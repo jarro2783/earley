@@ -1,0 +1,4 @@
+*.o
+earley
+.ninja_*
+*.o.d

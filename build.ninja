@@ -1,0 +1,10 @@
+rule cxx
+  command = g++ -I include -c -std=c++17 -fdiagnostics-color=always $
+    -Wall -Wextra -g -MMD -MF $out.d -o $out $in
+  depfile = $out.d
+
+rule cxx_link
+  command = g++ $in -o $out
+
+build earley.o: cxx earley.cpp
+build earley: cxx_link earley.o
