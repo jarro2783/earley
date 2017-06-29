@@ -64,6 +64,14 @@ namespace earley
     {
     }
 
+    Item(size_t nonterminal, std::vector<Entry> list)
+    : m_nonterminal(nonterminal)
+    , m_entries(std::move(list))
+    , m_start(0)
+    , m_current(m_entries.begin())
+    {
+    }
+
     #if 0
     template <typename... Args,
       typename = typename std::enable_if<
@@ -151,13 +159,17 @@ namespace earley
   bool
   operator==(const Item& lhs, const Item& rhs)
   {
-    return lhs.m_start == rhs.m_start
+    bool eq = lhs.m_start == rhs.m_start
       && lhs.m_entries == rhs.m_entries
       && (
           (lhs.m_current - lhs.m_entries.begin()) == 
           (rhs.m_current - rhs.m_entries.begin())
          )
       && lhs.m_nonterminal == rhs.m_nonterminal;
+
+    //std::cout << lhs << " == " << rhs << ": " << eq << std::endl;
+
+    return eq;
   }
 
   inline
@@ -226,15 +238,16 @@ namespace std
   hash<earley::Item>::operator()(const earley::Item& item) const
   {
     size_t result = item.m_start;
-    hash_combine(result, &*item.m_current);
+    hash_combine(result, (item.m_current - item.m_entries.begin()));
 
     for (auto& entry : item.m_entries)
     {
-      std::hash<earley::Entry> entry_hasher;
-      hash_combine(result, entry_hasher(entry));
+      hash_combine(result, entry);
     }
 
     hash_combine(result, item.m_nonterminal);
+
+    //std::cout << "Hash: " << item << ": " << result << std::endl;
 
     return result;
   }
