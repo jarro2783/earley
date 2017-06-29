@@ -1,4 +1,5 @@
 #include <initializer_list>
+#include <unordered_map>
 #include <unordered_set>
 #include <variant>
 #include <vector>
@@ -220,13 +221,34 @@ namespace earley
 
     return os;
   }
+
+  typedef std::variant<
+    Epsilon,
+    std::string,
+    char
+  > Production;
+
+  typedef std::unordered_map<std::string, std::vector<std::vector<Production>>>
+    Grammar;
 }
+
+void
+process_input(
+  size_t start,
+  const std::string& input,
+  const std::unordered_map<size_t, earley::ItemSet>& rules
+);
+
+std::tuple<std::unordered_map<size_t, earley::ItemSet>,
+  std::unordered_map<std::string, size_t>>
+generate_rules(earley::Grammar& grammar);
 
 namespace std
 {
   template <>
   struct hash<earley::Epsilon>
   {
+    inline
     size_t
     operator()(const earley::Epsilon&) const
     {
@@ -234,6 +256,7 @@ namespace std
     }
   };
 
+  inline
   size_t
   hash<earley::Item>::operator()(const earley::Item& item) const
   {

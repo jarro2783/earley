@@ -7,4 +7,5 @@ rule cxx_link
   command = g++ $in -o $out
 
 build earley.o: cxx earley.cpp
-build earley: cxx_link earley.o
+build main.o: cxx main.cpp
+build earley: cxx_link earley.o main.o
