@@ -232,8 +232,9 @@ namespace earley
     Grammar;
 }
 
-void
+std::tuple<bool, double>
 process_input(
+  bool debug,
   size_t start,
   const std::string& input,
   const std::unordered_map<size_t, earley::ItemSet>& rules

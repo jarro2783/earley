@@ -5,6 +5,17 @@ int main(int argc, char** argv)
 {
   using namespace earley;
 
+  cxxopts::Options options("earley", "an earley parser");
+  options.add_options()
+    ("d,debug", "turn on debugging")
+    ("t,timing", "print timing")
+  ;
+
+  options.parse(argc, argv);
+
+  bool debug = options.count("debug");
+  bool timing = options.count("timing");
+
   Item parens(0, {'(', 0ul, ')'});
   Item empty(0, {earley::Epsilon()});
 
@@ -12,9 +23,9 @@ int main(int argc, char** argv)
     {0ul, {parens, empty,}},
   };
 
-  process_input(0, "()", rules);
-  process_input(0, "(())", rules);
-  process_input(0, "((", rules);
+  process_input(debug, 0, "()", rules);
+  process_input(debug, 0, "(())", rules);
+  process_input(debug, 0, "((", rules);
 
   // number -> space | number [0-9]
   // sum -> product | sum + product
@@ -110,18 +121,34 @@ int main(int argc, char** argv)
 
   auto [grammar_rules, ids] = generate_rules(grammar);
 
-  std::cout << "Generated grammar rules:" << std::endl;
-  for (auto& rule : grammar_rules)
+  if (debug)
   {
-    std::cout << rule.first << ":" << std::endl;
-    for (auto& item : rule.second)
+    std::cout << "Generated grammar rules:" << std::endl;
+    for (auto& id : ids)
     {
-      std::cout << item << std::endl;
+      std::cout << id.first << " = " << id.second << std::endl;
+    }
+    for (auto& rule : grammar_rules)
+    {
+      std::cout << rule.first << ":" << std::endl;
+      for (auto& item : rule.second)
+      {
+        std::cout << item << std::endl;
+      }
     }
   }
 
   //process_input(4, argv[1], numbers);
-  process_input(ids["Input"], argv[1], grammar_rules);
+  auto [success, elapsed] =
+    process_input(debug, ids["Input"], argv[1], grammar_rules);
+
+  if (!success)
+  {
+    std::cerr << "Unable to parse" << std::endl;
+  } else if (timing)
+  {
+    std::cout << elapsed << std::endl;
+  }
 
   return 0;
 }

@@ -19,7 +19,6 @@ rule_id(
   if (iter == ids.end())
   {
     ids[name] = next;
-    std::cout << name << " = " << next << std::endl;
     return next++;
   }
   else
@@ -200,8 +199,9 @@ process_set(
   return more;
 }
 
-void
+std::tuple<bool, double>
 process_input(
+  bool debug,
   size_t start,
   const std::string& input,
   const std::unordered_map<size_t, ItemSet>& rules
@@ -222,15 +222,18 @@ process_input(
   end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end-start_time;
 
-  size_t n = 0;
-  for (auto& items : item_sets)
+  if (debug)
   {
-    std::cout << "Position " << n << std::endl;
-    for (auto& item : items)
+    size_t n = 0;
+    for (auto& items : item_sets)
     {
-      std::cout << item << std::endl;
+      std::cout << "Position " << n << std::endl;
+      for (auto& item : items)
+      {
+        std::cout << item << std::endl;
+      }
+      ++n;
     }
-    ++n;
   }
 
   // did we get to the end?
@@ -240,15 +243,16 @@ process_input(
     if (item.position() == item.end() && item.where() == 0 && item.nonterminal() == start)
     {
       parsed = true;
-      std::cout << "Parsed: " << input << std::endl;
-      std::cout << item << std::endl;
+      if (debug)
+      {
+        std::cout << "Parsed: " << input << std::endl;
+        std::cout << item << std::endl;
+      }
     }
   }
 
-  if (!parsed)
-  {
-    std::cout << "Unable to parse: " << input << std::endl;
-  }
+  //std::cout << "parsing took: " << elapsed_seconds.count() << "s\n";
 
-  std::cout << "parsing took: " << elapsed_seconds.count() << "s\n";
+  return std::make_tuple(parsed,
+    std::chrono::duration_cast<std::chrono::microseconds>(elapsed_seconds).count());
 }
