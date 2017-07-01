@@ -65,34 +65,34 @@ make_entry(
   return std::visit(creator, production);
 }
 
-std::tuple<std::unordered_map<size_t, ItemSet>,
+std::tuple<std::unordered_map<size_t, RuleList>,
   std::unordered_map<std::string, size_t>>
 generate_rules(Grammar& grammar)
 {
   size_t next_id = 0;
   std::unordered_map<std::string, size_t> identifiers;
-  std::unordered_map<size_t, ItemSet> item_set;
+  std::unordered_map<size_t, RuleList> rule_set;
 
   for (auto& nonterminal : grammar)
   {
-    ItemSet items;
+    RuleList rules;
     auto id = rule_id(identifiers, next_id, nonterminal.first);
 
-    for (auto& rule : nonterminal.second)
+    for (auto& productions : nonterminal.second)
     {
       std::vector<Entry> entries;
-      for (auto& entry : rule)
+      for (auto& production : productions)
       {
-        entries.push_back(make_entry(entry, identifiers, next_id));
+        entries.push_back(make_entry(production, identifiers, next_id));
       }
-      Item item(id, entries);
-      items.insert(item);
+      Rule rule(id, entries);
+      rules.push_back(rule);
     }
 
-    item_set[id] = std::move(items);
+    rule_set[id] = std::move(rules);
   }
 
-  return std::make_tuple(item_set, identifiers);
+  return std::make_tuple(rule_set, identifiers);
 }
 
 // Predict the next item sets for `which` set
