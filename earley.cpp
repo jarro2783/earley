@@ -65,34 +65,34 @@ make_entry(
   return std::visit(creator, production);
 }
 
-std::tuple<std::unordered_map<size_t, ItemSet>,
+std::tuple<std::unordered_map<size_t, RuleList>,
   std::unordered_map<std::string, size_t>>
 generate_rules(Grammar& grammar)
 {
   size_t next_id = 0;
   std::unordered_map<std::string, size_t> identifiers;
-  std::unordered_map<size_t, ItemSet> item_set;
+  std::unordered_map<size_t, RuleList> rule_set;
 
   for (auto& nonterminal : grammar)
   {
-    ItemSet items;
+    RuleList rules;
     auto id = rule_id(identifiers, next_id, nonterminal.first);
 
-    for (auto& rule : nonterminal.second)
+    for (auto& productions : nonterminal.second)
     {
       std::vector<Entry> entries;
-      for (auto& entry : rule)
+      for (auto& production : productions)
       {
-        entries.push_back(make_entry(entry, identifiers, next_id));
+        entries.push_back(make_entry(production, identifiers, next_id));
       }
-      Item item(id, entries);
-      items.insert(item);
+      Rule rule(id, entries);
+      rules.push_back(rule);
     }
 
-    item_set[id] = std::move(items);
+    rule_set[id] = std::move(rules);
   }
 
-  return std::make_tuple(item_set, identifiers);
+  return std::make_tuple(rule_set, identifiers);
 }
 
 // Predict the next item sets for `which` set
@@ -105,7 +105,7 @@ bool
 process_set(
   ItemSetList& item_sets,
   const std::string& input,
-  const std::unordered_map<size_t, ItemSet>& rules,
+  const std::unordered_map<size_t, earley::RuleList>& rules,
   size_t which
 )
 {
@@ -139,12 +139,13 @@ process_set(
         }
       } else if (std::holds_alternative<size_t>(*pos))
       {
+        // Predict
         // if it holds a non-terminal, add entries that expect the
         // non terminal
         auto& nt = rules.find(std::get<size_t>(*pos))->second;
         for (auto& rule : nt)
         {
-          auto predict = rule.start(which);
+          auto predict = Item(rule, which);
           if (item_sets[which].insert(predict).second)
           {
             //std::cout << "Predict " << std::get<size_t>(*pos) << std::endl;
@@ -153,6 +154,7 @@ process_set(
           }
         }
       } else if (std::holds_alternative<char>(*pos)) {
+        // Scan
         // we scan the terminal and add it to the next set if it matches
         // if input[which] == item then advance
         if (which < input.length() && input[which] == std::get<char>(*pos))
@@ -168,6 +170,7 @@ process_set(
     }
     else
     {
+      // Complete
       // at the end of the item; a completion
       // we need to advance anything with our non-terminal to the right
       // of the current from where it was predicted into our current set
@@ -204,12 +207,17 @@ process_input(
   bool debug,
   size_t start,
   const std::string& input,
-  const std::unordered_map<size_t, ItemSet>& rules
+  const std::unordered_map<size_t, RuleList>& rules
 )
 {
   ItemSetList item_sets(input.size() + 1);
 
-  item_sets[0] = rules.find(start)->second;
+  auto& first_set = item_sets[0];
+
+  for (auto& rule: rules.find(start)->second)
+  {
+    first_set.insert(Item(rule));
+  }
 
   std::chrono::time_point<std::chrono::system_clock> start_time, end;
   start_time = std::chrono::system_clock::now();

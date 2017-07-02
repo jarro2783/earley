@@ -16,10 +16,10 @@ int main(int argc, char** argv)
   bool debug = options.count("debug");
   bool timing = options.count("timing");
 
-  Item parens(0, {'(', 0ul, ')'});
-  Item empty(0, {earley::Epsilon()});
+  Rule parens(0, {'(', 0ul, ')'});
+  Rule empty(0, {earley::Epsilon()});
 
-  std::unordered_map<size_t, ItemSet> rules{
+  std::unordered_map<size_t, RuleList> rules{
     {0ul, {parens, empty,}},
   };
 
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
   // product -> number | product * number
   // space -> | space [ \t\n]
   // input -> sum space
-  std::unordered_map<size_t, ItemSet> numbers{
+  std::unordered_map<size_t, RuleList> numbers{
     {
       0,
       {
@@ -138,7 +138,6 @@ int main(int argc, char** argv)
     }
   }
 
-  //process_input(4, argv[1], numbers);
   auto [success, elapsed] =
     process_input(debug, ids["Input"], argv[1], grammar_rules);
 
