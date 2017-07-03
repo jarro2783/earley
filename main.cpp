@@ -138,6 +138,13 @@ int main(int argc, char** argv)
     }
   }
 
+  std::cout << "Is nullable:" << std::endl;
+  auto nullable = find_nullable(grammar_rules);
+  for (size_t i = 0; i != nullable.size(); ++i)
+  {
+    std::cout << i << ": " << nullable[i] << std::endl;
+  }
+
   auto [success, elapsed] =
     process_input(debug, ids["Input"], argv[1], grammar_rules);
 

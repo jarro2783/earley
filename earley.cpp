@@ -153,7 +153,9 @@ process_set(
             more = true;
           }
         }
-      } else if (std::holds_alternative<char>(*pos)) {
+      }
+      else if (std::holds_alternative<char>(*pos))
+      {
         // Scan
         // we scan the terminal and add it to the next set if it matches
         // if input[which] == item then advance
@@ -263,4 +265,113 @@ process_input(
 
   return std::make_tuple(parsed,
     std::chrono::duration_cast<std::chrono::microseconds>(elapsed_seconds).count());
+}
+
+struct InvertVisitor
+{
+  InvertVisitor(const std::unordered_map<size_t, earley::RuleList>& rules,
+    std::vector<std::vector<const Rule*>>& inverted,
+    const Rule* current
+  )
+  : m_rules(rules)
+  , m_inverted(inverted)
+  , m_current(current)
+  {
+  }
+
+  template <typename T>
+  void
+  operator()(const T&) const
+  {
+  }
+
+  void
+  operator()(size_t rule) const
+  {
+    if (m_inverted.size() < rule + 1)
+    {
+      m_inverted.resize(rule + 1);
+    }
+
+    m_inverted[rule].push_back(m_current);
+  }
+
+  private:
+  const std::unordered_map<size_t, earley::RuleList>& m_rules;
+  std::vector<std::vector<const Rule*>>& m_inverted;
+  const Rule* m_current;
+};
+
+std::vector<bool>
+find_nullable(const std::unordered_map<size_t, earley::RuleList>& rules)
+{
+  std::vector<bool> nullable;
+  std::deque<size_t> work;
+  std::vector<std::vector<const Rule*>> inverted;
+
+  for (auto& nt: rules)
+  {
+    if (nullable.size() < nt.first + 1)
+    {
+      nullable.resize(nt.first + 1);
+
+      for (auto& rule : nt.second)
+      {
+        //empty rules
+        if (rule.begin() != rule.end() &&
+            std::holds_alternative<earley::Epsilon>(*rule.begin()))
+        {
+          nullable[nt.first] = true;
+          work.push_back(nt.first);
+        }
+        else
+        {
+          nullable[nt.first] = false;
+        }
+
+        InvertVisitor invert_rule(rules, inverted, &rule);
+        //inverted index
+        for (auto& entry: rule)
+        {
+          std::visit(invert_rule, entry);
+        }
+      }
+    }
+  }
+
+  while (work.size() != 0)
+  {
+    auto symbol = work.front();
+    auto& work_rules = inverted[symbol];
+    for (auto& wr: work_rules)
+    {
+      if (nullable[wr->nonterminal()])
+      {
+        continue;
+      }
+
+      bool next = false;
+      for (auto& entry: *wr)
+      {
+        if (std::holds_alternative<size_t>(entry) &&
+            nullable[std::get<size_t>(entry)])
+        {
+          next = true;
+          break;
+        }
+      }
+
+      if (next)
+      {
+        continue;
+      }
+
+      nullable[wr->nonterminal()] = true;
+      work.push_back(wr->nonterminal());
+    }
+
+    work.pop_front();
+  }
+
+  return nullable;
 }

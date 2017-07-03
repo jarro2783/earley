@@ -250,6 +250,9 @@ std::tuple<std::unordered_map<size_t, earley::RuleList>,
   std::unordered_map<std::string, size_t>>
 generate_rules(earley::Grammar& grammar);
 
+std::vector<bool>
+find_nullable(const std::unordered_map<size_t, earley::RuleList>& rules);
+
 namespace std
 {
   template <>
