@@ -272,15 +272,15 @@ process_input(
   bool debug,
   size_t start,
   const std::string& input,
-  const std::unordered_map<size_t, earley::RuleList>& rules
+  const std::vector<earley::RuleList>& rules
 );
 
-std::tuple<std::unordered_map<size_t, earley::RuleList>,
+std::tuple<std::vector<earley::RuleList>,
   std::unordered_map<std::string, size_t>>
 generate_rules(earley::Grammar& grammar);
 
 std::vector<bool>
-find_nullable(const std::unordered_map<size_t, earley::RuleList>& rules);
+find_nullable(const std::vector<earley::RuleList>& rules);
 
 namespace std
 {

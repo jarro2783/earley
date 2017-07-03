@@ -65,13 +65,13 @@ make_entry(
   return std::visit(creator, production);
 }
 
-std::tuple<std::unordered_map<size_t, RuleList>,
+std::tuple<std::vector<RuleList>,
   std::unordered_map<std::string, size_t>>
 generate_rules(Grammar& grammar)
 {
   size_t next_id = 0;
   std::unordered_map<std::string, size_t> identifiers;
-  std::unordered_map<size_t, RuleList> rule_set;
+  std::vector<RuleList> rule_set;
 
   for (auto& nonterminal : grammar)
   {
@@ -89,6 +89,10 @@ generate_rules(Grammar& grammar)
       rules.push_back(rule);
     }
 
+    if (rule_set.size() <= id)
+    {
+      rule_set.resize(id+1);
+    }
     rule_set[id] = std::move(rules);
   }
 
@@ -105,7 +109,7 @@ void
 process_set(
   ItemSetList& item_sets,
   const std::string& input,
-  const std::unordered_map<size_t, earley::RuleList>& rules,
+  const std::vector<earley::RuleList>& rules,
   const std::vector<bool>& nullable,
   size_t which
 )
@@ -141,7 +145,7 @@ process_set(
         // Predict
         // if it holds a non-terminal, add entries that expect the
         // non terminal
-        auto& nt = rules.find(std::get<size_t>(*pos))->second;
+        auto& nt = rules[std::get<size_t>(*pos)];
         for (auto& rule : nt)
         {
           auto predict = Item(rule, which);
@@ -214,7 +218,7 @@ process_input(
   bool debug,
   size_t start,
   const std::string& input,
-  const std::unordered_map<size_t, RuleList>& rules
+  const std::vector<RuleList>& rules
 )
 {
   ItemSetList item_sets(input.size() + 1);
@@ -231,7 +235,7 @@ process_input(
 
   auto& first_set = item_sets[0];
 
-  for (auto& rule: rules.find(start)->second)
+  for (auto& rule: rules[start])
   {
     first_set.insert(Item(rule));
   }
@@ -284,7 +288,7 @@ process_input(
 
 struct InvertVisitor
 {
-  InvertVisitor(const std::unordered_map<size_t, earley::RuleList>& rules,
+  InvertVisitor(const std::vector<earley::RuleList>& rules,
     std::vector<std::vector<const Rule*>>& inverted,
     const Rule* current
   )
@@ -312,46 +316,43 @@ struct InvertVisitor
   }
 
   private:
-  const std::unordered_map<size_t, earley::RuleList>& m_rules;
+  const std::vector<earley::RuleList>& m_rules;
   std::vector<std::vector<const Rule*>>& m_inverted;
   const Rule* m_current;
 };
 
 std::vector<bool>
-find_nullable(const std::unordered_map<size_t, earley::RuleList>& rules)
+find_nullable(const std::vector<earley::RuleList>& rules)
 {
-  std::vector<bool> nullable;
+  std::vector<bool> nullable(rules.size(), false);
   std::deque<size_t> work;
   std::vector<std::vector<const Rule*>> inverted;
 
+  size_t i = 0;
   for (auto& nt: rules)
   {
-    if (nullable.size() < nt.first + 1)
+    for (auto& rule : nt)
     {
-      nullable.resize(nt.first + 1);
-
-      for (auto& rule : nt.second)
+      //empty rules
+      if (rule.begin() != rule.end() &&
+          std::holds_alternative<earley::Epsilon>(*rule.begin()))
       {
-        //empty rules
-        if (rule.begin() != rule.end() &&
-            std::holds_alternative<earley::Epsilon>(*rule.begin()))
-        {
-          nullable[nt.first] = true;
-          work.push_back(nt.first);
-        }
-        else
-        {
-          nullable[nt.first] = false;
-        }
+        nullable[i] = true;
+        work.push_back(i);
+      }
+      else
+      {
+        nullable[i] = false;
+      }
 
-        InvertVisitor invert_rule(rules, inverted, &rule);
-        //inverted index
-        for (auto& entry: rule)
-        {
-          std::visit(invert_rule, entry);
-        }
+      InvertVisitor invert_rule(rules, inverted, &rule);
+      //inverted index
+      for (auto& entry: rule)
+      {
+        std::visit(invert_rule, entry);
       }
     }
+    ++i;
   }
 
   while (work.size() != 0)

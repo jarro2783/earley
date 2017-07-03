@@ -19,8 +19,8 @@ int main(int argc, char** argv)
   Rule parens(0, {scan_char('('), 0ul, scan_char(')')});
   Rule empty(0, {earley::Epsilon()});
 
-  std::unordered_map<size_t, RuleList> rules{
-    {0ul, {parens, empty,}},
+  std::vector<RuleList> rules{
+    {parens, empty,},
   };
 
   process_input(debug, 0, "()", rules);
@@ -119,13 +119,16 @@ int main(int argc, char** argv)
     {
       std::cout << id.first << " = " << id.second << std::endl;
     }
+
+    size_t rule_id = 0;
     for (auto& rule : grammar_rules)
     {
-      std::cout << rule.first << ":" << std::endl;
-      for (auto& item : rule.second)
+      std::cout << rule_id << ":" << std::endl;
+      for (auto& item : rule)
       {
         std::cout << item << std::endl;
       }
+      ++rule_id;
     }
   }
 
