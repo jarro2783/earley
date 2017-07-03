@@ -16,7 +16,7 @@ int main(int argc, char** argv)
   bool debug = options.count("debug");
   bool timing = options.count("timing");
 
-  Rule parens(0, {'(', 0ul, ')'});
+  Rule parens(0, {scan_char('('), 0ul, scan_char(')')});
   Rule empty(0, {earley::Epsilon()});
 
   std::unordered_map<size_t, RuleList> rules{
@@ -82,33 +82,24 @@ int main(int argc, char** argv)
 
   Grammar grammar = {
     {"Number", {
-      {"Space"},
-      {"Number", '0'},
-      {"Number", '1'},
-      {"Number", '2'},
-      {"Number", '3'},
-      {"Number", '4'},
-      {"Number", '5'},
-      {"Number", '6'},
-      {"Number", '7'},
-      {"Number", '8'},
-      {"Number", '9'},
+      {"Space", scan_range('0', '9')},
+      {"Number", scan_range('0', '9')},
     }},
     {"Space", {
       {Epsilon()},
-      {"Space", ' '},
-      {"Space", '\t'},
-      {"Space", '\n'},
+      {"Space", scan_char(' ')},
+      {"Space", scan_char('\t')},
+      {"Space", scan_char('\n')},
     }},
     {"Sum", {
       {"Product"},
-      {"Sum", "Space", '+', "Product"},
-      {"Sum", "Space", '-', "Product"},
+      {"Sum", "Space", scan_char('+'), "Product"},
+      {"Sum", "Space", scan_char('-'), "Product"},
     }},
     {"Product", {
       {"Number"},
-      {"Product", "Space", '*', "Number"},
-      {"Product", "Space", '/', "Number"},
+      {"Product", "Space", scan_char('*'), "Number"},
+      {"Product", "Space", scan_char('/'), "Number"},
     }},
     {"Input", {{"Sum", "Space"}}},
   };
@@ -136,13 +127,6 @@ int main(int argc, char** argv)
         std::cout << item << std::endl;
       }
     }
-  }
-
-  std::cout << "Is nullable:" << std::endl;
-  auto nullable = find_nullable(grammar_rules);
-  for (size_t i = 0; i != nullable.size(); ++i)
-  {
-    std::cout << i << ": " << nullable[i] << std::endl;
   }
 
   auto [success, elapsed] =

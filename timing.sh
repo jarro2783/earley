@@ -1,6 +1,6 @@
 #!/bin/bash
 
-STATS="stats-$(date +%s)"
+STATS="stats-$(date '+%Y%m%d-%H%M%S')"
 rm -f $STATS
 
 for i in 10 50 100 500 1000 2000; do

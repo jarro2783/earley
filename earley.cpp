@@ -101,15 +101,15 @@ generate_rules(Grammar& grammar)
 //   len(item_sets) >= which + 1
 //   all referenced nonterminals in item_sets and rules exist in dom(rules)
 //   which < len(input)
-bool
+void
 process_set(
   ItemSetList& item_sets,
   const std::string& input,
   const std::unordered_map<size_t, earley::RuleList>& rules,
+  const std::vector<bool>& nullable,
   size_t which
 )
 {
-  bool more = false;
   std::deque<Item> to_process(item_sets[which].begin(), item_sets[which].end());
 
 #if 0
@@ -135,7 +135,6 @@ process_set(
         {
           //std::cout << "Epsilon" << std::endl;
           to_process.push_back(current.next());
-          more = true;
         }
       } else if (std::holds_alternative<size_t>(*pos))
       {
@@ -148,18 +147,27 @@ process_set(
           auto predict = Item(rule, which);
           if (item_sets[which].insert(predict).second)
           {
-            //std::cout << "Predict " << std::get<size_t>(*pos) << std::endl;
             to_process.push_back(predict);
-            more = true;
+          }
+        }
+
+        // nullable completion
+        if (nullable[std::get<size_t>(*pos)])
+        {
+          // we are completing *this* item, into the same set
+          auto next = current.next();
+          if (item_sets[which].insert(next).second)
+          {
+            to_process.push_back(next);
           }
         }
       }
-      else if (std::holds_alternative<char>(*pos))
+      else if (std::holds_alternative<Scanner>(*pos))
       {
         // Scan
         // we scan the terminal and add it to the next set if it matches
         // if input[which] == item then advance
-        if (which < input.length() && input[which] == std::get<char>(*pos))
+        if (which < input.length() && std::get<Scanner>(*pos)(input[which]))
         {
           item_sets[which+1].insert(current.next());
         }
@@ -167,7 +175,7 @@ process_set(
       else
       {
         std::cerr << "Item doesn't hold a value" << std::endl;
-        return false;
+        return;
       }
     }
     else
@@ -192,7 +200,6 @@ process_set(
           {
             //std::cout << "Bring it into our set as " << next << std::endl;
             to_process.push_back(next);
-            more = true;
           }
         }
       }
@@ -200,8 +207,6 @@ process_set(
 
     to_process.pop_front();
   }
-
-  return more;
 }
 
 std::tuple<bool, double>
@@ -213,6 +218,16 @@ process_input(
 )
 {
   ItemSetList item_sets(input.size() + 1);
+  auto nullable = find_nullable(rules);
+
+  if (debug)
+  {
+    std::cout << "Is nullable:" << std::endl;
+    for (size_t i = 0; i != nullable.size(); ++i)
+    {
+      std::cout << i << ": " << nullable[i] << std::endl;
+    }
+  }
 
   auto& first_set = item_sets[0];
 
@@ -226,7 +241,7 @@ process_input(
 
   for (size_t i = 0; i != input.size() + 1; ++i)
   {
-    while (process_set(item_sets, input, rules, i));
+    process_set(item_sets, input, rules, nullable, i);
   }
 
   end = std::chrono::system_clock::now();

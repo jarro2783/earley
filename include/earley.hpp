@@ -1,3 +1,4 @@
+#include <functional>
 #include <initializer_list>
 #include <unordered_map>
 #include <unordered_set>
@@ -45,12 +46,40 @@ namespace earley
 {
   struct Epsilon {};
 
+  typedef std::function<bool(char)> Scanner;
+
+  inline
+  Scanner
+  scan_range(char begin, char end)
+  {
+    return [=](char c){
+      return c >= begin && c <= end;
+    };
+  }
+
+  inline
+  Scanner
+  scan_char(char c)
+  {
+    return [=](char cc) {
+      return c == cc;
+    };
+  }
+
+  inline
+  std::ostream&
+  operator<<(std::ostream& os, const Scanner&)
+  {
+    os << "scanfn";
+    return os;
+  }
+
   // An entry is an epsilon, a pointer to another non-terminal, or
   // any number of ways of specifying a terminal
   typedef std::variant<
     Epsilon,
     size_t,
-    char
+    std::function<bool(char)>
   > Entry;
 
   class Rule
@@ -205,9 +234,9 @@ namespace earley
       {
         os << " " << std::get<size_t>(entry);
       }
-      else if (std::holds_alternative<char>(entry))
+      else if (std::holds_alternative<Scanner>(entry))
       {
-        os << " '" << std::get<char>(entry) << "'";
+        os << " '" << std::get<Scanner>(entry) << "'";
       }
 
       ++iter;
@@ -229,7 +258,7 @@ namespace earley
   typedef std::variant<
     Epsilon,
     std::string,
-    char
+    std::function<bool(char)>
   > Production;
 
   // A grammar is a mapping from non-terminals to a list of rules
