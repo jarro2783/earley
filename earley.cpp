@@ -151,7 +151,8 @@ process_set(
         // Predict
         // if it holds a non-terminal, add entries that expect the
         // non terminal
-        auto& nt = rules[std::get<size_t>(*pos)];
+        auto rule = std::get<size_t>(*pos);
+        auto& nt = rules[rule];
         for (auto& rule : nt)
         {
           auto predict = Item(rule, which);
@@ -162,7 +163,7 @@ process_set(
         }
 
         // nullable completion
-        if (nullable[std::get<size_t>(*pos)])
+        if (nullable[rule])
         {
           // we are completing *this* item, into the same set
           auto next = current.next();
@@ -345,10 +346,6 @@ find_nullable(const std::vector<earley::RuleList>& rules)
       {
         nullable[i] = true;
         work.push_back(i);
-      }
-      else
-      {
-        nullable[i] = false;
       }
 
       InvertVisitor invert_rule(rules, inverted, &rule);

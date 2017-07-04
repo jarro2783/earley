@@ -151,12 +151,14 @@ int main(int argc, char** argv)
     {"Space", {
       {Epsilon()},
       {' '},
+      {'\n'},
+      {'\t'},
     }},
     {"Nonterminal", {
-      {"Name", '-', '>', "Rules"}
+      {"Name", "Space", '-', '>', "Rules"}
     }},
     {"Rules", {
-      {"Rules", '|', "Rule"},
+      {"Rules", "Space", '|', "Rule"},
       {"Rule"},
     }},
     {"Rule", {
@@ -207,7 +209,7 @@ int main(int argc, char** argv)
   if (argc < 3)
   {
     std::cerr << "Give me an ebnf to parse" << std::endl;
-    exit(1);
+    exit(0);
   }
 
   auto [ebnf_rules, ebnf_ids] = generate_rules(ebnf);
@@ -223,6 +225,16 @@ int main(int argc, char** argv)
 
   auto [ebnf_parsed, ebnf_time] =
     process_input(debug, ebnf_ids["Grammar"], argv[2], ebnf_rules);
+
+  if (!ebnf_parsed)
+  {
+    std::cerr << "Unable to parse ebnf" << std::endl;
+    exit(1);
+  }
+  else
+  {
+    std::cout << ebnf_time << std::endl;
+  }
 
   return 0;
 }
