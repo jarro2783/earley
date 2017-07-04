@@ -143,5 +143,86 @@ int main(int argc, char** argv)
     std::cout << elapsed << std::endl;
   }
 
+  Grammar ebnf = {
+    {"Grammar", {
+      {Epsilon()},
+      {"Grammar", "Space", "Nonterminal"}
+    }},
+    {"Space", {
+      {Epsilon()},
+      {' '},
+    }},
+    {"Nonterminal", {
+      {"Name", '-', '>', "Rules"}
+    }},
+    {"Rules", {
+      {"Rules", '|', "Rule"},
+      {"Rule"},
+    }},
+    {"Rule", {
+      {Epsilon()},
+      {"Rule", "Production"},
+    }},
+    {"Production", {
+      {"Name"},
+      {"Literal"}
+    }},
+    {"Literal", {
+      {'\'', "Char", '\''},
+      {'[', "Ranges", ']'},
+      {'"', "Chars", '"'},
+    }},
+    {"Name", {
+      {"NameStart", "NameRest"},
+    }},
+    {"NameStart", {
+      {scan_range('a', 'z')},
+      {scan_range('A', 'Z')},
+    }},
+    {"NameRest", {
+      {Epsilon()},
+      {"NameRest", "NameStart"},
+      {"NameRest", scan_range('0', '9')},
+    }},
+    {"Ranges", {
+      {"Range"},
+      {"Ranges", "Range"},
+    }},
+    {"Range", {
+      {scan_range('a', 'z'), '-', scan_range('a', 'z')},
+      {scan_range('A', 'Z'), '-', scan_range('A', 'Z')},
+      {scan_range('0', '9'), '-', scan_range('0', '9')},
+    }},
+    {"Chars", {
+      {"Char"},
+      {"Chars", "Char"},
+    }},
+    {"Char", {
+      {scan_range('0', 'z')},
+      {'('},
+      {')'},
+    }},
+  };
+
+  if (argc < 3)
+  {
+    std::cerr << "Give me an ebnf to parse" << std::endl;
+    exit(1);
+  }
+
+  auto [ebnf_rules, ebnf_ids] = generate_rules(ebnf);
+
+  if (debug)
+  {
+    std::cout << "Generated grammar rules:" << std::endl;
+    for (auto& id : ebnf_ids)
+    {
+      std::cout << id.first << " = " << id.second << std::endl;
+    }
+  }
+
+  auto [ebnf_parsed, ebnf_time] =
+    process_input(debug, ebnf_ids["Grammar"], argv[2], ebnf_rules);
+
   return 0;
 }

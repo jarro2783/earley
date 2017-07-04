@@ -43,6 +43,12 @@ struct CreateEntry
   }
 
   Entry
+  operator()(char c) const
+  {
+    return scan_char(c);
+  }
+
+  Entry
   operator()(const std::string& s) const
   {
     return rule_id(m_ids, m_next, s);

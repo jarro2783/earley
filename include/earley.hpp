@@ -258,7 +258,8 @@ namespace earley
   typedef std::variant<
     Epsilon,
     std::string,
-    std::function<bool(char)>
+    std::function<bool(char)>,
+    char
   > Production;
 
   // A grammar is a mapping from non-terminals to a list of rules
