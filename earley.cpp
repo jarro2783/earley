@@ -122,14 +122,6 @@ process_set(
 {
   std::vector<Item> to_process(item_sets[which].begin(), item_sets[which].end());
 
-#if 0
-  std::cout << "Processing " << which << " with item set:" << std::endl;
-  for (auto& item : to_process)
-  {
-    std::cout << item << std::endl;
-  }
-#endif
-
   while (!to_process.empty())
   {
     auto current = to_process.back();
@@ -139,43 +131,46 @@ process_set(
 
     if (pos != current.end())
     {
-      if (std::holds_alternative<Epsilon>(*pos))
+      switch (pos->index())
       {
+        //these should be replaced with index_of
+        case 0:
         // if it holds an epsilon advance
         if (item_sets[which].insert(current.next()).second)
         {
           //std::cout << "Epsilon" << std::endl;
           to_process.push_back(current.next());
         }
-      } else if (std::holds_alternative<size_t>(*pos))
-      {
-        // Predict
-        // if it holds a non-terminal, add entries that expect the
-        // non terminal
-        auto rule = std::get<size_t>(*pos);
-        auto& nt = rules[rule];
-        for (auto& rule : nt)
+        break;
+        case 1:
         {
-          auto predict = Item(rule, which);
-          if (item_sets[which].insert(predict).second)
+          // Predict
+          // if it holds a non-terminal, add entries that expect the
+          // non terminal
+          auto rule = std::get<size_t>(*pos);
+          auto& nt = rules[rule];
+          for (auto& rule : nt)
           {
-            to_process.push_back(predict);
+            auto predict = Item(rule, which);
+            if (item_sets[which].insert(predict).second)
+            {
+              to_process.push_back(predict);
+            }
           }
-        }
 
-        // nullable completion
-        if (nullable[rule])
-        {
-          // we are completing *this* item, into the same set
-          auto next = current.next();
-          if (item_sets[which].insert(next).second)
+          // nullable completion
+          if (nullable[rule])
           {
-            to_process.push_back(next);
+            // we are completing *this* item, into the same set
+            auto next = current.next();
+            if (item_sets[which].insert(next).second)
+            {
+              to_process.push_back(next);
+            }
           }
         }
-      }
-      else if (std::holds_alternative<Scanner>(*pos))
-      {
+        break;
+        case 2:
         // Scan
         // we scan the terminal and add it to the next set if it matches
         // if input[which] == item then advance
@@ -183,9 +178,8 @@ process_set(
         {
           item_sets[which+1].insert(current.next());
         }
-      }
-      else
-      {
+        break;
+        default:
         std::cerr << "Item doesn't hold a value" << std::endl;
         return;
       }
