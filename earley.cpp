@@ -196,7 +196,8 @@ process_set(
       // we need to advance anything with our non-terminal to the right
       // of the current from where it was predicted into our current set
       auto ours = current.nonterminal();
-      //std::cout << "Loop " << which << " completed " << ours << std::endl;
+      std::unordered_set<Item> to_add;
+
       for (auto& item : item_sets[current.where()])
       {
         //std::cout << "Consider " << item << std::endl;
@@ -207,13 +208,15 @@ process_set(
         {
           //bring it into our set
           auto next = item.next();
-          if (item_sets[which].insert(next).second)
+          if (item_sets[which].count(next) == 0 && to_add.count(next) == 0)
           {
-            //std::cout << "Bring it into our set as " << next << std::endl;
+            to_add.insert(next);
             to_process.push_back(next);
           }
         }
       }
+
+      item_sets[which].insert(to_add.begin(), to_add.end());
     }
 
     to_process.pop_front();
