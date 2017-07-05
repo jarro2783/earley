@@ -120,7 +120,7 @@ process_set(
   size_t which
 )
 {
-  std::deque<Item> to_process(item_sets[which].begin(), item_sets[which].end());
+  std::vector<Item> to_process(item_sets[which].begin(), item_sets[which].end());
 
 #if 0
   std::cout << "Processing " << which << " with item set:" << std::endl;
@@ -132,7 +132,8 @@ process_set(
 
   while (!to_process.empty())
   {
-    auto& current = to_process.front();
+    auto current = to_process.back();
+    to_process.pop_back();
 
     auto pos = current.position();
 
@@ -218,8 +219,6 @@ process_set(
 
       item_sets[which].insert(to_add.begin(), to_add.end());
     }
-
-    to_process.pop_front();
   }
 }
 
