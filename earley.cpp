@@ -105,6 +105,122 @@ generate_rules(Grammar& grammar)
   return std::make_tuple(rule_set, identifiers);
 }
 
+struct RecogniseActions
+{
+  RecogniseActions(
+    const std::vector<RuleList>& rules,
+    const std::vector<bool>& nullable,
+    std::vector<Item>& stack,
+    Item item,
+    std::vector<ItemSet>& item_sets,
+    size_t which,
+    const std::string& input)
+  : m_rules(rules)
+  , m_nullable(nullable)
+  , m_stack(stack)
+  , m_item(item)
+  , m_item_sets(item_sets)
+  , m_which(which)
+  , m_input(input)
+  {
+  }
+
+  void
+  operator()(size_t rule) const
+  {
+    // Predict
+    // if it holds a non-terminal, add entries that expect the
+    // non terminal
+    auto& nt = m_rules[rule];
+    for (auto& def : nt)
+    {
+      auto predict = Item(def, m_which);
+      if (m_item_sets[m_which].insert(predict).second)
+      {
+        m_stack.push_back(predict);
+      }
+    }
+
+    // nullable completion
+    if (m_nullable[rule])
+    {
+      // we are completing *this* item, into the same set
+      auto next = m_item.next();
+      if (m_item_sets[m_which].insert(next).second)
+      {
+        m_stack.push_back(next);
+      }
+    }
+  }
+
+  void
+  operator()(const Scanner& scan) const
+  {
+    // Scan
+    // we scan the terminal and add it to the next set if it matches
+    // if input[which] == item then advance
+    if (m_which < m_input.length() && scan(m_input[m_which]))
+    {
+      m_item_sets[m_which+1].insert(m_item.next());
+    }
+  }
+
+  void
+  operator()(Epsilon) const
+  {
+    auto next = m_item.next();
+    if (m_item_sets[m_which].insert(next).second)
+    {
+      m_stack.push_back(next);
+    }
+  }
+
+  private:
+  const std::vector<RuleList>& m_rules;
+  const std::vector<bool>& m_nullable;
+  std::vector<Item>& m_stack;
+  Item m_item;
+  std::vector<ItemSet>& m_item_sets;
+  size_t m_which;
+  const std::string& m_input;
+};
+
+void
+complete(
+  std::vector<Item>& stack,
+  const Item& item,
+  std::vector<ItemSet>& item_sets,
+  size_t which
+)
+{
+  // Complete
+  // at the end of the item; a completion
+  // we need to advance anything with our non-terminal to the right
+  // of the current from where it was predicted into our current set
+  auto ours = item.nonterminal();
+  std::unordered_set<Item> to_add;
+
+  for (auto& consider : item_sets[item.where()])
+  {
+    //std::cout << "Consider " << item << std::endl;
+    auto dot = consider.position();
+    if (dot != consider.end() &&
+        std::holds_alternative<size_t>(*dot) &&
+        std::get<size_t>(*dot) == ours)
+    {
+      //bring it into our set
+      auto next = consider.next();
+      if (item_sets[which].count(next) == 0 && to_add.count(next) == 0)
+      {
+        to_add.insert(next);
+        stack.push_back(next);
+      }
+    }
+  }
+
+  item_sets[which].insert(to_add.begin(), to_add.end());
+}
+
 // Predict the next item sets for `which` set
 //
 // Preconditions:
@@ -131,87 +247,14 @@ process_set(
 
     if (pos != current.end())
     {
-      switch (pos->index())
-      {
-        //these should be replaced with index_of
-        case 0:
-        // if it holds an epsilon advance
-        if (item_sets[which].insert(current.next()).second)
-        {
-          //std::cout << "Epsilon" << std::endl;
-          to_process.push_back(current.next());
-        }
-        break;
-        case 1:
-        {
-          // Predict
-          // if it holds a non-terminal, add entries that expect the
-          // non terminal
-          auto rule = std::get<size_t>(*pos);
-          auto& nt = rules[rule];
-          for (auto& rule : nt)
-          {
-            auto predict = Item(rule, which);
-            if (item_sets[which].insert(predict).second)
-            {
-              to_process.push_back(predict);
-            }
-          }
-
-          // nullable completion
-          if (nullable[rule])
-          {
-            // we are completing *this* item, into the same set
-            auto next = current.next();
-            if (item_sets[which].insert(next).second)
-            {
-              to_process.push_back(next);
-            }
-          }
-        }
-        break;
-        case 2:
-        // Scan
-        // we scan the terminal and add it to the next set if it matches
-        // if input[which] == item then advance
-        if (which < input.length() && std::get<Scanner>(*pos)(input[which]))
-        {
-          item_sets[which+1].insert(current.next());
-        }
-        break;
-        default:
-        std::cerr << "Item doesn't hold a value" << std::endl;
-        return;
-      }
+      std::visit(
+        RecogniseActions(rules, nullable, to_process,
+                         current, item_sets, which, input),
+        *pos);
     }
     else
     {
-      // Complete
-      // at the end of the item; a completion
-      // we need to advance anything with our non-terminal to the right
-      // of the current from where it was predicted into our current set
-      auto ours = current.nonterminal();
-      std::unordered_set<Item> to_add;
-
-      for (auto& item : item_sets[current.where()])
-      {
-        //std::cout << "Consider " << item << std::endl;
-        auto dot = item.position();
-        if (dot != item.end() &&
-            std::holds_alternative<size_t>(*dot) &&
-            std::get<size_t>(*dot) == ours)
-        {
-          //bring it into our set
-          auto next = item.next();
-          if (item_sets[which].count(next) == 0 && to_add.count(next) == 0)
-          {
-            to_add.insert(next);
-            to_process.push_back(next);
-          }
-        }
-      }
-
-      item_sets[which].insert(to_add.begin(), to_add.end());
+      complete(to_process, current, item_sets, which);
     }
   }
 }
