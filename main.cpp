@@ -19,6 +19,9 @@ int main(int argc, char** argv)
   Rule parens(0, {scan_char('('), 0ul, scan_char(')')});
   Rule empty(0, {earley::Epsilon()});
 
+  HashSet<Item> foo;
+  foo.insert(Item(parens));
+
   std::vector<RuleList> rules{
     {parens, empty,},
   };
