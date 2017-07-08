@@ -11,6 +11,8 @@
 #include <variant>
 #include <vector>
 
+#include "earley_hash_set.hpp"
+
 template <typename T>
 struct is_initializer_list;
 
@@ -224,7 +226,8 @@ namespace earley
     std::vector<Entry>::const_iterator m_current;
   };
 
-  typedef std::unordered_set<Item> ItemSet;
+  //typedef std::unordered_set<Item> ItemSet;
+  typedef HashSet<Item> ItemSet;
   typedef std::vector<ItemSet> ItemSetList;
   typedef std::vector<Rule> RuleList;
 
