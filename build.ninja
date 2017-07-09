@@ -10,3 +10,8 @@ build earley.o: cxx earley.cpp
 build grammar.o: cxx grammar.cpp
 build main.o: cxx main.cpp
 build earley: cxx_link earley.o grammar.o main.o
+
+# tests
+build test/main.o: cxx test/main.cpp
+build test/hash.o: cxx test/hash.cpp
+build test/hash: cxx_link test/main.o test/hash.o
