@@ -1,3 +1,7 @@
+#include <cstddef>
+#include <iterator>
+#include <vector>
+
 namespace earley
 {
   template <typename T>
@@ -18,12 +22,12 @@ namespace earley
     : m_set(hs)
     , m_pos(pos)
     {
-      ++(*this);
     }
 
     HashSetIterator&
     operator++()
     {
+      ++m_pos;
       while (m_pos != m_set->m_size
         && !m_set->m_occupied[m_pos])
       {
@@ -54,7 +58,7 @@ namespace earley
   bool
   operator!=(const HashSetIterator<T>& lhs, const HashSetIterator<T>& rhs)
   {
-    return operator==(lhs, rhs);
+    return !operator==(lhs, rhs);
   }
 
   template <typename T>
@@ -66,21 +70,24 @@ namespace earley
     typedef const_iterator iterator;
 
     HashSet()
-    : m_occupied(false, m_size)
-    , m_size(100)
+    : m_elements(0)
+    , m_size(101)
+    , m_first(m_size)
+    , m_occupied(m_size, false)
     {
       m_memory = static_cast<T*>(malloc(m_size * sizeof(T)));
     }
 
     ~HashSet()
     {
+      // TODO: in place destruct elements
       free(m_memory);
     }
 
     const_iterator
     begin() const
     {
-      return const_iterator(this, 0);
+      return const_iterator(this, m_first);
     }
 
     const_iterator
@@ -103,31 +110,50 @@ namespace earley
     std::pair<const_iterator, bool>
     insert(const T& t)
     {
-      size_t key = std::hash<T>()(t) % m_size;
-      size_t secondary = 1 + key % (m_size - 2);
+      bool inserted = false;
 
       if (m_elements/3 > m_size/4)
       {
         resize();
       }
 
+      auto pos = find_position(t);
+
+      if (!m_occupied[pos])
+      {
+        new(m_memory + pos) T (t);
+        m_occupied[pos] = true;
+        inserted = true;
+        ++m_elements;
+
+        if (pos < m_first)
+        {
+          m_first = pos;
+        }
+      }
+
+      return std::make_pair(HashSetIterator<T>(this, pos), inserted);
+    }
+
+    private:
+
+    size_t
+    find_position(const T& t) const
+    {
+      size_t key = std::hash<T>()(t) % m_size;
+      //size_t secondary = 1 + key % (m_size - 2);
+      size_t secondary = 2;
+
       while (true)
       {
-        if (!m_occupied[key])
+        if (!m_occupied[key] || t == m_memory[key])
         {
-          new(m_memory + key) T (t);
-          m_occupied[key] = true;
-
-          return std::make_pair(const_iterator(this, key), true);
-        }
-        else if (t == m_memory[key])
-        {
-          return std::make_pair(const_iterator(this, key), false);
+          return key;
         }
         else
         {
           key += secondary;
-          if (key > m_size)
+          if (key >= m_size)
           {
             key -= m_size;
           }
@@ -135,9 +161,21 @@ namespace earley
       }
     }
 
+    public:
+
     const_iterator
     find(const T& t) const
     {
+      auto pos = find_position(t);
+
+      if (m_occupied[pos])
+      {
+        return HashSetIterator<T>(this, pos);
+      }
+      else
+      {
+        return HashSetIterator<T>(this, m_size);
+      }
     }
 
     int
@@ -146,21 +184,25 @@ namespace earley
       return find(t) != end() ? 1 : 0;
     }
 
+    private:
+
     void
     resize()
     {
       //TODO make this exception safe
-      m_size *= 2;
+      // Also need to move everything to the new size
+      std::cout << "Resizing" << std::endl;
+      m_size *= 2 + 1;
       m_occupied.resize(m_size, false);
-      m_memory = static_cast<T*>(realloc(m_memory, m_size));
+      m_memory = static_cast<T*>(realloc(m_memory, sizeof(T) * m_size));
     }
 
-    private:
     friend class HashSetIterator<T>;
 
-    std::vector<bool> m_occupied;
-    T* m_memory;
     size_t m_elements;
     size_t m_size;
+    size_t m_first;
+    std::vector<bool> m_occupied;
+    T* m_memory;
   };
 }
