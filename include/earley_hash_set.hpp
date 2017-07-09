@@ -61,6 +61,32 @@ namespace earley
     return !operator==(lhs, rhs);
   }
 
+  namespace detail
+  {
+    inline
+    size_t
+    next_prime (size_t number)
+    {
+      size_t i;
+
+      for (number = (number / 2) * 2 + 3;; number += 2)
+      {
+        for (i = 3; i * i <= number; i += 2)
+        {
+          size_t q = number / i;
+          if (q * i == number)
+          {
+            break;
+          }
+        }
+        if (i * i > number)
+        {
+          return number;
+        }
+      }
+    }
+  }
+
   template <typename T>
   class HashSet
   {
@@ -69,9 +95,19 @@ namespace earley
     typedef HashSetIterator<T> const_iterator;
     typedef const_iterator iterator;
 
+    mutable size_t collisions = 0;
+
+    // TODO: this is far from ideal
+    static size_t all_collisions;
+
     HashSet()
+    : HashSet(101)
+    {
+    }
+
+    HashSet(size_t size)
     : m_elements(0)
-    , m_size(101)
+    , m_size(detail::next_prime(size))
     , m_first(m_size)
     , m_occupied(m_size, false)
     {
@@ -80,7 +116,14 @@ namespace earley
 
     ~HashSet()
     {
-      // TODO: in place destruct elements
+      for (size_t i = 0; i != m_size; ++i)
+      {
+        if (m_occupied[i])
+        {
+          m_memory[i].~T();
+        }
+      }
+
       free(m_memory);
     }
 
@@ -140,9 +183,11 @@ namespace earley
     size_t
     find_position(const T& t) const
     {
-      size_t key = std::hash<T>()(t) % m_size;
-      //size_t secondary = 1 + key % (m_size - 2);
-      size_t secondary = 2;
+      // TODO: work out a better increment
+      size_t key = std::hash<T>()(t);
+      size_t secondary = 1 + key % (m_size - 2);
+      //size_t secondary = 2;
+      key %= m_size;
 
       while (true)
       {
@@ -158,6 +203,8 @@ namespace earley
             key -= m_size;
           }
         }
+        ++collisions;
+        ++all_collisions;
       }
     }
 
@@ -189,12 +236,27 @@ namespace earley
     void
     resize()
     {
-      //TODO make this exception safe
-      // Also need to move everything to the new size
-      std::cout << "Resizing" << std::endl;
-      m_size *= 2 + 1;
-      m_occupied.resize(m_size, false);
-      m_memory = static_cast<T*>(realloc(m_memory, sizeof(T) * m_size));
+      HashSet<T> moved(m_size * 2 + 1);
+
+      for (size_t i = 0; i != m_size; ++i)
+      {
+        if (m_occupied[i])
+        {
+          moved.insert(m_memory[i]);
+        }
+      }
+
+      swap(moved);
+    }
+
+    void
+    swap(HashSet<T>& other)
+    {
+      std::swap(other.m_memory, m_memory);
+      std::swap(other.m_elements, m_elements);
+      std::swap(other.m_occupied, m_occupied);
+      std::swap(other.m_first, m_first);
+      std::swap(other.m_size, m_size);
     }
 
     friend class HashSetIterator<T>;
