@@ -92,26 +92,28 @@ handle_minus(NumbersParts& parts)
   return std::get<int>(parts.at(0)) - std::get<int>(parts.at(1));
 }
 
+template <>
+size_t earley::HashSet<earley::Item>::all_collisions = 0;
+
 int main(int argc, char** argv)
 {
   using namespace earley;
 
   cxxopts::Options options("earley", "an earley parser");
   options.add_options()
+    ("collisions", "print collisions")
     ("d,debug", "turn on debugging")
     ("t,timing", "print timing")
   ;
 
   options.parse(argc, argv);
 
+  bool collisions = options.count("collisions");
   bool debug = options.count("debug");
   bool timing = options.count("timing");
 
   Rule parens(0, {scan_char('('), 0ul, scan_char(')')});
   Rule empty(0, {earley::Epsilon()});
-
-  HashSet<Item> foo;
-  foo.insert(Item(parens));
 
   std::vector<RuleList> rules{
     {parens, empty,},
@@ -352,6 +354,11 @@ int main(int argc, char** argv)
       {{')'}},
     }},
   };
+
+  if (collisions)
+  {
+    std::cout << "Collisions = " << earley::HashSet<Item>::all_collisions << std::endl;
+  }
 
   if (argc < 3)
   {

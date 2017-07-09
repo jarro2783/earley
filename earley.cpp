@@ -390,7 +390,8 @@ complete(
   // we need to advance anything with our non-terminal to the right
   // of the current from where it was predicted into our current set
   auto ours = item.nonterminal();
-  std::unordered_set<Item> to_add;
+  //std::unordered_set<Item> to_add;
+  HashSet<Item> to_add(20);
 
   for (auto& consider : item_sets[item.where()])
   {
@@ -432,6 +433,7 @@ complete(
 //   which < len(input)
 void
 process_set(
+  std::vector<Item>& to_process,
   ItemSetList& item_sets,
   TreePointers& pointers,
   const std::string& input,
@@ -440,8 +442,11 @@ process_set(
   size_t which
 )
 {
-  std::vector<Item> to_process(item_sets[which].begin(), item_sets[which].end());
   std::unordered_map<size_t, Item> nulled;
+  for (auto& item: item_sets[which])
+  {
+    to_process.push_back(item);
+  }
 
   while (!to_process.empty())
   {
@@ -503,10 +508,12 @@ process_input(
   start_time = std::chrono::system_clock::now();
 
   TreePointers pointers;
+  std::vector<Item> process_stack;
+  process_stack.reserve(100);
 
   for (size_t i = 0; i != input.size() + 1; ++i)
   {
-    process_set(item_sets, pointers, input, rules, nullable, i);
+    process_set(process_stack, item_sets, pointers, input, rules, nullable, i);
   }
 
   end = std::chrono::system_clock::now();
