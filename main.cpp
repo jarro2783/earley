@@ -82,26 +82,28 @@ int main(int argc, char** argv)
 
   Grammar grammar = {
     {"Number", {
-      {"Space", scan_range('0', '9')},
-      {"Number", scan_range('0', '9')},
+      {{"Space", scan_range('0', '9')}},
+      {{"Number", scan_range('0', '9')}},
     }},
     {"Space", {
-      {Epsilon()},
-      {"Space", scan_char(' ')},
-      {"Space", scan_char('\t')},
-      {"Space", scan_char('\n')},
+      {{Epsilon()}},
+      {{"Space", scan_char(' ')}},
+      {{"Space", scan_char('\t')}},
+      {{"Space", scan_char('\n')}},
     }},
     {"Sum", {
-      {"Product"},
-      {"Sum", "Space", scan_char('+'), "Product"},
-      {"Sum", "Space", scan_char('-'), "Product"},
+      {{"Product"}},
+      {{"Sum", "Space", scan_char('+'), "Product"}},
+      {{"Sum", "Space", scan_char('-'), "Product"}},
     }},
     {"Product", {
-      {"Number"},
-      {"Product", "Space", scan_char('*'), "Number"},
-      {"Product", "Space", scan_char('/'), "Number"},
+      {{"Number"}},
+      {{"Product", "Space", scan_char('*'), "Number"}},
+      {{"Product", "Space", scan_char('/'), "Number"}},
     }},
-    {"Input", {{"Sum", "Space"}}},
+    {"Input", {
+      {{"Sum", "Space"}},
+    }},
   };
 
   if (argc < 2)
@@ -132,8 +134,9 @@ int main(int argc, char** argv)
     }
   }
 
-  auto [success, elapsed] =
+  auto [success, elapsed, item_sets] =
     process_input(debug, ids["Input"], argv[1], grammar_rules);
+  (void)item_sets;
 
   if (!success)
   {
@@ -145,64 +148,64 @@ int main(int argc, char** argv)
 
   Grammar ebnf = {
     {"Grammar", {
-      {Epsilon()},
-      {"Grammar", "Space", "Nonterminal"}
+      {{Epsilon()}},
+      {{"Grammar", "Space", "Nonterminal"}},
     }},
     {"Space", {
-      {Epsilon()},
-      {' '},
-      {'\n'},
-      {'\t'},
+      {{Epsilon()}},
+      {{' '}},
+      {{'\n'}},
+      {{'\t'}},
     }},
     {"Nonterminal", {
-      {"Name", "Space", '-', '>', "Rules"}
+      {{"Name", "Space", '-', '>', "Rules"}}
     }},
     {"Rules", {
-      {"Rules", "Space", '|', "Rule"},
-      {"Rule"},
+      {{"Rules", "Space", '|', "Rule"}},
+      {{"Rule"}},
     }},
     {"Rule", {
-      {Epsilon()},
-      {"Rule", "Production"},
+      {{Epsilon()}},
+      {{"Rule", "Production"}},
     }},
     {"Production", {
-      {"Name"},
-      {"Literal"}
+      {{"Name"}},
+      {{"Literal"}}
     }},
     {"Literal", {
-      {'\'', "Char", '\''},
-      {'[', "Ranges", ']'},
-      {'"', "Chars", '"'},
+      {{'\'', "Char", '\''}},
+      {{'[', "Ranges", ']'}},
+      {{'"', "Chars", '"'}},
     }},
     {"Name", {
-      {"NameStart", "NameRest"},
+      {{"NameStart", "NameRest"}},
     }},
     {"NameStart", {
-      {scan_range('a', 'z')},
-      {scan_range('A', 'Z')},
+      {{scan_range('a', 'z')}},
+      {{scan_range('A', 'Z')}},
     }},
     {"NameRest", {
-      {Epsilon()},
-      {"NameRest", "NameStart"},
-      {"NameRest", scan_range('0', '9')},
+      {{Epsilon()}},
+      {{"NameRest", "NameStart"}},
+      {{"NameRest", scan_range('0', '9')}},
     }},
     {"Ranges", {
-      {"Range"},
-      {"Ranges", "Range"},
+      {{"Range"}},
+      {{"Ranges", "Range"}},
     }},
     {"Range", {
-      {scan_range('a', 'z'), '-', scan_range('a', 'z')},
-      {scan_range('A', 'Z'), '-', scan_range('A', 'Z')},
-      {scan_range('0', '9'), '-', scan_range('0', '9')},
+      {{scan_range('a', 'z'), '-', scan_range('a', 'z')}},
+      {{scan_range('A', 'Z'), '-', scan_range('A', 'Z')}},
+      {{scan_range('0', '9'), '-', scan_range('0', '9')}},
     }},
     {"Chars", {
-      {"Char"},
-      {"Chars", "Char"},
+      {{"Char"}},
+      {{"Chars", "Char"}},
     }},
     {"Char", {
-      {scan_range('0', 'z')},
-      {'('},
-      {')'},
+      {{scan_range('0', 'z')}},
+      {{'('}},
+      {{')'}},
     }},
   };
 
@@ -223,8 +226,9 @@ int main(int argc, char** argv)
     }
   }
 
-  auto [ebnf_parsed, ebnf_time] =
+  auto [ebnf_parsed, ebnf_time, ebnf_items] =
     process_input(debug, ebnf_ids["Grammar"], argv[2], ebnf_rules);
+  (void)ebnf_items;
 
   if (!ebnf_parsed)
   {

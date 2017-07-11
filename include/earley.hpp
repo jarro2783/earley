@@ -82,13 +82,16 @@ namespace earley
     std::function<bool(char)>
   > Entry;
 
+  typedef std::vector<int> ActionArgs;
+
   class Rule
   {
     public:
 
-    Rule(size_t nonterminal, std::vector<Entry> entries)
+    Rule(size_t nonterminal, std::vector<Entry> entries, ActionArgs actions = {})
     : m_nonterminal(nonterminal)
     , m_entries(std::move(entries))
+    , m_actions(std::move(actions))
     {
     }
 
@@ -110,10 +113,17 @@ namespace earley
       return m_nonterminal;
     }
 
+    const std::vector<int>&
+    actions() const
+    {
+      return m_actions;
+    }
+
     private:
 
     size_t m_nonterminal;
     std::vector<Entry> m_entries;
+    std::vector<int> m_actions;
   };
 
   class Item
@@ -175,6 +185,12 @@ namespace earley
     nonterminal() const
     {
       return m_rule.nonterminal();
+    }
+
+    const Rule&
+    rule() const
+    {
+      return m_rule;
     }
 
     private:
@@ -262,13 +278,49 @@ namespace earley
     char
   > Production;
 
+  typedef std::vector<Production> ProductionList;
+
+  struct RuleWithAction
+  {
+    RuleWithAction(ProductionList production)
+    : m_productions(std::move(production))
+    {
+    }
+
+    RuleWithAction(ProductionList productions, ActionArgs args)
+    : m_productions(std::move(productions))
+    , m_args(std::move(args))
+    {
+    }
+
+    const ProductionList&
+    productions() const
+    {
+      return m_productions;
+    }
+
+    const ActionArgs&
+    arguments() const
+    {
+      return m_args;
+    }
+
+    private:
+
+    ProductionList m_productions;
+    ActionArgs m_args;
+  };
+
   // A grammar is a mapping from non-terminals to a list of rules
   // A rule is a list of productions
-  typedef std::unordered_map<std::string, std::vector<std::vector<Production>>>
+  typedef std::unordered_map<std::string, std::vector<RuleWithAction>>
     Grammar;
+
+  ItemSetList
+  invert_items(const ItemSetList& item_sets);
 }
 
-std::tuple<bool, double>
+std::tuple<bool, double, earley::ItemSetList>
 process_input(
   bool debug,
   size_t start,
@@ -305,5 +357,88 @@ namespace std
     hash_combine(result, &item.m_rule);
 
     return result;
+  }
+}
+
+namespace earley
+{
+  namespace detail
+  {
+    struct ParserActions
+    {
+
+      bool
+      seen(const Item& item) const
+      {
+        return m_visited.find(item) != m_visited.end();
+      }
+
+      void
+      visit(const Item& item)
+      {
+        m_visited.insert(item);
+      }
+
+      void
+      unvisit(const Item& item)
+      {
+        m_visited.erase(item);
+      }
+
+      //find items that match `validate`
+      template <typename Actions>
+      void
+      item_search(const Item& validate, Actions actions,
+        const ItemSetList& item_sets,
+        size_t rule, size_t begin, size_t end)
+      {
+        for (auto& item: item_sets[begin])
+        {
+          if (!seen(item) && item.nonterminal() == rule && item.where() == end)
+          {
+            visit(item);
+            size_t current = begin;
+            std::vector<int> children;
+            for (auto& entry: item.rule())
+            {
+              if (std::holds_alternative<char>(entry))
+              {
+                //children.push_back(entry);
+                ++current;
+              }
+              else if (std::holds_alternative<size_t>(entry))
+              {
+                //find this rule starting at "current"
+                auto child = std::get<size_t>(entry);
+                //item_search(actions, item_sets, child, current
+              }
+              //children.push_back(actions(entry));
+            }
+            unvisit(item);
+            break;
+          }
+        }
+      }
+
+      private:
+      std::unordered_set<Item> m_visited;
+    };
+  }
+
+  template <typename Actions>
+  void
+  run_actions(size_t start, Actions actions, const ItemSetList& item_sets)
+  {
+    auto inverted = invert_items(item_sets);
+
+    Rule fake(-1, {start});
+    Item validate(fake, item_sets.size());
+
+    // start searching from an item that was completed in
+    // state zero and finishes at the length of the item sets
+    detail::ParserActions do_actions;
+
+    do_actions.item_search(validate,
+      actions, inverted, start, 0, item_sets.size());
   }
 }

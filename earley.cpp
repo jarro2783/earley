@@ -7,6 +7,33 @@
 
 using namespace earley;
 
+namespace earley
+{
+
+ItemSetList
+invert_items(const ItemSetList& item_sets)
+{
+  ItemSetList inverted(item_sets.size());
+
+  size_t i = 0;
+  for (auto& set: item_sets)
+  {
+    for (auto& item: set)
+    {
+      // We only need to keep completed items
+      if (item.position() == item.end())
+      {
+        inverted[item.where()].insert(Item(item.rule(), i));
+      }
+    }
+    ++i;
+  }
+
+  return inverted;
+}
+
+}
+
 size_t
 rule_id(
   std::unordered_map<std::string, size_t>& ids,
@@ -84,14 +111,14 @@ generate_rules(Grammar& grammar)
     RuleList rules;
     auto id = rule_id(identifiers, next_id, nonterminal.first);
 
-    for (auto& productions : nonterminal.second)
+    for (auto& rule_action : nonterminal.second)
     {
       std::vector<Entry> entries;
-      for (auto& production : productions)
+      for (auto& production : rule_action.productions())
       {
         entries.push_back(make_entry(production, identifiers, next_id));
       }
-      Rule rule(id, entries);
+      Rule rule(id, entries, rule_action.arguments());
       rules.push_back(rule);
     }
 
@@ -259,7 +286,11 @@ process_set(
   }
 }
 
-std::tuple<bool, double>
+std::tuple<
+  bool,
+  double,
+  ItemSetList
+>
 process_input(
   bool debug,
   size_t start,
@@ -329,7 +360,9 @@ process_input(
   //std::cout << "parsing took: " << elapsed_seconds.count() << "s\n";
 
   return std::make_tuple(parsed,
-    std::chrono::duration_cast<std::chrono::microseconds>(elapsed_seconds).count());
+    std::chrono::duration_cast<std::chrono::microseconds>(
+      elapsed_seconds).count(),
+    std::move(item_sets));
 }
 
 struct InvertVisitor
