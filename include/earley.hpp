@@ -362,10 +362,28 @@ namespace std
 
 namespace earley
 {
+  namespace values
+  {
+    struct Empty {};
+    struct Failed {};
+  }
+
+  template <typename T>
+  using ActionResult = std::variant<
+    values::Failed,
+    values::Empty,
+    char,
+    T
+  >;
+
   namespace detail
   {
     struct ParserActions
     {
+      ParserActions(const std::string& input)
+      : m_input(input)
+      {
+      }
 
       bool
       seen(const Item& item) const
@@ -385,60 +403,139 @@ namespace earley
         m_visited.erase(item);
       }
 
+      public:
+      template <typename Actions>
+      auto
+      do_actions(const Item& root, const std::vector<Actions>& actions,
+        const ItemSetList& item_sets)
+      {
+        visit(root);
+        auto result = item_search(root, actions, item_sets, 0);
+        unvisit(root);
+
+        return result;
+      }
+
+      private:
+
       //find items that match `validate`
       template <typename Actions>
-      void
-      item_search(const Item& validate, Actions actions,
-        const ItemSetList& item_sets,
-        size_t rule, size_t begin, size_t end)
+      auto
+      item_search(const Item& root, const std::vector<Actions>& actions,
+        const ItemSetList& item_sets, size_t position)
+      -> decltype(actions[0]({values::Failed()}))
       {
-        for (auto& item: item_sets[begin])
+        using Ret = decltype(actions[0]({values::Failed()}));
+        std::vector<Ret> results;
+
+        std::cout << "Looking for " << root.nonterminal() << " at "
+          << position << std::endl;
+
+        for (auto& entry: root.rule())
         {
-          if (!seen(item) && item.nonterminal() == rule && item.where() == end)
+          if (std::holds_alternative<Scanner>(entry))
           {
-            visit(item);
-            size_t current = begin;
-            std::vector<int> children;
-            for (auto& entry: item.rule())
+            auto matcher = std::get<Scanner>(entry);
+            if (matcher(m_input[position]))
             {
-              if (std::holds_alternative<char>(entry))
-              {
-                //children.push_back(entry);
-                ++current;
-              }
-              else if (std::holds_alternative<size_t>(entry))
-              {
-                //find this rule starting at "current"
-                auto child = std::get<size_t>(entry);
-                //item_search(actions, item_sets, child, current
-              }
-              //children.push_back(actions(entry));
+              results.push_back(m_input[position]);
+              ++position;
             }
-            unvisit(item);
-            break;
+            else
+            {
+              // abort because it wasn't actually a match
+              return values::Failed();
+            }
           }
+          else if (std::holds_alternative<size_t>(entry))
+          {
+            auto nt = std::get<size_t>(entry);
+            // look for nonterminal starting at `position`
+            for (auto& item: item_sets[position])
+            {
+              if (item.nonterminal() == nt && !seen(item))
+              {
+                visit(item);
+                auto result = item_search(item, actions, item_sets, position);
+
+                if (std::holds_alternative<values::Failed>(result))
+                {
+                  return values::Failed();
+                }
+                else
+                {
+                  results.push_back(result);
+                }
+
+                unvisit(item);
+                position = item.where();
+                break;
+              }
+            }
+          }
+        }
+
+        if (root.rule().actions().size() == 0)
+        {
+          return values::Empty();
+        }
+
+        // if we haven't aborted by now we need to return the action
+        // run on all the parts
+        std::vector<ActionResult<int>> run_actions;
+        for (auto& handle: root.rule().actions())
+        {
+          std::cout << "Pushing back " << handle << std::endl;
+          std::cout << "and results is size " << results.size() << std::endl;
+          run_actions.push_back(results[handle]);
+        }
+
+        if (actions[root.nonterminal()])
+        {
+          return actions[root.nonterminal()](run_actions);
+        }
+        else
+        {
+          return values::Empty();
         }
       }
 
       private:
+      const std::string& m_input;
       std::unordered_set<Item> m_visited;
     };
   }
 
   template <typename Actions>
   void
-  run_actions(size_t start, Actions actions, const ItemSetList& item_sets)
+  run_actions(const std::string& input,
+    const std::vector<Actions>& actions, const ItemSetList& item_sets)
   {
     auto inverted = invert_items(item_sets);
 
-    Rule fake(-1, {start});
-    Item validate(fake, item_sets.size());
+    std::cout << "Inverted:" << std::endl;
+    size_t n = 0;
+    for (auto& items : inverted)
+    {
+      std::cout << "Position " << n << std::endl;
+      for (auto& item : items)
+      {
+        std::cout << item << std::endl;
+      }
+      ++n;
+    }
 
     // start searching from an item that was completed in
     // state zero and finishes at the length of the item sets
-    detail::ParserActions do_actions;
+    detail::ParserActions do_actions(input);
 
-    do_actions.item_search(validate,
-      actions, inverted, start, 0, item_sets.size());
+    for (auto& item: inverted[0])
+    {
+      if (item.where() == input.size())
+      {
+        do_actions.do_actions(item, actions, inverted);
+        return;
+      }
+    }
   }
 }

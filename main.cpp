@@ -1,6 +1,80 @@
 #include "cxxopts.hpp"
 #include "earley.hpp"
 
+typedef earley::ActionResult<int> NumberResult;
+
+template <typename T>
+void
+add_action(
+  const std::string& name,
+  std::vector<T (*)(const std::vector<T>&)>& actions,
+  const std::unordered_map<std::string, size_t>& ids,
+  T (*fun)(const std::vector<T>&)
+)
+{
+  auto iter = ids.find(name);
+
+  if (iter == ids.end())
+  {
+    std::cerr << "Rule not found" << std::endl;
+    return;
+  }
+
+  auto pos = iter->second;
+  if (actions.size() <= pos)
+  {
+    actions.resize(pos+1);
+  }
+  actions[pos] = fun;
+}
+
+NumberResult
+handle_number(const std::vector<NumberResult>& parts)
+{
+  int value = 0;
+  switch (parts.size())
+  {
+    case 1:
+    {
+      auto& ch = parts[0];
+      if (std::holds_alternative<char>(ch))
+      {
+        value = std::get<char>(ch) - '0';
+      }
+      else
+      {
+        std::cerr << "Invalid type in handle_number[1]" << std::endl;
+        return 0;
+      }
+    }
+    break;
+
+    case 2:
+    {
+      auto& integer = parts[0];
+      auto& character = parts[1];
+
+      if (std::holds_alternative<int>(integer) &&
+          std::holds_alternative<char>(character))
+      {
+        value = std::get<int>(integer) * 10 + (std::get<char>(character) - '0');
+      }
+      else
+      {
+        std::cerr << "Invalid type in handle_number[2]" << std::endl;
+      }
+    }
+    break;
+
+    default:
+    std::cerr << "Invalid arguments to handle_number" << std::endl;
+    return 0;
+  }
+
+  std::cout << "Parsed: " << value << std::endl;
+  return value;
+}
+
 int main(int argc, char** argv)
 {
   using namespace earley;
@@ -82,8 +156,11 @@ int main(int argc, char** argv)
 
   Grammar grammar = {
     {"Number", {
-      {{"Space", scan_range('0', '9')}},
-      {{"Number", scan_range('0', '9')}},
+      {{"Space", "NumberRest"}, {1}},
+    }},
+    {"NumberRest", {
+      {{scan_range('0', '9')}, {0}},
+      {{"NumberRest", scan_range('0', '9')}, {0, 1}},
     }},
     {"Space", {
       {{Epsilon()}},
@@ -137,6 +214,16 @@ int main(int argc, char** argv)
   auto [success, elapsed, item_sets] =
     process_input(debug, ids["Input"], argv[1], grammar_rules);
   (void)item_sets;
+
+  if (success)
+  {
+    std::vector<earley::ActionResult<int>(*)(
+      const std::vector<earley::ActionResult<int>>&
+    )> actions;
+
+    add_action("NumberRest", actions, ids, &handle_number);
+    earley::run_actions(argv[1], actions, item_sets);
+  }
 
   if (!success)
   {
