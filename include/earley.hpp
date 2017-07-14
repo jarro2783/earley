@@ -410,13 +410,120 @@ namespace earley
         const ItemSetList& item_sets)
       {
         visit(root);
-        auto result = item_search(root, actions, item_sets, 0);
+        auto result = process_item(root, item_sets, actions, 0);
         unvisit(root);
 
         return result;
       }
 
       private:
+
+      template <typename Actions>
+      auto
+      process_item(const Item& item, const ItemSetList& item_sets,
+        const std::vector<Actions>& actions,
+        size_t position)
+      -> decltype(actions[0]({values::Failed()}))
+      {
+        std::cout << "Processing " << item.nonterminal() << " at " << position << std::endl;
+        using Ret = decltype(actions[0]({values::Failed()}));
+        std::vector<Ret> results;
+
+        if (traverse_item(results, actions, item,
+            item.rule().begin(), item_sets, position))
+        {
+          if (item.rule().actions().size() == 0)
+          {
+            return values::Empty();
+          }
+
+          // return the action run on all the parts
+          if (actions[item.nonterminal()])
+          {
+            std::vector<Ret> run_actions;
+            for (auto& handle: item.rule().actions())
+            {
+              std::cout << "Processing " << item.nonterminal() << std::endl;
+              std::cout << "Pushing back " << handle << std::endl;
+              std::cout << "and results is size " << results.size() << std::endl;
+              run_actions.push_back(results[handle]);
+            }
+
+            return actions[item.nonterminal()](run_actions);
+          }
+          else
+          {
+            return values::Empty();
+          }
+        }
+        else
+        {
+          return values::Failed();
+        }
+      }
+
+      template <typename Action, typename Result>
+      bool
+      traverse_item(std::vector<Result>& results,
+        const std::vector<Action>& actions,
+        const Item& item, decltype(item.position()) iter,
+        const ItemSetList& item_sets, size_t position)
+      {
+        if (iter == item.end())
+        {
+          return true;
+        }
+
+        if (std::holds_alternative<Scanner>(*iter))
+        {
+          auto matcher = std::get<Scanner>(*iter);
+          if (position != m_input.size() && matcher(m_input[position]))
+          {
+            results.push_back(m_input[position]);
+            if (!traverse_item(results, actions, item, iter + 1, item_sets, position + 1))
+            {
+              results.pop_back();
+              return false;
+            }
+            return true;
+          }
+          else
+          {
+            return false;
+          }
+        }
+        else if (std::holds_alternative<size_t>(*iter))
+        {
+          auto to_search = std::get<size_t>(*iter);
+          for (auto& child: item_sets[position])
+          {
+            if (!seen(child) && child.nonterminal() == to_search)
+            {
+              std::cout << item.nonterminal() << ":" << child.nonterminal()
+                << " -> " << child.where() << std::endl;
+              visit(child);
+              last = child.where();
+              auto value = process_item(child, item_sets, actions, position);
+
+              if (!std::holds_alternative<values::Failed>(value))
+              {
+                results.push_back(value);
+                if (traverse_item(results, actions, item, iter + 1, item_sets,
+                  child.where()))
+                {
+                  unvisit(child);
+                  return true;
+                }
+                results.pop_back();
+              }
+              unvisit(child);
+            }
+          }
+          return false;
+        }
+
+        return true;
+      }
 
       //find items that match `validate`
       template <typename Actions>
@@ -438,6 +545,7 @@ namespace earley
             auto matcher = std::get<Scanner>(entry);
             if (matcher(m_input[position]))
             {
+              std::cout << "Matched " << m_input[position] << " at " << position << std::endl;
               results.push_back(m_input[position]);
               ++position;
             }
@@ -450,6 +558,7 @@ namespace earley
           else if (std::holds_alternative<size_t>(entry))
           {
             auto nt = std::get<size_t>(entry);
+            bool found = false;
             // look for nonterminal starting at `position`
             for (auto& item: item_sets[position])
             {
@@ -460,7 +569,7 @@ namespace earley
 
                 if (std::holds_alternative<values::Failed>(result))
                 {
-                  return values::Failed();
+                  continue;
                 }
                 else
                 {
@@ -469,8 +578,15 @@ namespace earley
 
                 unvisit(item);
                 position = item.where();
+                found = true;
                 break;
               }
+            }
+
+            if (!found)
+            {
+              std::cout << "Couldn't find " << nt << std::endl;
+              results.push_back(values::Empty());
             }
           }
         }
@@ -485,6 +601,7 @@ namespace earley
         std::vector<ActionResult<int>> run_actions;
         for (auto& handle: root.rule().actions())
         {
+          std::cout << "Processing " << root.nonterminal() << std::endl;
           std::cout << "Pushing back " << handle << std::endl;
           std::cout << "and results is size " << results.size() << std::endl;
           run_actions.push_back(results[handle]);
@@ -508,7 +625,7 @@ namespace earley
 
   template <typename Actions>
   void
-  run_actions(const std::string& input,
+  run_actions(size_t start, const std::string& input,
     const std::vector<Actions>& actions, const ItemSetList& item_sets)
   {
     auto inverted = invert_items(item_sets);
@@ -531,7 +648,7 @@ namespace earley
 
     for (auto& item: inverted[0])
     {
-      if (item.where() == input.size())
+      if (item.where() == input.size() && item.nonterminal() == start)
       {
         do_actions.do_actions(item, actions, inverted);
         return;

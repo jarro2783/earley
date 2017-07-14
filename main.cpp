@@ -222,7 +222,7 @@ int main(int argc, char** argv)
     )> actions;
 
     add_action("NumberRest", actions, ids, &handle_number);
-    earley::run_actions(argv[1], actions, item_sets);
+    earley::run_actions(ids["Input"], argv[1], actions, item_sets);
   }
 
   if (!success)
