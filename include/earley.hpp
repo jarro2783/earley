@@ -471,6 +471,11 @@ namespace earley
       {
         if (iter == item.end())
         {
+          if (item.where() != position)
+          {
+            std::cout << "Not at the end of the item" << std::endl;
+            return false;
+          }
           return true;
         }
 
@@ -480,7 +485,8 @@ namespace earley
           if (position != m_input.size() && matcher(m_input[position]))
           {
             results.push_back(m_input[position]);
-            if (!traverse_item(results, actions, item, iter + 1, item_sets, position + 1))
+            if (!traverse_item(results, actions, item, iter + 1,
+                item_sets, position + 1))
             {
               results.pop_back();
               return false;
@@ -502,7 +508,6 @@ namespace earley
               std::cout << item.nonterminal() << ":" << child.nonterminal()
                 << " -> " << child.where() << std::endl;
               visit(child);
-              last = child.where();
               auto value = process_item(child, item_sets, actions, position);
 
               if (!std::holds_alternative<values::Failed>(value))
