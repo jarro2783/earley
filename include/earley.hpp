@@ -82,7 +82,7 @@ namespace earley
     std::function<bool(char)>
   > Entry;
 
-  typedef std::vector<int> ActionArgs;
+  typedef std::tuple<std::string, std::vector<size_t>> ActionArgs;
 
   class Rule
   {
@@ -113,7 +113,7 @@ namespace earley
       return m_nonterminal;
     }
 
-    const std::vector<int>&
+    const ActionArgs&
     actions() const
     {
       return m_actions;
@@ -123,7 +123,7 @@ namespace earley
 
     size_t m_nonterminal;
     std::vector<Entry> m_entries;
-    std::vector<int> m_actions;
+    ActionArgs m_actions;
   };
 
   class Item
@@ -406,7 +406,7 @@ namespace earley
       public:
       template <typename Actions>
       auto
-      do_actions(const Item& root, const std::vector<Actions>& actions,
+      do_actions(const Item& root, const Actions& actions,
         const ItemSetList& item_sets)
       {
         visit(root);
@@ -421,27 +421,29 @@ namespace earley
       template <typename Actions>
       auto
       process_item(const Item& item, const ItemSetList& item_sets,
-        const std::vector<Actions>& actions,
+        const Actions& actions,
         size_t position)
-      -> decltype(actions[0]({values::Failed()}))
+      -> decltype(std::declval<typename Actions::mapped_type>()({values::Failed()}))
       {
         std::cout << "Processing " << item.nonterminal() << " at " << position << std::endl;
-        using Ret = decltype(actions[0]({values::Failed()}));
+        using Ret = decltype(actions.find("")->second({values::Failed()}));
         std::vector<Ret> results;
 
         if (traverse_item(results, actions, item,
             item.rule().begin(), item_sets, position))
         {
-          if (item.rule().actions().size() == 0)
+          if (std::get<1>(item.rule().actions()).size() == 0)
           {
             return values::Empty();
           }
 
           // return the action run on all the parts
-          if (actions[item.nonterminal()])
+          auto& action_runner = item.rule().actions();
+          auto iter = actions.find(std::get<0>(action_runner));
+          if (iter != actions.end() && iter->second)
           {
             std::vector<Ret> run_actions;
-            for (auto& handle: item.rule().actions())
+            for (auto& handle: std::get<1>(action_runner))
             {
               std::cout << "Processing " << item.nonterminal() << std::endl;
               std::cout << "Pushing back " << handle << std::endl;
@@ -449,7 +451,7 @@ namespace earley
               run_actions.push_back(results[handle]);
             }
 
-            return actions[item.nonterminal()](run_actions);
+            return iter->second(run_actions);
           }
           else
           {
@@ -462,10 +464,10 @@ namespace earley
         }
       }
 
-      template <typename Action, typename Result>
+      template <typename Actions, typename Result>
       bool
       traverse_item(std::vector<Result>& results,
-        const std::vector<Action>& actions,
+        const Actions& actions,
         const Item& item, decltype(item.position()) iter,
         const ItemSetList& item_sets, size_t position)
       {
@@ -539,7 +541,8 @@ namespace earley
   template <typename Actions>
   void
   run_actions(size_t start, const std::string& input,
-    const std::vector<Actions>& actions, const ItemSetList& item_sets)
+    const std::unordered_map<std::string, Actions>& actions,
+    const ItemSetList& item_sets)
   {
     auto inverted = invert_items(item_sets);
 

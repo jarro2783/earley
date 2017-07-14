@@ -7,71 +7,70 @@ template <typename T>
 void
 add_action(
   const std::string& name,
-  std::vector<T (*)(const std::vector<T>&)>& actions,
-  const std::unordered_map<std::string, size_t>& ids,
+  std::unordered_map<std::string, T (*)(const std::vector<T>&)>& actions,
   T (*fun)(const std::vector<T>&)
 )
 {
-  auto iter = ids.find(name);
+  actions[name] = fun;
+}
 
-  if (iter == ids.end())
+typedef std::vector<NumberResult> NumbersParts;
+
+NumberResult
+handle_digit(const NumbersParts& parts)
+{
+  if (parts.size() == 1)
   {
-    std::cerr << "Rule not found" << std::endl;
-    return;
+    auto& ch = parts[0];
+    if (std::holds_alternative<char>(ch))
+    {
+      return std::get<char>(ch) - '0';
+    }
+    else
+    {
+      std::cerr << "Invalid type in handle_number[1]" << std::endl;
+      return 0;
+    }
   }
 
-  auto pos = iter->second;
-  if (actions.size() <= pos)
-  {
-    actions.resize(pos+1);
-  }
-  actions[pos] = fun;
+  return 0;
 }
 
 NumberResult
-handle_number(const std::vector<NumberResult>& parts)
+handle_number(const NumbersParts& parts)
 {
   int value = 0;
-  switch (parts.size())
+  if (parts.size() == 2)
   {
-    case 1:
+    auto& integer = parts[0];
+    auto& character = parts[1];
+
+    if (std::holds_alternative<int>(integer) &&
+        std::holds_alternative<char>(character))
     {
-      auto& ch = parts[0];
-      if (std::holds_alternative<char>(ch))
-      {
-        value = std::get<char>(ch) - '0';
-      }
-      else
-      {
-        std::cerr << "Invalid type in handle_number[1]" << std::endl;
-        return 0;
-      }
+      value = std::get<int>(integer) * 10 + (std::get<char>(character) - '0');
     }
-    break;
-
-    case 2:
+    else
     {
-      auto& integer = parts[0];
-      auto& character = parts[1];
-
-      if (std::holds_alternative<int>(integer) &&
-          std::holds_alternative<char>(character))
-      {
-        value = std::get<int>(integer) * 10 + (std::get<char>(character) - '0');
-      }
-      else
-      {
-        std::cerr << "Invalid type in handle_number[2]" << std::endl;
-      }
+      std::cerr << "Invalid type in handle_number[2]" << std::endl;
     }
-    break;
-
-    default:
-    std::cerr << "Invalid arguments to handle_number" << std::endl;
-    return 0;
   }
 
   std::cout << "Parsed: " << value << std::endl;
+  return value;
+}
+
+NumberResult
+handle_pass(const NumbersParts& parts)
+{
+  return parts.at(0);
+}
+
+NumberResult
+handle_sum(const NumbersParts& parts)
+{
+  auto value = std::get<int>(parts.at(0)) + std::get<int>(parts.at(1));
+  std::cout << "Sum = " << value << std::endl;
   return value;
 }
 
@@ -156,11 +155,11 @@ int main(int argc, char** argv)
 
   Grammar grammar = {
     {"Number", {
-      {{"Space", "NumberRest"}, {1}},
+      {{"Space", "NumberRest"}, {"pass", {1}}},
     }},
     {"NumberRest", {
-      {{scan_range('0', '9')}, {0}},
-      {{"NumberRest", scan_range('0', '9')}, {0, 1}},
+      {{scan_range('0', '9')}, {"digit", {0}}},
+      {{"NumberRest", scan_range('0', '9')}, {"number", {0, 1}}},
     }},
     {"Space", {
       {{Epsilon()}},
@@ -169,12 +168,12 @@ int main(int argc, char** argv)
       {{"Space", scan_char('\n')}},
     }},
     {"Sum", {
-      {{"Product"}},
-      {{"Sum", "Space", scan_char('+'), "Product"}},
+      {{"Product"}, {"pass", {0}}},
+      {{"Sum", "Space", scan_char('+'), "Product"}, {"sum", {0, 3}}},
       {{"Sum", "Space", scan_char('-'), "Product"}},
     }},
     {"Product", {
-      {{"Number"}},
+      {{"Number"}, {"pass", {0}}},
       {{"Product", "Space", scan_char('*'), "Number"}},
       {{"Product", "Space", scan_char('/'), "Number"}},
     }},
@@ -217,11 +216,15 @@ int main(int argc, char** argv)
 
   if (success)
   {
-    std::vector<earley::ActionResult<int>(*)(
+    std::unordered_map<std::string, earley::ActionResult<int>(*)(
       const std::vector<earley::ActionResult<int>>&
     )> actions;
 
-    add_action("NumberRest", actions, ids, &handle_number);
+    add_action("pass", actions, &handle_pass);
+    add_action("digit", actions, &handle_digit);
+    add_action("number", actions, &handle_number);
+    add_action("sum", actions, &handle_sum);
+
     earley::run_actions(ids["Input"], argv[1], actions, item_sets);
   }
 
