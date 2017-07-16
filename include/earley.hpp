@@ -131,20 +131,23 @@ namespace earley
     public:
 
     Item(const Rule& rule)
-    : m_rule(rule)
+    : m_rule(&rule)
     , m_start(0)
     , m_current(rule.begin())
     {
     }
 
     Item(const Rule& rule, size_t start)
-    : m_rule(rule)
+    : m_rule(&rule)
     , m_start(start)
     , m_current(rule.begin())
     {
     }
 
-    Item(const Item& rhs) = default;
+    Item(const Item&) = default;
+    Item(Item&&) = default;
+    Item& operator=(const Item&) = default;
+
 
     std::vector<Entry>::const_iterator
     position() const
@@ -155,7 +158,7 @@ namespace earley
     std::vector<Entry>::const_iterator
     end() const
     {
-      return m_rule.end();
+      return m_rule->end();
     }
 
     Item
@@ -184,13 +187,13 @@ namespace earley
     size_t
     nonterminal() const
     {
-      return m_rule.nonterminal();
+      return m_rule->nonterminal();
     }
 
     const Rule&
     rule() const
     {
-      return m_rule;
+      return *m_rule;
     }
 
     private:
@@ -199,7 +202,7 @@ namespace earley
     friend bool operator==(const Item&, const Item&);
     friend std::ostream& operator<<(std::ostream&, const Item&);
 
-    const Rule& m_rule;
+    const Rule* m_rule;
     size_t m_start;
     std::vector<Entry>::const_iterator m_current;
   };
@@ -213,7 +216,7 @@ namespace earley
   operator==(const Item& lhs, const Item& rhs)
   {
     bool eq = lhs.m_start == rhs.m_start
-      && &lhs.m_rule == &rhs.m_rule
+      && lhs.m_rule == rhs.m_rule
       && lhs.m_current == rhs.m_current;
 
     return eq;
@@ -230,10 +233,10 @@ namespace earley
   std::ostream&
   operator<<(std::ostream& os, const Item& item)
   {
-    os << item.m_rule.nonterminal() << " -> ";
-    auto iter = item.m_rule.begin();
+    os << item.m_rule->nonterminal() << " -> ";
+    auto iter = item.m_rule->begin();
 
-    while (iter != item.m_rule.end())
+    while (iter != item.m_rule->end())
     {
       if (iter == item.m_current)
       {
@@ -318,6 +321,12 @@ namespace earley
 
   ItemSetList
   invert_items(const ItemSetList& item_sets);
+
+  // For each item set,
+  //   indexed by rule id
+  //     a sorted list of items
+  std::vector<std::vector<std::vector<Item>>>
+  sorted_index(const ItemSetList& item_sets);
 }
 
 std::tuple<bool, double, earley::ItemSetList>
@@ -545,6 +554,7 @@ namespace earley
     const ItemSetList& item_sets)
   {
     auto inverted = invert_items(item_sets);
+    auto sorted = sorted_index(inverted);
 
     std::cout << "Inverted:" << std::endl;
     size_t n = 0;
@@ -554,6 +564,27 @@ namespace earley
       for (auto& item : items)
       {
         std::cout << item << std::endl;
+      }
+      ++n;
+    }
+
+    std::cout << "Sorted and indexed:" << std::endl;
+    n = 0;
+    for (auto& items: sorted)
+    {
+      std::cout << "Set " << n << std::endl;
+      size_t rule = 0;
+      for (auto& rules: items)
+      {
+        if (rules.size())
+        {
+          std::cout << "  Rule: " << rule << std::endl;
+          for (auto& item: rules)
+          {
+            std::cout << "    " << item << std::endl;
+          }
+        }
+        ++rule;
       }
       ++n;
     }

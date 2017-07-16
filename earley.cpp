@@ -32,6 +32,66 @@ invert_items(const ItemSetList& item_sets)
   return inverted;
 }
 
+namespace
+{
+  template <typename T>
+  void
+  check_size(T& t, size_t s)
+  {
+    if (t.size() < s + 1)
+    {
+      t.resize(s+1);
+    }
+  }
+
+  struct ItemCompare
+  {
+    bool
+    operator()(const Item& lhs, const Item& rhs) const
+    {
+      return ((lhs.end() - lhs.rule().begin()) > (rhs.end() - rhs.rule().begin())) ||
+        (lhs.where() > rhs.where()) ||
+        (&lhs.rule() > &rhs.rule())
+      ;
+    }
+  };
+}
+
+std::vector<std::vector<std::vector<Item>>>
+sorted_index(const ItemSetList& item_sets)
+{
+  std::vector<std::vector<std::vector<Item>>> sorted;
+
+  size_t i = 0;
+  for (auto& item_set: item_sets)
+  {
+    check_size(sorted, i);
+
+    auto& set_indexed = sorted[i];
+
+    size_t j = 0;
+    for (auto& item: item_set)
+    {
+      size_t nonterminal = item.nonterminal();
+      check_size(set_indexed, nonterminal);
+
+      set_indexed[nonterminal].push_back(item);
+
+      ++j;
+    }
+
+    for (j = 0; j != set_indexed.size(); ++j)
+    {
+      auto& items = set_indexed[j];
+      std::sort(items.begin(), items.end(), ItemCompare());
+    }
+
+    ++i;
+  }
+
+  return sorted;
+}
+
 }
 
 size_t
