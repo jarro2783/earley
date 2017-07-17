@@ -288,7 +288,7 @@ int main(int argc, char** argv)
       {{'"', "Chars", '"'}},
     }},
     {"Name", {
-      {{"NameStart", "NameRest"}},
+      {{"Space", "NameStart", "NameRest"}},
     }},
     {"NameStart", {
       {{scan_range('a', 'z')}},
