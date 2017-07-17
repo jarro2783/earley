@@ -379,12 +379,12 @@ namespace earley
     struct Failed {};
   }
 
-  template <typename T>
+  template <typename... T>
   using ActionResult = std::variant<
     values::Failed,
     values::Empty,
     char,
-    T
+    T...
   >;
 
   namespace detail
@@ -436,7 +436,7 @@ namespace earley
         size_t position)
       -> decltype(std::declval<typename Actions::mapped_type>()({values::Failed()}))
       {
-        std::cout << "Processing " << item.nonterminal() << " at " << position << std::endl;
+        //std::cout << "Processing " << item.nonterminal() << " at " << position << std::endl;
         using Ret = decltype(actions.find("")->second({values::Failed()}));
         std::vector<Ret> results;
 
@@ -456,9 +456,9 @@ namespace earley
             std::vector<Ret> run_actions;
             for (auto& handle: std::get<1>(action_runner))
             {
-              std::cout << "Processing " << item.nonterminal() << std::endl;
-              std::cout << "Pushing back " << handle << std::endl;
-              std::cout << "and results is size " << results.size() << std::endl;
+              //std::cout << "Processing " << item.nonterminal() << std::endl;
+              //std::cout << "Pushing back " << handle << std::endl;
+              //std::cout << "and results is size " << results.size() << std::endl;
               run_actions.push_back(results[handle]);
             }
 
@@ -486,7 +486,7 @@ namespace earley
         {
           if (item.where() != position)
           {
-            std::cout << "Not at the end of the item" << std::endl;
+            //std::cout << "Not at the end of the item" << std::endl;
             return false;
           }
           return true;
@@ -518,8 +518,8 @@ namespace earley
           {
             if (!seen(child) && child.nonterminal() == to_search)
             {
-              std::cout << item.nonterminal() << ":" << child.nonterminal()
-                << " -> " << child.where() << std::endl;
+              //std::cout << item.nonterminal() << ":" << child.nonterminal()
+              //  << " -> " << child.where() << std::endl;
               visit(child);
               auto value = process_item(child, item_sets, actions, position);
 
@@ -561,6 +561,7 @@ namespace earley
     auto inverted = invert_items(item_sets);
     auto sorted = sorted_index(inverted);
 
+#if 0
     std::cout << "Inverted:" << std::endl;
     size_t n = 0;
     for (auto& items : inverted)
@@ -572,7 +573,9 @@ namespace earley
       }
       ++n;
     }
+#endif
 
+#if 0
     std::cout << "Sorted and indexed:" << std::endl;
     n = 0;
     for (auto& items: sorted)
@@ -593,6 +596,7 @@ namespace earley
       }
       ++n;
     }
+#endif
 
     // start searching from an item that was completed in
     // state zero and finishes at the length of the item sets

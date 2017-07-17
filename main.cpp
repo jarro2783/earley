@@ -56,7 +56,7 @@ handle_number(const NumbersParts& parts)
     }
   }
 
-  std::cout << "Parsed: " << value << std::endl;
+  //std::cout << "Parsed: " << value << std::endl;
   return value;
 }
 
