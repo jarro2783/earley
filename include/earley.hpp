@@ -327,6 +327,8 @@ namespace earley
   //     a sorted list of items
   std::vector<std::vector<std::vector<Item>>>
   sorted_index(const ItemSetList& item_sets);
+
+  typedef std::vector<std::vector<std::vector<Item>>> SortedItemSets;
 }
 
 std::tuple<bool, double, earley::ItemSetList>
@@ -416,7 +418,7 @@ namespace earley
       template <typename Actions>
       auto
       do_actions(const Item& root, const Actions& actions,
-        const ItemSetList& item_sets)
+        const SortedItemSets& item_sets)
       {
         visit(root);
         auto result = process_item(root, item_sets, actions, 0);
@@ -429,7 +431,7 @@ namespace earley
 
       template <typename Actions>
       auto
-      process_item(const Item& item, const ItemSetList& item_sets,
+      process_item(const Item& item, const SortedItemSets& item_sets,
         const Actions& actions,
         size_t position)
       -> decltype(std::declval<typename Actions::mapped_type>()({values::Failed()}))
@@ -478,7 +480,7 @@ namespace earley
       traverse_item(std::vector<Result>& results,
         const Actions& actions,
         const Item& item, decltype(item.position()) iter,
-        const ItemSetList& item_sets, size_t position)
+        const SortedItemSets& item_sets, size_t position)
       {
         if (iter == item.end())
         {
@@ -512,7 +514,7 @@ namespace earley
         else if (std::holds_alternative<size_t>(*iter))
         {
           auto to_search = std::get<size_t>(*iter);
-          for (auto& child: item_sets[position])
+          for (auto& child: item_sets[position][to_search])
           {
             if (!seen(child) && child.nonterminal() == to_search)
             {
@@ -548,10 +550,13 @@ namespace earley
   }
 
   template <typename Actions>
-  void
+  auto
   run_actions(size_t start, const std::string& input,
     const std::unordered_map<std::string, Actions>& actions,
     const ItemSetList& item_sets)
+  -> decltype(std::declval<
+        typename std::decay_t<decltype(actions)>::mapped_type
+      >()({values::Failed()}))
   {
     auto inverted = invert_items(item_sets);
     auto sorted = sorted_index(inverted);
@@ -597,9 +602,10 @@ namespace earley
     {
       if (item.where() == input.size() && item.nonterminal() == start)
       {
-        do_actions.do_actions(item, actions, inverted);
-        return;
+        return do_actions.do_actions(item, actions, sorted);
       }
     }
+
+    return values::Failed();
   }
 }

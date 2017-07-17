@@ -67,11 +67,27 @@ handle_pass(const NumbersParts& parts)
 }
 
 NumberResult
+handle_divide(const NumbersParts& parts)
+{
+  return std::get<int>(parts.at(0)) / std::get<int>(parts.at(1));
+}
+
+NumberResult
 handle_sum(const NumbersParts& parts)
 {
-  auto value = std::get<int>(parts.at(0)) + std::get<int>(parts.at(1));
-  std::cout << "Sum = " << value << std::endl;
-  return value;
+  return std::get<int>(parts.at(0)) + std::get<int>(parts.at(1));
+}
+
+NumberResult
+handle_product(const NumbersParts& parts)
+{
+  return std::get<int>(parts.at(0)) + std::get<int>(parts.at(1));
+}
+
+NumberResult
+handle_minus(const NumbersParts& parts)
+{
+  return std::get<int>(parts.at(0)) + std::get<int>(parts.at(1));
 }
 
 int main(int argc, char** argv)
@@ -170,15 +186,15 @@ int main(int argc, char** argv)
     {"Sum", {
       {{"Product"}, {"pass", {0}}},
       {{"Sum", "Space", scan_char('+'), "Product"}, {"sum", {0, 3}}},
-      {{"Sum", "Space", scan_char('-'), "Product"}},
+      {{"Sum", "Space", scan_char('-'), "Product"}, {"minus", {0, 3}}},
     }},
     {"Product", {
       {{"Number"}, {"pass", {0}}},
-      {{"Product", "Space", scan_char('*'), "Number"}},
-      {{"Product", "Space", scan_char('/'), "Number"}},
+      {{"Product", "Space", scan_char('*'), "Number"}, {"product", {0, 3}}},
+      {{"Product", "Space", scan_char('/'), "Number"}, {"divide", {0, 3}}},
     }},
     {"Input", {
-      {{"Sum", "Space"}},
+      {{"Sum", "Space"}, {"pass", {0}}},
     }},
   };
 
@@ -224,8 +240,12 @@ int main(int argc, char** argv)
     add_action("digit", actions, &handle_digit);
     add_action("number", actions, &handle_number);
     add_action("sum", actions, &handle_sum);
+    add_action("product", actions, &handle_product);
+    add_action("divide", actions, &handle_divide);
+    add_action("minus", actions, &handle_minus);
 
-    earley::run_actions(ids["Input"], argv[1], actions, item_sets);
+    auto value = earley::run_actions(ids["Input"], argv[1], actions, item_sets);
+    std::cout << std::get<int>(value) << std::endl;
   }
 
   if (!success)
