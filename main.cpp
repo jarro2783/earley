@@ -189,9 +189,13 @@ int main(int argc, char** argv)
       {{"Sum", "Space", scan_char('-'), "Product"}, {"minus", {0, 3}}},
     }},
     {"Product", {
+      {{"Facter"}, {"pass", {0}}},
+      {{"Product", "Space", scan_char('*'), "Facter"}, {"product", {0, 3}}},
+      {{"Product", "Space", scan_char('/'), "Facter"}, {"divide", {0, 3}}},
+    }},
+    {"Facter", {
+      {{"Space", scan_char('('), "Sum", "Space", scan_char(')')}, {"pass", {2}}},
       {{"Number"}, {"pass", {0}}},
-      {{"Product", "Space", scan_char('*'), "Number"}, {"product", {0, 3}}},
-      {{"Product", "Space", scan_char('/'), "Number"}, {"divide", {0, 3}}},
     }},
     {"Input", {
       {{"Sum", "Space"}, {"pass", {0}}},
