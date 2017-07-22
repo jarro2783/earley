@@ -1,5 +1,6 @@
 #include <functional>
 #include <initializer_list>
+#include <map>
 #include <unordered_map>
 #include <unordered_set>
 #include <variant>
@@ -196,11 +197,13 @@ namespace earley
       return *m_rule;
     }
 
+    std::ostream&
+    print(std::ostream&, const std::unordered_map<size_t, std::string>&) const;
+
     private:
 
     friend size_t std::hash<Item>::operator()(const Item&) const;
     friend bool operator==(const Item&, const Item&);
-    friend std::ostream& operator<<(std::ostream&, const Item&);
 
     const Rule* m_rule;
     size_t m_start;
@@ -233,7 +236,63 @@ namespace earley
   std::ostream&
   operator<<(std::ostream& os, const Item& item)
   {
-    os << item.m_rule->nonterminal() << " -> ";
+    item.print(os, {});
+    return os;
+  }
+
+  struct NtPrinter
+  {
+    NtPrinter(const std::unordered_map<size_t, std::string>& names,
+      size_t id)
+    : m_names(names)
+    , m_id(id)
+    {
+    }
+
+    void
+    print(std::ostream& os) const
+    {
+      auto iter = m_names.find(m_id);
+
+      if (iter != m_names.end())
+      {
+        os << iter->second;
+      }
+      else
+      {
+        os << m_id;
+      }
+    }
+
+    private:
+    const std::unordered_map<size_t, std::string>& m_names;
+    size_t m_id;
+  };
+
+  inline
+  std::ostream&
+  operator<<(std::ostream& os, const NtPrinter& printer)
+  {
+    printer.print(os);
+    return os;
+  }
+
+  inline
+  NtPrinter
+  print_nt(const std::unordered_map<size_t, std::string>& names, size_t id)
+  {
+    return NtPrinter(names, id);
+  }
+
+  inline
+  std::ostream&
+  Item::print(std::ostream& os,
+    const std::unordered_map<size_t, std::string>& names
+  ) const
+  {
+    auto& item = *this;
+
+    os << print_nt(names, item.m_rule->nonterminal()) << " -> ";
     auto iter = item.m_rule->begin();
 
     while (iter != item.m_rule->end())
@@ -251,7 +310,7 @@ namespace earley
       }
       else if (std::holds_alternative<size_t>(entry))
       {
-        os << " " << std::get<size_t>(entry);
+        os << " " << print_nt(names, std::get<size_t>(entry));
       }
       else if (std::holds_alternative<Scanner>(entry))
       {
@@ -314,6 +373,62 @@ namespace earley
     ActionArgs m_args;
   };
 
+  class TreePointers
+  {
+    public:
+
+    typedef std::map<size_t, std::pair<Item, size_t>> ItemLabels;
+    typedef std::unordered_map<Item, ItemLabels> Pointers;
+    typedef std::vector<Pointers> PointerList;
+
+    void
+    reduction(size_t where, const Item& from, const Item& to)
+    {
+      insert(m_reductions, where, where, from, to);
+    }
+
+    void
+    predecessor(size_t where, size_t wherefrom, const Item& from, const Item& to)
+    {
+      insert(m_predecessors, where, wherefrom, from, to);
+    }
+
+    const PointerList&
+    reductions() const
+    {
+      return m_reductions;
+    }
+
+    const PointerList&
+    predecessors() const
+    {
+      return m_predecessors;
+    }
+
+    private:
+
+    static
+    void
+    ensure_size(PointerList& p, size_t s)
+    {
+      if (p.size() < s + 1)
+      {
+        p.resize(s+1);
+      }
+    }
+
+    void
+    insert(PointerList& p, size_t where, size_t wherefrom, const Item& from, const Item& to)
+    {
+      ensure_size(p, where);
+      auto& pointers = p[where][from];
+      pointers.insert({to.where(), {to, wherefrom}});
+    }
+
+    PointerList m_reductions;
+    PointerList m_predecessors;
+  };
+
   // A grammar is a mapping from non-terminals to a list of rules
   // A rule is a list of productions
   typedef std::unordered_map<std::string, std::vector<RuleWithAction>>
@@ -336,7 +451,8 @@ process_input(
   bool debug,
   size_t start,
   const std::string& input,
-  const std::vector<earley::RuleList>& rules
+  const std::vector<earley::RuleList>& rules,
+  const std::unordered_map<std::string, size_t>& names = {}
 );
 
 std::tuple<std::vector<earley::RuleList>,
@@ -365,7 +481,7 @@ namespace std
   {
     size_t result = item.m_start;
     hash_combine(result, &*item.m_current);
-    hash_combine(result, &item.m_rule);
+    hash_combine(result, item.m_rule);
 
     return result;
   }

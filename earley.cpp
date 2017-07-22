@@ -1,6 +1,8 @@
 #include <chrono>
 #include <deque>
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <unordered_map>
 
 #include "earley.hpp"
@@ -55,6 +57,91 @@ namespace
       ;
     }
   };
+
+  template <template <typename, typename> typename Map, typename K, typename V>
+  Map<V, K>
+  invert_map(const Map<K, V>& map)
+  {
+    Map<V, K> inverted;
+
+    for (auto& p: map)
+    {
+      inverted[p.second] = p.first;
+    }
+
+    return inverted;
+  }
+
+  void
+  draw_pointers(const TreePointers::PointerList& pointers,
+    const std::unordered_map<size_t, std::string>& names,
+    std::ostream& out,
+    const std::string& style
+  )
+  {
+    size_t cluster = 0;
+    for (auto& item_set: pointers)
+    {
+      for (auto& items: item_set)
+      {
+        for (auto& item_label: items.second)
+        {
+          out << "  \"";
+          items.first.print(out, names);
+          out << ":" << cluster << "\" -> \"";
+          item_label.second.first.print(out, names);
+          out << ":" << item_label.first << "\" edge [style=" << style
+              << " label=\"" << item_label.second.second << "\"];\n";
+        }
+      }
+      ++cluster;
+    }
+  }
+
+  void
+  dump_pointers(const ItemSetList& item_sets, const TreePointers& pointers,
+      const std::unordered_map<size_t, std::string>& names)
+  {
+    std::ofstream out("graph");
+    std::unordered_map<Item, size_t> nodes;
+    size_t next_node = 0;
+
+    out << "digraph {\n";
+
+    size_t index = 0;
+    for (auto& items: item_sets)
+    {
+      out << "subgraph cluster_" << index << " {\n";
+      out << "  label = \"set " << index << "\";\n";
+      for (auto& item: items)
+      {
+        out << "  \"";
+        item.print(out, names);
+        out << ":" << index << "\";\n";
+      }
+      out << "}\n";
+      ++index;
+    }
+
+    auto get_node = [&] (const Item& item) -> size_t {
+      auto iter = nodes.find(item);
+      if (iter != nodes.end())
+      {
+        return iter->second;
+      }
+      else
+      {
+        ++next_node;
+        nodes.insert({item, next_node});
+        return next_node;
+      }
+    };
+
+    draw_pointers(pointers.reductions(), names, out, "solid");
+    draw_pointers(pointers.predecessors(), names, out, "dashed");
+
+    out << "}";
+  }
 }
 
 std::vector<std::vector<std::vector<Item>>>
@@ -201,7 +288,9 @@ struct RecogniseActions
     Item item,
     std::vector<ItemSet>& item_sets,
     size_t which,
-    const std::string& input)
+    const std::string& input,
+    TreePointers& pointers,
+    std::unordered_map<size_t, Item>& nulled)
   : m_rules(rules)
   , m_nullable(nullable)
   , m_stack(stack)
@@ -209,6 +298,8 @@ struct RecogniseActions
   , m_item_sets(item_sets)
   , m_which(which)
   , m_input(input)
+  , m_pointers(pointers)
+  , m_nulled(nulled)
   {
   }
 
@@ -233,9 +324,20 @@ struct RecogniseActions
     {
       // we are completing *this* item, into the same set
       auto next = m_item.next();
+      std::cout << "Nullable prediction adding " << next << ":" << m_which 
+                << " -> " << m_item << ":" << m_which << std::endl;
+      m_pointers.predecessor(m_which, m_which, next, m_item);
+
       if (m_item_sets[m_which].insert(next).second)
       {
         m_stack.push_back(next);
+      }
+
+      auto nulled = m_nulled.find(rule);
+      if (nulled != m_nulled.end())
+      {
+        // The item has already been added, we just add a reduction here
+        m_pointers.reduction(m_which, next, nulled->second);
       }
     }
   }
@@ -248,6 +350,9 @@ struct RecogniseActions
     // if input[which] == item then advance
     if (m_which < m_input.length() && scan(m_input[m_which]))
     {
+      std::cout << "Scan adding " << m_item.next() << ":" << m_which+1
+                << " -> " << m_item << ":" << m_which << std::endl;
+      m_pointers.predecessor(m_which+1, m_which, m_item.next(), m_item);
       m_item_sets[m_which+1].insert(m_item.next());
     }
   }
@@ -255,11 +360,17 @@ struct RecogniseActions
   void
   operator()(Epsilon) const
   {
+    // this is a completion
     auto next = m_item.next();
+    m_pointers.reduction(m_which, next, m_item);
     if (m_item_sets[m_which].insert(next).second)
     {
       m_stack.push_back(next);
     }
+
+    // TODO: This isn't good enough, I actually need to 
+    // deal with A -> B where B is nullable
+    m_nulled.insert({m_item.nonterminal(), m_item.next()});
   }
 
   private:
@@ -270,11 +381,14 @@ struct RecogniseActions
   std::vector<ItemSet>& m_item_sets;
   size_t m_which;
   const std::string& m_input;
+  TreePointers& m_pointers;
+  std::unordered_map<size_t, Item>& m_nulled;
 };
 
 void
 complete(
   std::vector<Item>& stack,
+  TreePointers& pointers,
   const Item& item,
   std::vector<ItemSet>& item_sets,
   size_t which
@@ -297,6 +411,14 @@ complete(
     {
       //bring it into our set
       auto next = consider.next();
+      pointers.reduction(which, next, item);
+
+      if (dot != consider.rule().begin())
+      {
+        std::cout << "Completion adding " << next << ":" << which
+                  << " -> " << consider << ":" << item.where() << std::endl;
+        pointers.predecessor(which, item.where(), next, consider);
+      }
       if (item_sets[which].count(next) == 0 && to_add.count(next) == 0)
       {
         to_add.insert(next);
@@ -317,6 +439,7 @@ complete(
 void
 process_set(
   ItemSetList& item_sets,
+  TreePointers& pointers,
   const std::string& input,
   const std::vector<earley::RuleList>& rules,
   const std::vector<bool>& nullable,
@@ -324,6 +447,7 @@ process_set(
 )
 {
   std::vector<Item> to_process(item_sets[which].begin(), item_sets[which].end());
+  std::unordered_map<size_t, Item> nulled;
 
   while (!to_process.empty())
   {
@@ -336,12 +460,12 @@ process_set(
     {
       std::visit(
         RecogniseActions(rules, nullable, to_process,
-                         current, item_sets, which, input),
+                         current, item_sets, which, input, pointers, nulled),
         *pos);
     }
     else
     {
-      complete(to_process, current, item_sets, which);
+      complete(to_process, pointers, current, item_sets, which);
     }
   }
 }
@@ -355,11 +479,14 @@ process_input(
   bool debug,
   size_t start,
   const std::string& input,
-  const std::vector<RuleList>& rules
+  const std::vector<RuleList>& rules,
+  const std::unordered_map<std::string, size_t>& names
 )
 {
   ItemSetList item_sets(input.size() + 1);
   auto nullable = find_nullable(rules);
+
+  auto rule_names = invert_map(names);
 
   if (debug)
   {
@@ -380,9 +507,11 @@ process_input(
   std::chrono::time_point<std::chrono::system_clock> start_time, end;
   start_time = std::chrono::system_clock::now();
 
+  TreePointers pointers;
+
   for (size_t i = 0; i != input.size() + 1; ++i)
   {
-    process_set(item_sets, input, rules, nullable, i);
+    process_set(item_sets, pointers, input, rules, nullable, i);
   }
 
   end = std::chrono::system_clock::now();
@@ -396,7 +525,8 @@ process_input(
       std::cout << "Position " << n << std::endl;
       for (auto& item : items)
       {
-        std::cout << item << std::endl;
+        item.print(std::cout, rule_names);
+        std::cout << std::endl;
       }
       ++n;
     }
@@ -408,11 +538,54 @@ process_input(
   {
     if (item.position() == item.end() && item.where() == 0 && item.nonterminal() == start)
     {
+      dump_pointers(item_sets, pointers, rule_names);
       parsed = true;
       if (debug)
       {
         std::cout << "Parsed: " << input << std::endl;
-        std::cout << item << std::endl;
+        item.print(std::cout, rule_names);
+        std::cout << std::endl;
+
+        std::cout << "Pointers for top item" << std::endl;
+        auto& reductions = pointers.reductions();
+        if (reductions.size() > input.size())
+        {
+          auto& last = reductions[input.size()];
+
+          for (auto& item_reduction: last)
+          {
+            for (auto& reduction: item_reduction.second)
+            {
+              std::cout << "Reduction from ";
+              item_reduction.first.print(std::cout, rule_names);
+              std::cout << " to ";
+              reduction.second.first.print(std::cout, rule_names);
+              std::cout << " labelled " << reduction.first << std::endl;
+            }
+          }
+
+          auto iter = last.find(item);
+          if (iter != last.end())
+          {
+            std::cout << "Last item pointer" << std::endl;
+            for (auto& reduction: iter->second)
+            {
+              std::cout << "Reduction from ";
+              item.print(std::cout, rule_names);
+              std::cout << " to ";
+              reduction.second.first.print(std::cout, rule_names);
+              std::cout << " labelled " << reduction.first << std::endl;
+            }
+          }
+          else
+          {
+            std::cout << "Item not found" << std::endl;
+          }
+        }
+        else
+        {
+          std::cout << "No reduction at end" << std::endl;
+        }
       }
     }
   }

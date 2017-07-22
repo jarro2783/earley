@@ -231,7 +231,7 @@ int main(int argc, char** argv)
   }
 
   auto [success, elapsed, item_sets] =
-    process_input(debug, ids["Input"], argv[1], grammar_rules);
+    process_input(debug, ids["Input"], argv[1], grammar_rules, ids);
   (void)item_sets;
 
   if (success)
@@ -248,8 +248,8 @@ int main(int argc, char** argv)
     add_action("divide", actions, &handle_divide);
     add_action("minus", actions, &handle_minus);
 
-    auto value = earley::run_actions(ids["Input"], argv[1], actions, item_sets);
-    std::cout << std::get<int>(value) << std::endl;
+    //auto value = earley::run_actions(ids["Input"], argv[1], actions, item_sets);
+    //std::cout << std::get<int>(value) << std::endl;
   }
 
   if (!success)
@@ -266,25 +266,36 @@ int main(int argc, char** argv)
       {{"Grammar", "Space", "Nonterminal"}},
     }},
     {"Space", {
+      {{Epsilon(), "SpaceRest"}},
+    }},
+    {"SpaceRest", {
       {{Epsilon()}},
-      {{' '}},
-      {{'\n'}},
-      {{'\t'}},
+      {{"SpaceRest", ' '}},
+      {{"SpaceRest", '\n'}},
+      {{"SpaceRest", '\t'}},
     }},
     {"Nonterminal", {
       {{"Name", "Space", '-', '>', "Rules"}}
     }},
     {"Rules", {
-      {{"Rules", "Space", '|', "Rule"}},
-      {{"Rule"}},
+      {{"Rule"}, {"pass", {0}}},
+      {{"Rules", "Space", '|', "Rule"}, {"rl", {0, 3}}},
     }},
     {"Rule", {
+      {{"Productions", "Action"}, {"rule", {0, 1}}},
+    }},
+    {"Productions", {
       {{Epsilon()}},
-      {{"Rule", "Production"}},
+      {{"Productions", "Production"}, {"pl", {0, 1}}},
     }},
     {"Production", {
+      {{Epsilon()}},
       {{"Name"}},
-      {{"Literal"}}
+      {{"Space", "Literal"}},
+    }},
+    {"Action", {
+      {{Epsilon()}},
+      {{"Space", '#', "Space", "Name"}},
     }},
     {"Literal", {
       {{'\'', "Char", '\''}},
@@ -341,7 +352,7 @@ int main(int argc, char** argv)
   }
 
   auto [ebnf_parsed, ebnf_time, ebnf_items] =
-    process_input(debug, ebnf_ids["Grammar"], argv[2], ebnf_rules);
+    process_input(debug, ebnf_ids["Grammar"], argv[2], ebnf_rules, ebnf_ids);
   (void)ebnf_items;
 
   if (!ebnf_parsed)
