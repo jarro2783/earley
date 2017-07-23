@@ -299,7 +299,7 @@ namespace earley
     {
       if (iter == item.m_current)
       {
-        os << " *";
+        os << " ·";
       }
 
       auto& entry = *iter;
@@ -382,15 +382,16 @@ namespace earley
     typedef std::vector<Pointers> PointerList;
 
     void
-    reduction(size_t where, const Item& from, const Item& to)
+    reduction(size_t where, size_t label, const Item& from, const Item& to)
     {
-      insert(m_reductions, where, where, from, to);
+      insert(m_reductions, where, where, label, from, to);
     }
 
     void
-    predecessor(size_t where, size_t wherefrom, const Item& from, const Item& to)
+    predecessor(size_t wherefrom, size_t whereto, size_t label,
+      const Item& from, const Item& to)
     {
-      insert(m_predecessors, where, wherefrom, from, to);
+      insert(m_predecessors, wherefrom, whereto, label, from, to);
     }
 
     const PointerList&
@@ -418,11 +419,17 @@ namespace earley
     }
 
     void
-    insert(PointerList& p, size_t where, size_t wherefrom, const Item& from, const Item& to)
+    insert(
+      PointerList& p,
+      size_t wherefrom,
+      size_t whereto,
+      size_t label,
+      const Item& from,
+      const Item& to)
     {
-      ensure_size(p, where);
-      auto& pointers = p[where][from];
-      pointers.insert({to.where(), {to, wherefrom}});
+      ensure_size(p, wherefrom);
+      auto& pointers = p[wherefrom][from];
+      pointers.insert({label, {to, whereto}});
     }
 
     PointerList m_reductions;
@@ -662,6 +669,32 @@ namespace earley
       private:
       const std::string& m_input;
       std::unordered_set<Item> m_visited;
+    };
+
+    struct ForestActions
+    {
+      ForestActions(TreePointers& pointers);
+
+      // Run the actions for a complete item
+      // Calls item_entry_action to run the entry
+      // actions and runs the action on the resulting vector
+      void
+      item_action(const Item& item)
+      {
+        std::vector<ActionResult<int>> results;
+        item_entry_action(results);
+      }
+
+      // Recursively go through the predecessors of an item and
+      // run the reduction for each entry.
+      // A reduction is just processing a full action with
+      // item_action.
+      void
+      item_entry_action(std::vector<ActionResult<int>>& results)
+      {
+        // visit the predecessor first
+        // then our reduction
+      }
     };
   }
 

@@ -90,8 +90,8 @@ namespace
           items.first.print(out, names);
           out << ":" << cluster << "\" -> \"";
           item_label.second.first.print(out, names);
-          out << ":" << item_label.first << "\" edge [style=" << style
-              << " label=\"" << item_label.second.second << "\"];\n";
+          out << ":" << item_label.second.second << "\" [style=" << style
+              << " label=\"" << item_label.first << "\"];\n";
         }
       }
       ++cluster;
@@ -104,7 +104,6 @@ namespace
   {
     std::ofstream out("graph");
     std::unordered_map<Item, size_t> nodes;
-    size_t next_node = 0;
 
     out << "digraph {\n";
 
@@ -122,20 +121,6 @@ namespace
       out << "}\n";
       ++index;
     }
-
-    auto get_node = [&] (const Item& item) -> size_t {
-      auto iter = nodes.find(item);
-      if (iter != nodes.end())
-      {
-        return iter->second;
-      }
-      else
-      {
-        ++next_node;
-        nodes.insert({item, next_node});
-        return next_node;
-      }
-    };
 
     draw_pointers(pointers.reductions(), names, out, "solid");
     draw_pointers(pointers.predecessors(), names, out, "dashed");
@@ -326,7 +311,7 @@ struct RecogniseActions
       auto next = m_item.next();
       std::cout << "Nullable prediction adding " << next << ":" << m_which 
                 << " -> " << m_item << ":" << m_which << std::endl;
-      m_pointers.predecessor(m_which, m_which, next, m_item);
+      m_pointers.predecessor(m_which, m_which, m_which, next, m_item);
 
       if (m_item_sets[m_which].insert(next).second)
       {
@@ -336,8 +321,11 @@ struct RecogniseActions
       auto nulled = m_nulled.find(rule);
       if (nulled != m_nulled.end())
       {
+        std::cout << "Nulled prediction adding reduction " 
+                  << next << ":" << m_which 
+                  << " -> " << nulled->second << ":" << m_which << std::endl;
         // The item has already been added, we just add a reduction here
-        m_pointers.reduction(m_which, next, nulled->second);
+        m_pointers.reduction(m_which, m_which, next, nulled->second);
       }
     }
   }
@@ -352,7 +340,7 @@ struct RecogniseActions
     {
       std::cout << "Scan adding " << m_item.next() << ":" << m_which+1
                 << " -> " << m_item << ":" << m_which << std::endl;
-      m_pointers.predecessor(m_which+1, m_which, m_item.next(), m_item);
+      m_pointers.predecessor(m_which+1, m_which, m_which, m_item.next(), m_item);
       m_item_sets[m_which+1].insert(m_item.next());
     }
   }
@@ -362,7 +350,10 @@ struct RecogniseActions
   {
     // this is a completion
     auto next = m_item.next();
-    m_pointers.reduction(m_which, next, m_item);
+    std::cout << "Epsilon adding reduction " 
+              << next << ":" << m_which 
+              << " -> " << m_item << ":" << m_which << std::endl;
+    m_pointers.reduction(m_which, m_which, next, m_item);
     if (m_item_sets[m_which].insert(next).second)
     {
       m_stack.push_back(next);
@@ -411,13 +402,16 @@ complete(
     {
       //bring it into our set
       auto next = consider.next();
-      pointers.reduction(which, next, item);
+      std::cout << "Completion adding reduction " 
+                << next << ":" << which 
+                << " -> " << item << ":" << which << std::endl;
+      pointers.reduction(which, item.where(), next, item);
 
       if (dot != consider.rule().begin())
       {
         std::cout << "Completion adding " << next << ":" << which
                   << " -> " << consider << ":" << item.where() << std::endl;
-        pointers.predecessor(which, item.where(), next, consider);
+        pointers.predecessor(which, item.where(), item.where(), next, consider);
       }
       if (item_sets[which].count(next) == 0 && to_add.count(next) == 0)
       {
