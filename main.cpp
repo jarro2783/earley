@@ -1,5 +1,6 @@
 #include "cxxopts.hpp"
 #include "earley.hpp"
+#include "grammar.hpp"
 
 typedef earley::ActionResult<int> NumberResult;
 
@@ -60,8 +61,9 @@ handle_number(const NumbersParts& parts)
   return value;
 }
 
-NumberResult
-handle_pass(const NumbersParts& parts)
+template <typename Result>
+Result
+handle_pass(const std::vector<Result>& parts)
 {
   return parts.at(0);
 }
@@ -287,15 +289,15 @@ int main(int argc, char** argv)
       {{"Name", "Space", '-', '>', "Rules"}}
     }},
     {"Rules", {
-      {{"Rule"}, {"pass", {0}}},
-      {{"Rules", "Space", '|', "Rule"}, {"rl", {0, 3}}},
+      {{"Rule"}, {"create_list", {0}}},
+      {{"Rules", "Space", '|', "Rule"}, {"append_list", {0, 3}}},
     }},
     {"Rule", {
       {{"Productions", "Action"}, {"rule", {0, 1}}},
     }},
     {"Productions", {
-      {{Epsilon()}},
-      {{"Productions", "Production"}, {"pl", {0, 1}}},
+      {{Epsilon()}, {"create_list", {0}}},
+      {{"Productions", "Production"}, {"append_list", {0, 1}}},
     }},
     {"Production", {
       {{Epsilon()}},
@@ -373,6 +375,14 @@ int main(int argc, char** argv)
   else
   {
     std::cout << ebnf_time << std::endl;
+
+    std::unordered_map<std::string, ast::GrammarNode(*)(
+      const std::vector<ast::GrammarNode>&
+    )> actions;
+
+    add_action("pass", actions, &handle_pass);
+    add_action("create_list", actions, &ast::action_append_list);
+    add_action("append_list", actions, &ast::action_create_list);
   }
 
   return 0;

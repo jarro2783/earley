@@ -1,3 +1,8 @@
+#ifndef EARLEY_HPP_INCLUDED
+#define EARLEY_HPP_INCLUDED
+
+#include <iostream>
+
 #include <functional>
 #include <initializer_list>
 #include <map>
@@ -865,3 +870,5 @@ namespace earley
     return values::Failed();
   }
 }
+
+#endif
