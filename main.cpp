@@ -81,13 +81,13 @@ handle_sum(const NumbersParts& parts)
 NumberResult
 handle_product(const NumbersParts& parts)
 {
-  return std::get<int>(parts.at(0)) + std::get<int>(parts.at(1));
+  return std::get<int>(parts.at(0)) * std::get<int>(parts.at(1));
 }
 
 NumberResult
 handle_minus(const NumbersParts& parts)
 {
-  return std::get<int>(parts.at(0)) + std::get<int>(parts.at(1));
+  return std::get<int>(parts.at(0)) - std::get<int>(parts.at(1));
 }
 
 int main(int argc, char** argv)
@@ -230,7 +230,7 @@ int main(int argc, char** argv)
     }
   }
 
-  auto [success, elapsed, item_sets] =
+  auto [success, elapsed, item_sets, pointers] =
     process_input(debug, ids["Input"], argv[1], grammar_rules, ids);
   (void)item_sets;
 
@@ -248,8 +248,17 @@ int main(int argc, char** argv)
     add_action("divide", actions, &handle_divide);
     add_action("minus", actions, &handle_minus);
 
-    //auto value = earley::run_actions(ids["Input"], argv[1], actions, item_sets);
-    //std::cout << std::get<int>(value) << std::endl;
+    auto value = earley::run_actions(
+        pointers, ids["Input"], argv[1], actions, item_sets);
+
+    if (std::holds_alternative<int>(value))
+    {
+      std::cout << std::get<int>(value) << std::endl;
+    }
+    else
+    {
+      std::cout << "Failed to compute value" << std::endl;
+    }
   }
 
   if (!success)
@@ -351,9 +360,10 @@ int main(int argc, char** argv)
     }
   }
 
-  auto [ebnf_parsed, ebnf_time, ebnf_items] =
+  auto [ebnf_parsed, ebnf_time, ebnf_items, ebnf_pointers] =
     process_input(debug, ebnf_ids["Grammar"], argv[2], ebnf_rules, ebnf_ids);
   (void)ebnf_items;
+  (void)ebnf_pointers;
 
   if (!ebnf_parsed)
   {

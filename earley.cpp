@@ -467,7 +467,8 @@ process_set(
 std::tuple<
   bool,
   double,
-  ItemSetList
+  ItemSetList,
+  earley::TreePointers
 >
 process_input(
   bool debug,
@@ -533,6 +534,7 @@ process_input(
     if (item.position() == item.end() && item.where() == 0 && item.nonterminal() == start)
     {
       dump_pointers(item_sets, pointers, rule_names);
+
       parsed = true;
       if (debug)
       {
@@ -589,7 +591,8 @@ process_input(
   return std::make_tuple(parsed,
     std::chrono::duration_cast<std::chrono::microseconds>(
       elapsed_seconds).count(),
-    std::move(item_sets));
+    std::move(item_sets),
+    pointers);
 }
 
 struct InvertVisitor

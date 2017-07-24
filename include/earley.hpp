@@ -322,7 +322,7 @@ namespace earley
 
     if (iter == item.m_current)
     {
-      os << " *";
+      os << " ·";
     }
 
     os << " (" << item.m_start << ')';
@@ -453,7 +453,7 @@ namespace earley
   typedef std::vector<std::vector<std::vector<Item>>> SortedItemSets;
 }
 
-std::tuple<bool, double, earley::ItemSetList>
+std::tuple<bool, double, earley::ItemSetList, earley::TreePointers>
 process_input(
   bool debug,
   size_t start,
@@ -673,42 +673,144 @@ namespace earley
 
     struct ForestActions
     {
-      ForestActions(TreePointers& pointers);
+      ForestActions(const TreePointers& pointers, const std::string& input)
+      : m_pointers(pointers)
+      , m_input(input)
+      {
+      }
 
       // Run the actions for a complete item
       // Calls item_entry_action to run the entry
       // actions and runs the action on the resulting vector
-      void
-      item_action(const Item& item)
+      template <typename Actions>
+      auto
+      item_action(const Actions& actions, const Item& item, size_t which)
+      -> decltype(std::declval<typename Actions::mapped_type>()(
+            {values::Failed()}))
       {
-        std::vector<ActionResult<int>> results;
-        item_entry_action(results);
+        using Ret = decltype(actions.find("")->second({values::Failed()}));
+        std::vector<Ret> results;
+        item_entry_action(actions, item, results, which);
+
+        //run the actual actions on results
+        auto& action_runner = item.rule().actions();
+        auto iter = actions.find(std::get<0>(action_runner));
+        if (iter != actions.end() && iter->second)
+        {
+          std::vector<Ret> run_actions;
+          for (auto& handle: std::get<1>(action_runner))
+          {
+            //std::cout << "Processing " << item.nonterminal() << std::endl;
+            //std::cout << "Pushing back " << handle << std::endl;
+            //std::cout << "and results is size " << results.size() << std::endl;
+            run_actions.push_back(results[handle]);
+          }
+
+          return iter->second(run_actions);
+        }
+        else
+        {
+          return values::Empty();
+        }
       }
 
       // Recursively go through the predecessors of an item and
       // run the reduction for each entry.
       // A reduction is just processing a full action with
       // item_action.
+      template <typename Actions, typename Results>
       void
-      item_entry_action(std::vector<ActionResult<int>>& results)
+      item_entry_action(const Actions& actions, const Item& item,
+        Results& results,
+        size_t which)
       {
         // visit the predecessor first
         // then our reduction
+
+        std::cout << item << std::endl;
+        // find the predecessor
+        {
+          auto predecessor = find_previous(
+            m_pointers.predecessors(), which, item);
+
+          if (predecessor)
+          {
+            item_entry_action(actions, predecessor->first,
+              results, predecessor->second);
+          }
+        }
+
+        // do our reduction
+        auto reduction = find_previous(m_pointers.reductions(), which, item);
+
+        if (reduction)
+        {
+          // this builds the current node
+          results.push_back(
+            item_action(actions, reduction->first, reduction->second));
+        }
+        else
+        {
+          //we are either at the start or this is a scan
+          auto current = item.position();
+          if (current == item.rule().begin())
+          {
+            std::cout << "Start" << std::endl;
+            return;
+          }
+
+          --current;
+          if (std::holds_alternative<Scanner>(*current))
+          {
+            std::cout << "Scanning " << m_input[which-1] << " at " << which << std::endl;
+            results.push_back(m_input[which-1]);
+          }
+        }
       }
+
+      private:
+
+      const std::pair<Item, size_t>*
+      find_previous(const TreePointers::PointerList& pointers,
+        size_t which, const Item& item)
+      {
+        if (which >= pointers.size())
+        {
+          return nullptr;
+        }
+
+        auto iter = pointers[which].find(item);
+        // if there is no predecessor we must be at the end
+        if (iter != pointers[which].end())
+        {
+          auto& labels = iter->second;
+          auto label = labels.rbegin();
+          if (label != labels.rend())
+          {
+            return &label->second;
+          }
+        }
+
+        return nullptr;
+      }
+
+      const TreePointers& m_pointers;
+      const std::string& m_input;
     };
+
   }
 
   template <typename Actions>
   auto
-  run_actions(size_t start, const std::string& input,
+  run_actions(const TreePointers& pointers,
+    size_t start,
+    const std::string& input,
     const std::unordered_map<std::string, Actions>& actions,
     const ItemSetList& item_sets)
   -> decltype(std::declval<
         typename std::decay_t<decltype(actions)>::mapped_type
       >()({values::Failed()}))
   {
-    auto inverted = invert_items(item_sets);
-    auto sorted = sorted_index(inverted);
 
 #if 0
     std::cout << "Inverted:" << std::endl;
@@ -751,11 +853,12 @@ namespace earley
     // state zero and finishes at the length of the item sets
     detail::ParserActions do_actions(input);
 
-    for (auto& item: inverted[0])
+    for (auto& item: item_sets[input.size()])
     {
-      if (item.where() == input.size() && item.nonterminal() == start)
+      if (item.where() == 0 && item.nonterminal() == start)
       {
-        return do_actions.do_actions(item, actions, sorted);
+        detail::ForestActions run(pointers, input);
+        return run.item_action(actions, item, input.size());
       }
     }
 
