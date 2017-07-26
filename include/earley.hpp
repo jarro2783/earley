@@ -50,6 +50,15 @@ namespace std
 
 namespace earley
 {
+  template <typename T>
+  struct ActionType;
+
+  template <typename T>
+  struct ActionType<std::unordered_map<std::string, T(*)(std::vector<T>&)>>
+  {
+    typedef T type;
+  };
+
   struct Epsilon {};
 
   typedef std::function<bool(char)> Scanner;
@@ -688,12 +697,11 @@ namespace earley
       // Calls item_entry_action to run the entry
       // actions and runs the action on the resulting vector
       template <typename Actions>
-      auto
+      typename ActionType<Actions>::type
       item_action(const Actions& actions, const Item& item, size_t which)
-      //-> decltype(std::declval<typename Actions::mapped_type>()(
-      //      {values::Failed()}))
       {
-        using Ret = decltype(actions.find("")->second({values::Failed()}));
+        //using Ret = decltype(actions.find("")->second({values::Failed()}));
+        using Ret = typename ActionType<Actions>::type;
         std::vector<Ret> results;
         item_entry_action(actions, item, results, which);
 
@@ -806,11 +814,11 @@ namespace earley
   }
 
   template <typename Actions>
-  auto
+  typename ActionType<Actions>::type
   run_actions(const TreePointers& pointers,
     size_t start,
     const std::string& input,
-    const std::unordered_map<std::string, Actions>& actions,
+    const Actions& actions,
     const ItemSetList& item_sets)
   {
 
