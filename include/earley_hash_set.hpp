@@ -97,9 +97,6 @@ namespace earley
 
     mutable size_t collisions = 0;
 
-    // TODO: this is far from ideal
-    static size_t all_collisions;
-
     HashSet()
     : HashSet(101)
     {
@@ -204,7 +201,6 @@ namespace earley
           }
         }
         ++collisions;
-        ++all_collisions;
       }
     }
 
