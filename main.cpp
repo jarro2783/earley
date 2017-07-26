@@ -8,8 +8,8 @@ template <typename T>
 void
 add_action(
   const std::string& name,
-  std::unordered_map<std::string, T (*)(const std::vector<T>&)>& actions,
-  T (*fun)(const std::vector<T>&)
+  std::unordered_map<std::string, T (*)(std::vector<T>&)>& actions,
+  T (*fun)(std::vector<T>&)
 )
 {
   actions[name] = fun;
@@ -18,7 +18,7 @@ add_action(
 typedef std::vector<NumberResult> NumbersParts;
 
 NumberResult
-handle_digit(const NumbersParts& parts)
+handle_digit(NumbersParts& parts)
 {
   if (parts.size() == 1)
   {
@@ -38,7 +38,7 @@ handle_digit(const NumbersParts& parts)
 }
 
 NumberResult
-handle_number(const NumbersParts& parts)
+handle_number(NumbersParts& parts)
 {
   int value = 0;
   if (parts.size() == 2)
@@ -63,31 +63,31 @@ handle_number(const NumbersParts& parts)
 
 template <typename Result>
 Result
-handle_pass(const std::vector<Result>& parts)
+handle_pass(std::vector<Result>& parts)
 {
   return parts.at(0);
 }
 
 NumberResult
-handle_divide(const NumbersParts& parts)
+handle_divide(NumbersParts& parts)
 {
   return std::get<int>(parts.at(0)) / std::get<int>(parts.at(1));
 }
 
 NumberResult
-handle_sum(const NumbersParts& parts)
+handle_sum(NumbersParts& parts)
 {
   return std::get<int>(parts.at(0)) + std::get<int>(parts.at(1));
 }
 
 NumberResult
-handle_product(const NumbersParts& parts)
+handle_product(NumbersParts& parts)
 {
   return std::get<int>(parts.at(0)) * std::get<int>(parts.at(1));
 }
 
 NumberResult
-handle_minus(const NumbersParts& parts)
+handle_minus(NumbersParts& parts)
 {
   return std::get<int>(parts.at(0)) - std::get<int>(parts.at(1));
 }
@@ -239,7 +239,7 @@ int main(int argc, char** argv)
   if (success)
   {
     std::unordered_map<std::string, earley::ActionResult<int>(*)(
-      const std::vector<earley::ActionResult<int>>&
+      std::vector<earley::ActionResult<int>>&
     )> actions;
 
     add_action("pass", actions, &handle_pass);
@@ -277,13 +277,17 @@ int main(int argc, char** argv)
       {{"Grammar", "Space", "Nonterminal"}},
     }},
     {"Space", {
-      {{Epsilon(), "SpaceRest"}},
+      {{Epsilon()}},
+      {{"SpaceRest"}},
     }},
     {"SpaceRest", {
-      {{Epsilon()}},
-      {{"SpaceRest", ' '}},
-      {{"SpaceRest", '\n'}},
-      {{"SpaceRest", '\t'}},
+      {{"SpaceChar"}},
+      {{"SpaceRest", "SpaceChar"}},
+    }},
+    {"SpaceChar", {
+      {{' '}},
+      {{'\n'}},
+      {{'\t'}},
     }},
     {"Nonterminal", {
       {{"Name", "Space", '-', '>', "Rules"}}
@@ -293,19 +297,19 @@ int main(int argc, char** argv)
       {{"Rules", "Space", '|', "Rule"}, {"append_list", {0, 3}}},
     }},
     {"Rule", {
+      {{Epsilon()}, {"create_list", {}}},
+      {{"Productions"}, {"rule", {0}}},
       {{"Productions", "Action"}, {"rule", {0, 1}}},
     }},
     {"Productions", {
-      {{Epsilon()}, {"create_list", {0}}},
+      {{"Production"}},
       {{"Productions", "Production"}, {"append_list", {0, 1}}},
     }},
     {"Production", {
-      {{Epsilon()}},
       {{"Name"}},
       {{"Space", "Literal"}},
     }},
     {"Action", {
-      {{Epsilon()}},
       {{"Space", '#', "Space", "Name"}},
     }},
     {"Literal", {
@@ -314,16 +318,17 @@ int main(int argc, char** argv)
       {{'"', "Chars", '"'}},
     }},
     {"Name", {
+      {{"Space", "NameStart"}},
       {{"Space", "NameStart", "NameRest"}},
     }},
     {"NameStart", {
-      {{scan_range('a', 'z')}},
-      {{scan_range('A', 'Z')}},
+      {{scan_range('a', 'z')}, {"pass", {0}}},
+      {{scan_range('A', 'Z')}, {"pass", {0}}},
     }},
     {"NameRest", {
-      {{Epsilon()}},
-      {{"NameRest", "NameStart"}},
-      {{"NameRest", scan_range('0', '9')}},
+      {{Epsilon()}, {"create_string", {}}},
+      {{"NameRest", "NameStart"}, {"append_string", {0, 1}}},
+      {{"NameRest", scan_range('0', '9')}, {"append_string", {0, 1}}},
     }},
     {"Ranges", {
       {{"Range"}},
@@ -377,12 +382,19 @@ int main(int argc, char** argv)
     std::cout << ebnf_time << std::endl;
 
     std::unordered_map<std::string, ast::GrammarNode(*)(
-      const std::vector<ast::GrammarNode>&
+      std::vector<ast::GrammarNode>&
     )> actions;
 
+    using namespace earley::ast;
+
     add_action("pass", actions, &handle_pass);
-    add_action("create_list", actions, &ast::action_append_list);
-    add_action("append_list", actions, &ast::action_create_list);
+    add_action("append_list", actions, &ast::action_append_list<std::vector<GrammarPtr>>);
+    add_action("create_list", actions, &ast::action_create_list<std::vector<GrammarPtr>>);
+    add_action("create_string", actions, &ast::action_create_list<std::string>);
+    add_action("append_string", actions, &ast::action_append_list<std::string>);
+
+    auto value = earley::run_actions(
+        ebnf_pointers, ebnf_ids["Grammar"], argv[2], actions, ebnf_items);
   }
 
   return 0;

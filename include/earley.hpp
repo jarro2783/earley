@@ -690,8 +690,8 @@ namespace earley
       template <typename Actions>
       auto
       item_action(const Actions& actions, const Item& item, size_t which)
-      -> decltype(std::declval<typename Actions::mapped_type>()(
-            {values::Failed()}))
+      //-> decltype(std::declval<typename Actions::mapped_type>()(
+      //      {values::Failed()}))
       {
         using Ret = decltype(actions.find("")->second({values::Failed()}));
         std::vector<Ret> results;
@@ -812,9 +812,6 @@ namespace earley
     const std::string& input,
     const std::unordered_map<std::string, Actions>& actions,
     const ItemSetList& item_sets)
-  -> decltype(std::declval<
-        typename std::decay_t<decltype(actions)>::mapped_type
-      >()({values::Failed()}))
   {
 
 #if 0
