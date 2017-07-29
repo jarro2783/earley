@@ -297,12 +297,12 @@ int main(int argc, char** argv)
       {{"Rules", "Space", '|', "Rule"}, {"append_list", {0, 3}}},
     }},
     {"Rule", {
-      {{Epsilon()}, {"create_list", {}}},
+      {{Epsilon()}, {"rule", {}}},
       {{"Productions"}, {"rule", {0}}},
       {{"Productions", "Action"}, {"rule", {0, 1}}},
     }},
     {"Productions", {
-      {{"Production"}},
+      {{"Production"}, {"pass", {0}}},
       {{"Productions", "Production"}, {"append_list", {0, 1}}},
     }},
     {"Production", {
@@ -318,12 +318,12 @@ int main(int argc, char** argv)
       {{'"', "Chars", '"'}},
     }},
     {"Name", {
-      {{"Space", "NameStart"}},
-      {{"Space", "NameStart", "NameRest"}},
+      {{"Space", "NameStart"}, {"pass", {1}}},
+      {{"Space", "NameStart", "NameRest"}, {"append_string", {0, 1}}},
     }},
     {"NameStart", {
-      {{scan_range('a', 'z')}, {"pass", {0}}},
-      {{scan_range('A', 'Z')}, {"pass", {0}}},
+      {{scan_range('a', 'z')}, {"create_string", {0}}},
+      {{scan_range('A', 'Z')}, {"create_string", {0}}},
     }},
     {"NameRest", {
       {{Epsilon()}, {"create_string", {}}},
@@ -388,10 +388,11 @@ int main(int argc, char** argv)
     using namespace earley::ast;
 
     add_action("pass", actions, &handle_pass);
-    add_action("append_list", actions, &ast::action_append_list<std::vector<GrammarPtr>>);
-    add_action("create_list", actions, &ast::action_create_list<std::vector<GrammarPtr>>);
-    add_action("create_string", actions, &ast::action_create_list<std::string>);
-    add_action("append_string", actions, &ast::action_append_list<std::string>);
+    add_action("create_list", actions, &ast::action_create_list);
+    add_action("append_list", actions, &ast::action_append_list);
+    add_action("create_string", actions, &ast::action_create_string);
+    add_action("append_string", actions, &ast::action_append_string);
+    add_action("rule", actions, &ast::action_rule);
 
     auto value = earley::run_actions(
         ebnf_pointers, ebnf_ids["Grammar"], argv[2], actions, ebnf_items);
