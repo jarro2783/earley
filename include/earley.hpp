@@ -52,6 +52,20 @@ namespace std
 
 namespace earley
 {
+  template <template <typename, typename> typename Map, typename K, typename V>
+  Map<V, K>
+  invert_map(const Map<K, V>& map)
+  {
+    Map<V, K> inverted;
+
+    for (auto& p: map)
+    {
+      inverted[p.second] = p.first;
+    }
+
+    return inverted;
+  }
+
   template <typename T>
   struct ActionType;
 
@@ -690,9 +704,14 @@ namespace earley
 
     struct ForestActions
     {
-      ForestActions(const TreePointers& pointers, const std::string& input)
+      ForestActions(
+        const TreePointers& pointers,
+        const std::string& input,
+        const std::unordered_map<size_t, std::string>& names
+      )
       : m_pointers(pointers)
       , m_input(input)
+      , m_names(names)
       {
       }
 
@@ -719,13 +738,28 @@ namespace earley
             //std::cout << "Processing " << item.nonterminal() << std::endl;
             //std::cout << "Pushing back " << handle << std::endl;
             //std::cout << "and results is size " << results.size() << std::endl;
-            run_actions.push_back(results[handle]);
+            run_actions.push_back(results.at(handle));
           }
+
+          std::cout << "Tree: |";
+          for (size_t i = 0; i != which; ++i)
+          {
+            std::cout << ' ';
+          }
+          item.print(std::cout, m_names);
+          std::cout << std::endl;
 
           return iter->second(run_actions);
         }
         else
         {
+          std::cout << "Tree: |";
+          for (size_t i = 0; i != which; ++i)
+          {
+            std::cout << ' ';
+          }
+          item.print(std::cout, m_names);
+          std::cout << std::endl;
           return values::Empty();
         }
       }
@@ -781,6 +815,10 @@ namespace earley
             std::cout << "Scanning " << m_input[which-1] << " at " << which << std::endl;
             results.push_back(m_input[which-1]);
           }
+          else if (std::holds_alternative<Epsilon>(*current))
+          {
+            results.push_back(values::Empty());
+          }
         }
       }
 
@@ -812,8 +850,8 @@ namespace earley
 
       const TreePointers& m_pointers;
       const std::string& m_input;
+      const std::unordered_map<size_t, std::string>& m_names;
     };
-
   }
 
   template <typename Actions>
@@ -822,7 +860,9 @@ namespace earley
     size_t start,
     const std::string& input,
     const Actions& actions,
-    const ItemSetList& item_sets)
+    const ItemSetList& item_sets,
+    const std::unordered_map<std::string, size_t>& names
+  )
   {
 
 #if 0
@@ -870,7 +910,8 @@ namespace earley
     {
       if (item.where() == 0 && item.nonterminal() == start)
       {
-        detail::ForestActions run(pointers, input);
+        auto inverted = invert_map(names);
+        detail::ForestActions run(pointers, input, inverted);
         return run.item_action(actions, item, input.size());
       }
     }

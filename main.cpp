@@ -251,7 +251,7 @@ int main(int argc, char** argv)
     add_action("minus", actions, &handle_minus);
 
     auto value = earley::run_actions(
-        pointers, ids["Input"], argv[1], actions, item_sets);
+        pointers, ids["Input"], argv[1], actions, item_sets, ids);
 
     if (std::holds_alternative<int>(value))
     {
@@ -273,11 +273,14 @@ int main(int argc, char** argv)
 
   Grammar ebnf = {
     {"Grammar", {
-      {{Epsilon()}},
-      {{"Grammar", "Space", "Nonterminal"}},
+      {{"Nonterminal"}, {"create_list", {0}}},
+      {{"Grammar", "Space", "Nonterminal"}, {"append_list", {0, 1}}},
     }},
     {"Space", {
       {{Epsilon()}},
+      {{"SpaceRest"}},
+    }},
+    {"HardSpace", {
       {{"SpaceRest"}},
     }},
     {"SpaceRest", {
@@ -290,63 +293,61 @@ int main(int argc, char** argv)
       {{'\t'}},
     }},
     {"Nonterminal", {
-      {{"Name", "Space", '-', '>', "Rules"}}
+      {{"Name", "Space", '-', '>', "Rules"}, {"create_nonterminal", {0, 4}}}
     }},
     {"Rules", {
       {{"Rule"}, {"create_list", {0}}},
       {{"Rules", "Space", '|', "Rule"}, {"append_list", {0, 3}}},
     }},
     {"Rule", {
-      {{Epsilon()}, {"rule", {}}},
+      //{{Epsilon()}, {"rule", {}}},
       {{"Productions"}, {"rule", {0}}},
       {{"Productions", "Action"}, {"rule", {0, 1}}},
     }},
     {"Productions", {
-      {{"Production"}, {"pass", {0}}},
-      {{"Productions", "Production"}, {"append_list", {0, 1}}},
+      {{"Production"}, {"create_list", {0}}},
+      {{"Productions", "HardSpace", "Production"}, {"append_list", {0, 2}}},
     }},
     {"Production", {
-      {{"Name"}},
-      {{"Space", "Literal"}},
+      {{"Name"}, {"pass", {0}}},
+      {{"Space", "Literal"}, {"pass", {1}}},
     }},
     {"Action", {
       {{"Space", '#', "Space", "Name"}},
     }},
     {"Literal", {
-      {{'\'', "Char", '\''}},
-      {{'[', "Ranges", ']'}},
-      {{'"', "Chars", '"'}},
+      {{'\'', "Char", '\''}, {"pass", {1}}},
+      {{'[', "Ranges", ']'}, {"pass", {1}}},
+      {{'"', "Chars", '"'}, {"pass", {1}}},
     }},
     {"Name", {
       {{"Space", "NameStart"}, {"pass", {1}}},
-      {{"Space", "NameStart", "NameRest"}, {"append_string", {0, 1}}},
+      {{"Space", "NameStart", "NameRest"}, {"append_string", {1, 2}}},
     }},
     {"NameStart", {
       {{scan_range('a', 'z')}, {"create_string", {0}}},
       {{scan_range('A', 'Z')}, {"create_string", {0}}},
     }},
     {"NameRest", {
-      {{Epsilon()}, {"create_string", {}}},
+      {{"NameStart"}, {"pass", {0}}},
       {{"NameRest", "NameStart"}, {"append_string", {0, 1}}},
       {{"NameRest", scan_range('0', '9')}, {"append_string", {0, 1}}},
     }},
     {"Ranges", {
-      {{"Range"}},
-      {{"Ranges", "Range"}},
+      {{"Range"}, {"create_list", {0}}},
+      {{"Ranges", "Range"}, {"append_list", {0, 1}}},
     }},
     {"Range", {
-      {{scan_range('a', 'z'), '-', scan_range('a', 'z')}},
-      {{scan_range('A', 'Z'), '-', scan_range('A', 'Z')}},
-      {{scan_range('0', '9'), '-', scan_range('0', '9')}},
+      {{scan_range('a', 'z'), '-', scan_range('a', 'z')}, {"create_range", {0, 2}}},
+      {{scan_range('A', 'Z'), '-', scan_range('A', 'Z')}, {"create_range", {0, 2}}},
+      {{scan_range('0', '9'), '-', scan_range('0', '9')}, {"create_range", {0, 2}}},
     }},
     {"Chars", {
-      {{"Char"}},
-      {{"Chars", "Char"}},
+      {{"Char"}, {"create_list", {0}}},
+      {{"Chars", "Char"}, {"append_list", {0}}},
     }},
     {"Char", {
-      {{scan_range('0', 'z')}},
-      {{'('}},
-      {{')'}},
+      {{scan_range(' ', '~')}, {"pass", {0}}},
     }},
   };
 
@@ -393,9 +394,11 @@ int main(int argc, char** argv)
     add_action("create_string", actions, &ast::action_create_string);
     add_action("append_string", actions, &ast::action_append_string);
     add_action("rule", actions, &ast::action_rule);
+    add_action("create_range", actions, &ast::action_create_range);
+    add_action("create_nonterminal", actions, &ast::action_create_nonterminal);
 
     auto value = earley::run_actions(
-        ebnf_pointers, ebnf_ids["Grammar"], argv[2], actions, ebnf_items);
+        ebnf_pointers, ebnf_ids["Grammar"], argv[2], actions, ebnf_items, ebnf_ids);
   }
 
   return 0;

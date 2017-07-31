@@ -58,20 +58,6 @@ namespace
     }
   };
 
-  template <template <typename, typename> typename Map, typename K, typename V>
-  Map<V, K>
-  invert_map(const Map<K, V>& map)
-  {
-    Map<V, K> inverted;
-
-    for (auto& p: map)
-    {
-      inverted[p.second] = p.first;
-    }
-
-    return inverted;
-  }
-
   void
   draw_pointers(const TreePointers::PointerList& pointers,
     const std::unordered_map<size_t, std::string>& names,

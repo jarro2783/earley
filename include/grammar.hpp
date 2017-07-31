@@ -53,6 +53,44 @@ namespace earley
 
     class GrammarString : public Grammar
     {
+      public:
+
+      GrammarString() = default;
+
+      GrammarString(char c)
+      : m_string(1, c)
+      {
+        std::cout << "Create string " << m_string << std::endl;
+      }
+
+      const std::string&
+      string() const
+      {
+        return m_string;
+      }
+
+      std::string&
+      string()
+      {
+        return m_string;
+      }
+
+      private:
+      std::string m_string;
+    };
+
+    class GrammarRange : public Grammar
+    {
+      public:
+      GrammarRange(char begin, char end)
+      : m_begin(begin)
+      , m_end(end)
+      {
+      }
+
+      private:
+      char m_begin;
+      char m_end;
     };
 
     class Rule : public Grammar
@@ -61,6 +99,7 @@ namespace earley
 
       Rule()
       {
+        std::cout << "Empty rule" << std::endl;
         productions.push_back(Epsilon());
       }
 
@@ -82,14 +121,24 @@ namespace earley
         auto& ptr = std::get<GrammarPtr>(productions);
         auto list = dynamic_cast<const GrammarList*>(ptr.get());
         // each of these should be either a name or a literal
+        std::cerr << "Parsed rule: ";
         for (auto& production: list->list())
         {
-          auto name = dynamic_cast<const GrammarString*>(ptr.get());
-          if (name != nullptr)
+          if (std::holds_alternative<GrammarPtr>(production))
           {
-            continue;
+            auto name = dynamic_cast<const GrammarString*>(
+              std::get<GrammarPtr>(production).get());
+            if (name != nullptr)
+            {
+              std::cerr << name->string() << ' ';
+            }
+          }
+          else if (std::holds_alternative<char>(production))
+          {
+            std::cerr << "'" << std::get<char>(production) << "'";
           }
         }
+        std::cerr << std::endl;
       }
 
       std::vector<Production> productions;
@@ -167,28 +216,109 @@ namespace earley
     GrammarNode
     action_create_string(std::vector<GrammarNode>& nodes)
     {
+      std::cout << "Create string" << std::endl;
+      switch (nodes.size())
+      {
+        case 0:
+        return std::make_shared<GrammarString>();
+
+        case 1:
+        if (!std::holds_alternative<char>(nodes[0]))
+        {
+          return values::Failed();
+        }
+        return std::make_shared<GrammarString>(std::get<char>(nodes[0]));
+
+        default:
+        return values::Failed();
+      }
     }
 
     inline
     GrammarNode
     action_append_string(std::vector<GrammarNode>& nodes)
     {
+      std::cout << "Append string" << std::endl;
+      if (nodes.size() != 2 || !std::holds_alternative<GrammarPtr>(nodes[0]))
+      {
+        return values::Failed();
+      }
+
+      auto ptr = std::get<GrammarPtr>(nodes[0]);
+      auto gstring = dynamic_cast<GrammarString*>(ptr.get());
+
+      if (gstring == nullptr)
+      {
+        return values::Failed();
+      }
+
+      auto& string = gstring->string();
+
+      if (std::holds_alternative<char>(nodes[1]))
+      {
+        string.append(1, std::get<char>(nodes[1]));
+        std::cout << "Made string " << string << std::endl;
+      }
+      else if (std::holds_alternative<GrammarPtr>(nodes[1]))
+      {
+        auto rhs = dynamic_cast<GrammarString*>(std::get<GrammarPtr>(nodes[1]).get());
+        if (rhs == nullptr)
+        {
+          std::cout << "String append failed" << std::endl;
+          return values::Failed();
+        }
+
+        string.append(rhs->string());
+        std::cout << "Made string " << string << std::endl;
+      }
+      else
+      {
+        std::cout << "String append failed" << std::endl;
+        return values::Failed();
+      }
+
+      return ptr;
     }
 
     inline
     GrammarNode
     action_rule(std::vector<GrammarNode>& nodes)
     {
+      std::cout << "Building a rule" << std::endl;
       switch (nodes.size())
       {
         case 0:
-        case 1:
-        case 2:
         return std::make_shared<Rule>();
+
+        case 1:
+        return std::make_shared<Rule>(nodes[0]);
+
+        case 2:
+        return std::make_shared<Rule>(nodes[0]);
         break;
       }
 
       return values::Empty();
+    }
+
+    inline
+    GrammarNode
+    action_create_range(std::vector<GrammarNode>& nodes)
+    {
+      if (nodes.size() != 2)
+      {
+        return values::Failed();
+      }
+
+      return std::make_shared<GrammarRange>(
+        std::get<char>(nodes[0]),
+        std::get<char>(nodes[1]));
+    }
+
+    inline
+    GrammarNode
+    action_create_nonterminal(std::vector<GrammarNode>& nodes)
+    {
     }
   }
 }
