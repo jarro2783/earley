@@ -1,8 +1,10 @@
 #ifndef EARLEY_GRAMMAR_HPP_INCLUDED
 #define EARLEY_GRAMMAR_HPP_INCLUDED
 
-#include "earley.hpp"
 #include <memory>
+
+#include "earley.hpp"
+#include "earley/variant.hpp"
 
 namespace earley
 {
@@ -91,6 +93,21 @@ namespace earley
       private:
       char m_begin;
       char m_end;
+    };
+
+    class GrammarNonterminal : public Grammar
+    {
+      public:
+      GrammarNonterminal(std::string name,
+        std::vector<GrammarPtr> rules)
+      : m_name(std::move(name))
+      , m_rules(std::move(rules))
+      {
+      }
+
+      private:
+      std::string m_name;
+      std::vector<GrammarPtr> m_rules;
     };
 
     class Rule : public Grammar
@@ -319,6 +336,41 @@ namespace earley
     GrammarNode
     action_create_nonterminal(std::vector<GrammarNode>& nodes)
     {
+      if (nodes.size() != 2)
+      {
+        return values::Failed();
+      }
+
+      const GrammarString* name = nullptr;
+      const GrammarList* rules = nullptr;
+
+      if (holds<GrammarPtr>(nodes[0]))
+      {
+        name = dynamic_cast<const GrammarString*>(get<GrammarPtr>(nodes[0]).get());
+      }
+
+      if (holds<GrammarPtr>(nodes[1]))
+      {
+        rules = dynamic_cast<const GrammarList*>(get<GrammarPtr>(nodes[0]).get());
+      }
+
+      if (name == nullptr || rules == nullptr)
+      {
+        return values::Failed();
+      }
+
+      std::vector<GrammarPtr> rules_ptrs;
+      for (auto& node: rules->list())
+      {
+        if (!holds<GrammarPtr>(node))
+        {
+          return values::Failed();
+        }
+
+        rules_ptrs.push_back(get<GrammarPtr>(node));
+      }
+
+      return std::make_shared<GrammarNonterminal>(name->string(), rules_ptrs);
     }
   }
 }

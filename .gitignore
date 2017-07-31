@@ -2,3 +2,4 @@
 earley
 .ninja_*
 *.o.d
+!include/earley/
