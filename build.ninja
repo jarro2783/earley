@@ -9,7 +9,8 @@ rule cxx_link
 build earley.o: cxx earley.cpp
 build grammar.o: cxx grammar.cpp
 build main.o: cxx main.cpp
-build earley: cxx_link earley.o grammar.o main.o
+build numbers.o: cxx numbers.cpp
+build earley: cxx_link earley.o grammar.o main.o numbers.o
 
 # tests
 build test/main.o: cxx test/main.cpp

@@ -482,6 +482,25 @@ namespace earley
   sorted_index(const ItemSetList& item_sets);
 
   typedef std::vector<std::vector<std::vector<Item>>> SortedItemSets;
+
+  template <typename T>
+  void
+  add_action(
+    const std::string& name,
+    std::unordered_map<std::string, T (*)(std::vector<T>&)>& actions,
+    T (*fun)(std::vector<T>&)
+  )
+  {
+    actions[name] = fun;
+  }
+
+  template <typename Result>
+  Result
+  handle_pass(std::vector<Result>& parts)
+  {
+    return parts.at(0);
+  }
+
 }
 
 std::tuple<bool, double, earley::ItemSetList, earley::TreePointers>
