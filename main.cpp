@@ -31,16 +31,6 @@ int main(int argc, char** argv)
     parse_expression(options["expression"].as<std::string>(), debug, timing);
   }
 
-#if 0
-  if (!success)
-  {
-    std::cerr << "Unable to parse" << std::endl;
-  } else if (timing)
-  {
-    std::cout << elapsed << std::endl;
-  }
-#endif
-
   Grammar ebnf = {
     {"Grammar", {
       {{"Nonterminal"}, {"create_list", {0}}},
@@ -121,7 +111,7 @@ int main(int argc, char** argv)
     }},
   };
 
-  if (argc < 3)
+  if (argc < 2)
   {
     std::cerr << "Give me an ebnf to parse" << std::endl;
     exit(0);
@@ -139,7 +129,7 @@ int main(int argc, char** argv)
   }
 
   auto [ebnf_parsed, ebnf_time, ebnf_items, ebnf_pointers] =
-    process_input(debug, ebnf_ids["Grammar"], argv[2], ebnf_rules, ebnf_ids);
+    process_input(debug, ebnf_ids["Grammar"], argv[1], ebnf_rules, ebnf_ids);
   (void)ebnf_items;
   (void)ebnf_pointers;
 
@@ -168,7 +158,9 @@ int main(int argc, char** argv)
     add_action("create_nonterminal", actions, &ast::action_create_nonterminal);
 
     auto value = earley::run_actions(
-        ebnf_pointers, ebnf_ids["Grammar"], argv[2], actions, ebnf_items, ebnf_ids);
+        ebnf_pointers, ebnf_ids["Grammar"], argv[1], actions, ebnf_items, ebnf_ids);
+
+    print_grammar(value);
   }
 
   return 0;

@@ -105,6 +105,18 @@ namespace earley
       {
       }
 
+      const std::string&
+      name() const
+      {
+        return m_name;
+      }
+
+      auto&
+      rules() const
+      {
+        return m_rules;
+      }
+
       private:
       std::string m_name;
       std::vector<GrammarPtr> m_rules;
@@ -117,7 +129,7 @@ namespace earley
       Rule()
       {
         std::cout << "Empty rule" << std::endl;
-        productions.push_back(Epsilon());
+        m_productions.push_back(Epsilon());
       }
 
       Rule(const GrammarNode& productions)
@@ -128,6 +140,12 @@ namespace earley
       Rule(const GrammarNode& productions, const GrammarNode&)
       {
         process_productions(productions);
+      }
+
+      auto&
+      productions() const
+      {
+        return m_productions;
       }
 
       private:
@@ -148,6 +166,7 @@ namespace earley
             if (name != nullptr)
             {
               std::cerr << name->string() << ' ';
+              m_productions.push_back(name->string());
             }
           }
           else if (std::holds_alternative<char>(production))
@@ -158,11 +177,7 @@ namespace earley
         std::cerr << std::endl;
       }
 
-      std::vector<Production> productions;
-    };
-
-    class Nonterminal : public Grammar
-    {
+      std::vector<Production> m_productions;
     };
 
     inline
@@ -336,6 +351,7 @@ namespace earley
     GrammarNode
     action_create_nonterminal(std::vector<GrammarNode>& nodes)
     {
+      std::cout << "Trying to make a nonterminal" << std::endl;
       if (nodes.size() != 2)
       {
         return values::Failed();
@@ -351,7 +367,7 @@ namespace earley
 
       if (holds<GrammarPtr>(nodes[1]))
       {
-        rules = dynamic_cast<const GrammarList*>(get<GrammarPtr>(nodes[0]).get());
+        rules = dynamic_cast<const GrammarList*>(get<GrammarPtr>(nodes[1]).get());
       }
 
       if (name == nullptr || rules == nullptr)
@@ -370,8 +386,13 @@ namespace earley
         rules_ptrs.push_back(get<GrammarPtr>(node));
       }
 
+      std::cout << "Built nonterminal" << std::endl;
+
       return std::make_shared<GrammarNonterminal>(name->string(), rules_ptrs);
     }
+
+    void
+    print_grammar(GrammarNode grammar);
   }
 }
 

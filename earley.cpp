@@ -72,12 +72,15 @@ namespace
       {
         for (auto& item_label: items.second)
         {
-          out << "  \"";
-          items.first.print(out, names);
-          out << ":" << cluster << "\" -> \"";
-          item_label.second.first.print(out, names);
-          out << ":" << item_label.second.second << "\" [style=" << style
-              << " label=\"" << item_label.first << "\"];\n";
+          for (auto& pointer: item_label.second)
+          {
+            out << "  \"";
+            items.first.print(out, names);
+            out << ":" << cluster << "\" -> \"";
+            pointer.first.print(out, names);
+            out << ":" << pointer.second << "\" [style=" << style
+                << " label=\"" << item_label.first << "\"];\n";
+          }
         }
       }
       ++cluster;
@@ -548,7 +551,10 @@ process_input(
               std::cout << "Reduction from ";
               item_reduction.first.print(std::cout, rule_names);
               std::cout << " to ";
-              reduction.second.first.print(std::cout, rule_names);
+              for (auto& pointer: reduction.second)
+              {
+                pointer.first.print(std::cout, rule_names);
+              }
               std::cout << " labelled " << reduction.first << std::endl;
             }
           }
@@ -562,7 +568,10 @@ process_input(
               std::cout << "Reduction from ";
               item.print(std::cout, rule_names);
               std::cout << " to ";
-              reduction.second.first.print(std::cout, rule_names);
+              for (auto& pointer: reduction.second)
+              {
+                pointer.first.print(std::cout, rule_names);
+              }
               std::cout << " labelled " << reduction.first << std::endl;
             }
           }

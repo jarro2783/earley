@@ -6,6 +6,7 @@
 #include <functional>
 #include <initializer_list>
 #include <map>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include <variant>
@@ -240,6 +241,47 @@ namespace earley
     std::vector<Entry>::const_iterator m_current;
   };
 
+  inline
+  bool
+  operator<(const std::pair<Item, size_t>& lhs,
+    const std::pair<Item, size_t>& rhs)
+  {
+    //ignore the label because I think it's redundant
+    auto& li = lhs.first;
+    auto& ri = rhs.first;
+
+    if (&li.rule() < &ri.rule())
+    {
+      return true;
+    }
+    else if (&li.rule() > &ri.rule())
+    {
+      return false;
+    }
+
+    if (li.where() < ri.where())
+    {
+      return true;
+    }
+    else if (li.where() > ri.where())
+    {
+    }
+
+    auto left_length = li.rule().end() - li.rule().begin();
+    auto right_length = ri.rule().end() - ri.rule().begin();
+
+    if (left_length < right_length)
+    {
+      return true;
+    }
+    else if (left_length > right_length)
+    {
+      return false;
+    }
+
+    return false;
+  }
+
   //typedef std::unordered_set<Item> ItemSet;
   typedef HashSet<Item> ItemSet;
   typedef std::vector<ItemSet> ItemSetList;
@@ -408,7 +450,7 @@ namespace earley
   {
     public:
 
-    typedef std::map<size_t, std::pair<Item, size_t>> ItemLabels;
+    typedef std::map<size_t, std::set<std::pair<Item, size_t>>> ItemLabels;
     typedef std::unordered_map<Item, ItemLabels> Pointers;
     typedef std::vector<Pointers> PointerList;
 
@@ -460,7 +502,7 @@ namespace earley
     {
       ensure_size(p, wherefrom);
       auto& pointers = p[wherefrom][from];
-      pointers.insert({label, {to, whereto}});
+      pointers[label].insert({to, whereto});
     }
 
     PointerList m_reductions;
@@ -858,9 +900,9 @@ namespace earley
         {
           auto& labels = iter->second;
           auto label = labels.rbegin();
-          if (label != labels.rend())
+          if (label != labels.rend() && label->second.begin() != label->second.end())
           {
-            return &label->second;
+            return &*label->second.begin();
           }
         }
 
