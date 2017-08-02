@@ -502,6 +502,12 @@ namespace earley
     {
       ensure_size(p, wherefrom);
       auto& pointers = p[wherefrom][from];
+
+      if (pointers[label].size() != 0)
+      {
+        std::cout << "Duplicate at " << from << ": " << wherefrom << std::endl;
+      }
+
       pointers[label].insert({to, whereto});
     }
 
@@ -796,9 +802,6 @@ namespace earley
           std::vector<Ret> run_actions;
           for (auto& handle: std::get<1>(action_runner))
           {
-            //std::cout << "Processing " << item.nonterminal() << std::endl;
-            //std::cout << "Pushing back " << handle << std::endl;
-            //std::cout << "and results is size " << results.size() << std::endl;
             run_actions.push_back(results.at(handle));
           }
 
@@ -969,7 +972,8 @@ namespace earley
 
     for (auto& item: item_sets[input.size()])
     {
-      if (item.where() == 0 && item.nonterminal() == start)
+      if (item.where() == 0 && item.nonterminal() == start &&
+        item.position() == item.rule().end())
       {
         auto inverted = invert_map(names);
         detail::ForestActions run(pointers, input, inverted);

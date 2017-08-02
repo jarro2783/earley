@@ -50,7 +50,7 @@ print_rule(GrammarPtr ptr)
   {
     if (holds<std::string>(p))
     {
-      std::cout << get<std::string>(p) << " ";
+      std::cout << " " << get<std::string>(p);
     }
   }
 }
@@ -62,7 +62,7 @@ print_nonterminal(GrammarNode nt)
   auto ptr = get<GrammarPtr>(nt);
   auto node = checked_cast<const earley::ast::GrammarNonterminal*>(ptr.get());
 
-  std::cout << node->name() << " -> ";
+  std::cout << node->name() << " ->";
 
   auto& rules = node->rules();
   auto iter = rules.begin();
@@ -75,10 +75,11 @@ print_nonterminal(GrammarNode nt)
 
   while (iter != rules.end())
   {
-    std::cout << "  |";
+    std::cout << std::endl << "  |";
     print_rule(*iter);
     ++iter;
   }
+  std::cout << std::endl;
 }
 
 }

@@ -329,7 +329,11 @@ struct RecogniseActions
     {
       std::cout << "Scan adding " << m_item.next() << ":" << m_which+1
                 << " -> " << m_item << ":" << m_which << std::endl;
-      m_pointers.predecessor(m_which+1, m_which, m_which, m_item.next(), m_item);
+
+      if (m_item.position() != m_item.rule().begin())
+      {
+        m_pointers.predecessor(m_which+1, m_which, m_which, m_item.next(), m_item);
+      }
       m_item_sets[m_which+1].insert(m_item.next());
     }
   }
@@ -342,7 +346,7 @@ struct RecogniseActions
     std::cout << "Epsilon adding reduction " 
               << next << ":" << m_which 
               << " -> " << m_item << ":" << m_which << std::endl;
-    m_pointers.reduction(m_which, m_which, next, m_item);
+    //m_pointers.reduction(m_which, m_which, next, m_item);
     if (m_item_sets[m_which].insert(next).second)
     {
       m_stack.push_back(next);

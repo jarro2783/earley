@@ -212,7 +212,7 @@ namespace earley
           }
           else
           {
-            list->list().insert(list->list().begin(), std::get<GrammarPtr>(rhs));
+            list->list().push_back(std::get<GrammarPtr>(rhs));
           }
         }
 
