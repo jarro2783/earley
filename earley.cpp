@@ -300,7 +300,11 @@ struct RecogniseActions
       auto next = m_item.next();
       std::cout << "Nullable prediction adding " << next << ":" << m_which 
                 << " -> " << m_item << ":" << m_which << std::endl;
-      m_pointers.predecessor(m_which, m_which, m_which, next, m_item);
+
+      if (m_item.position() != m_item.rule().begin())
+      {
+        m_pointers.predecessor(m_which, m_which, m_which, next, m_item);
+      }
 
       if (m_item_sets[m_which].insert(next).second)
       {

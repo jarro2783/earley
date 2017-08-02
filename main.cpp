@@ -34,7 +34,7 @@ int main(int argc, char** argv)
   Grammar ebnf = {
     {"Grammar", {
       {{"Nonterminal"}, {"create_list", {0}}},
-      {{"Grammar", "Space", "Nonterminal"}, {"append_list", {0, 1}}},
+      {{"Grammar", "Space", "Nonterminal"}, {"append_list", {0, 2}}},
     }},
     {"Space", {
       {{Epsilon()}},
