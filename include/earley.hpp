@@ -503,10 +503,10 @@ namespace earley
       ensure_size(p, wherefrom);
       auto& pointers = p[wherefrom][from];
 
-      if (pointers[label].size() != 0)
-      {
-        std::cout << "Duplicate at " << from << ": " << wherefrom << std::endl;
-      }
+      //if (pointers[label].size() != 0)
+      //{
+      //  std::cout << "Duplicate at " << from << ": " << wherefrom << std::endl;
+      //}
 
       pointers[label].insert({to, whereto});
     }
@@ -805,25 +805,25 @@ namespace earley
             run_actions.push_back(results.at(handle));
           }
 
-          std::cout << "Tree: |";
-          for (size_t i = 0; i != which; ++i)
-          {
-            std::cout << ' ';
-          }
-          item.print(std::cout, m_names);
-          std::cout << std::endl;
+          //std::cout << "Tree: |";
+          //for (size_t i = 0; i != which; ++i)
+          //{
+          //  std::cout << ' ';
+          //}
+          //item.print(std::cout, m_names);
+          //std::cout << std::endl;
 
           return iter->second(run_actions);
         }
         else
         {
-          std::cout << "Tree: |";
-          for (size_t i = 0; i != which; ++i)
-          {
-            std::cout << ' ';
-          }
-          item.print(std::cout, m_names);
-          std::cout << std::endl;
+          //std::cout << "Tree: |";
+          //for (size_t i = 0; i != which; ++i)
+          //{
+          //  std::cout << ' ';
+          //}
+          //item.print(std::cout, m_names);
+          //std::cout << std::endl;
           return values::Empty();
         }
       }
@@ -841,7 +841,7 @@ namespace earley
         // visit the predecessor first
         // then our reduction
 
-        std::cout << item << std::endl;
+        //std::cout << item << std::endl;
         // find the predecessor
         {
           auto predecessor = find_previous(
@@ -869,14 +869,14 @@ namespace earley
           auto current = item.position();
           if (current == item.rule().begin())
           {
-            std::cout << "Start" << std::endl;
+            //std::cout << "Start" << std::endl;
             return;
           }
 
           --current;
           if (std::holds_alternative<Scanner>(*current))
           {
-            std::cout << "Scanning " << m_input[which-1] << " at " << which << std::endl;
+            //std::cout << "Scanning " << m_input[which-1] << " at " << which << std::endl;
             results.push_back(m_input[which-1]);
           }
           else if (std::holds_alternative<Epsilon>(*current))

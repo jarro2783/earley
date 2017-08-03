@@ -141,6 +141,11 @@ parse_expression(const std::string& expression, bool debug, bool timing)
 
   if (success)
   {
+    if (timing)
+    {
+      std::cout << elapsed << std::endl;
+    }
+
     std::unordered_map<std::string, earley::ActionResult<int>(*)(
       std::vector<earley::ActionResult<int>>&
     )> actions;

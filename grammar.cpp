@@ -206,7 +206,10 @@ parse_ebnf(const std::string& input, bool debug, bool timing)
   }
   else
   {
-    std::cout << ebnf_time << std::endl;
+    if (timing)
+    {
+      std::cout << ebnf_time << std::endl;
+    }
 
     std::unordered_map<std::string, ast::GrammarNode(*)(
       std::vector<ast::GrammarNode>&

@@ -307,8 +307,8 @@ struct RecogniseActions
     {
       // we are completing *this* item, into the same set
       auto next = m_item.next();
-      std::cout << "Nullable prediction adding " << next << ":" << m_which 
-                << " -> " << m_item << ":" << m_which << std::endl;
+      //std::cout << "Nullable prediction adding " << next << ":" << m_which 
+      //          << " -> " << m_item << ":" << m_which << std::endl;
 
       if (m_item.position() != m_item.rule().begin())
       {
@@ -323,9 +323,9 @@ struct RecogniseActions
       auto nulled = m_nulled.find(rule);
       if (nulled != m_nulled.end())
       {
-        std::cout << "Nulled prediction adding reduction " 
-                  << next << ":" << m_which 
-                  << " -> " << nulled->second << ":" << m_which << std::endl;
+        //std::cout << "Nulled prediction adding reduction " 
+        //          << next << ":" << m_which 
+        //          << " -> " << nulled->second << ":" << m_which << std::endl;
         // The item has already been added, we just add a reduction here
         m_pointers.reduction(m_which, m_which, next, nulled->second);
       }
@@ -340,8 +340,8 @@ struct RecogniseActions
     // if input[which] == item then advance
     if (m_which < m_input.length() && scan(m_input[m_which]))
     {
-      std::cout << "Scan adding " << m_item.next() << ":" << m_which+1
-                << " -> " << m_item << ":" << m_which << std::endl;
+      //std::cout << "Scan adding " << m_item.next() << ":" << m_which+1
+      //          << " -> " << m_item << ":" << m_which << std::endl;
 
       if (m_item.position() != m_item.rule().begin())
       {
@@ -356,9 +356,9 @@ struct RecogniseActions
   {
     // this is a completion
     auto next = m_item.next();
-    std::cout << "Epsilon adding reduction " 
-              << next << ":" << m_which 
-              << " -> " << m_item << ":" << m_which << std::endl;
+    //std::cout << "Epsilon adding reduction " 
+    //          << next << ":" << m_which 
+    //          << " -> " << m_item << ":" << m_which << std::endl;
     //m_pointers.reduction(m_which, m_which, next, m_item);
     if (m_item_sets[m_which].insert(next).second)
     {
@@ -409,15 +409,15 @@ complete(
     {
       //bring it into our set
       auto next = consider.next();
-      std::cout << "Completion adding reduction " 
-                << next << ":" << which 
-                << " -> " << item << ":" << which << std::endl;
+      //std::cout << "Completion adding reduction " 
+      //          << next << ":" << which 
+      //          << " -> " << item << ":" << which << std::endl;
       pointers.reduction(which, item.where(), next, item);
 
       if (dot != consider.rule().begin())
       {
-        std::cout << "Completion adding " << next << ":" << which
-                  << " -> " << consider << ":" << item.where() << std::endl;
+        //std::cout << "Completion adding " << next << ":" << which
+        //          << " -> " << consider << ":" << item.where() << std::endl;
         pointers.predecessor(which, item.where(), item.where(), next, consider);
       }
       if (item_sets[which].count(next) == 0 && to_add.count(next) == 0)
