@@ -111,7 +111,7 @@ namespace earley
   typedef std::variant<
     Epsilon,
     size_t,
-    std::function<bool(char)>
+    Scanner
   > Entry;
 
   typedef std::tuple<std::string, std::vector<size_t>> ActionArgs;

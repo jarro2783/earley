@@ -2,6 +2,7 @@
 #define EARLEY_GRAMMAR_HPP_INCLUDED
 
 #include <memory>
+#include <ostream>
 
 #include "earley.hpp"
 #include "earley/variant.hpp"
@@ -90,6 +91,16 @@ namespace earley
       {
       }
 
+      auto
+      make_scanner() const
+      {
+        return scan_range(m_begin, m_end);
+      }
+
+      friend
+      std::ostream&
+      operator<<(std::ostream&, const GrammarRange&);
+
       private:
       char m_begin;
       char m_end;
@@ -161,17 +172,25 @@ namespace earley
         {
           if (std::holds_alternative<GrammarPtr>(production))
           {
-            auto name = dynamic_cast<const GrammarString*>(
-              std::get<GrammarPtr>(production).get());
-            if (name != nullptr)
+            auto ptr = std::get<GrammarPtr>(production).get();
+            const GrammarString* name = nullptr;
+            const GrammarRange* range = nullptr;
+
+            if ((name = dynamic_cast<const GrammarString*>(ptr)) != nullptr)
             {
               std::cerr << name->string() << ' ';
               m_productions.push_back(name->string());
             }
+            else if ((range = dynamic_cast<const GrammarRange*>(ptr)) != nullptr)
+            {
+              // Build a range here out of a GrammarRange
+              std::cerr << "Range: " << *range << std::endl;
+              m_productions.push_back(range->make_scanner());
+            }
           }
-          else if (std::holds_alternative<char>(production))
+          else if (holds<char>(production))
           {
-            std::cerr << "'" << std::get<char>(production) << "'";
+            m_productions.push_back(get<char>(production));
           }
         }
         std::cerr << std::endl;

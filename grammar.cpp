@@ -52,6 +52,11 @@ print_rule(GrammarPtr ptr)
     {
       std::cout << " " << get<std::string>(p);
     }
+    // TODO: implement Scanner better and print it here
+    else if (holds<Scanner>(p))
+    {
+      std::cout << "'scanfn'";
+    }
   }
 }
 
@@ -96,6 +101,13 @@ print_grammar(GrammarNode grammar)
   {
     print_nonterminal(nt);
   }
+}
+
+std::ostream&
+operator<<(std::ostream& os, const GrammarRange& range)
+{
+  os << "[" << range.m_begin << "-" << range.m_end << "]";
+  return os;
 }
 
 }
@@ -149,7 +161,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing)
     }},
     {"Literal", {
       {{'\'', "Char", '\''}, {"pass", {1}}},
-      {{'[', "Ranges", ']'}, {"pass", {1}}},
+      {{'[', "Range", ']'}, {"pass", {1}}},
       {{'"', "Chars", '"'}, {"pass", {1}}},
     }},
     {"Name", {
