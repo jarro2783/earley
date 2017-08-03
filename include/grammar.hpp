@@ -394,6 +394,9 @@ namespace earley
     void
     print_grammar(GrammarNode grammar);
   }
+
+  void
+  parse_ebnf(const std::string& input, bool debug, bool timing);
 }
 
 #endif

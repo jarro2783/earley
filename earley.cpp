@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "earley.hpp"
 
@@ -62,7 +63,8 @@ namespace
   draw_pointers(const TreePointers::PointerList& pointers,
     const std::unordered_map<size_t, std::string>& names,
     std::ostream& out,
-    const std::string& style
+    const std::string& style,
+    std::unordered_set<Item>& seen
   )
   {
     size_t cluster = 0;
@@ -70,10 +72,13 @@ namespace
     {
       for (auto& items: item_set)
       {
+        seen.insert(items.first);
         for (auto& item_label: items.second)
         {
           for (auto& pointer: item_label.second)
           {
+            seen.insert(pointer.first);
+
             out << "  \"";
             items.first.print(out, names);
             out << ":" << cluster << "\" -> \"";
@@ -93,8 +98,12 @@ namespace
   {
     std::ofstream out("graph");
     std::unordered_map<Item, size_t> nodes;
+    std::unordered_set<Item> seen;
 
     out << "digraph {\n";
+
+    draw_pointers(pointers.reductions(), names, out, "solid", seen);
+    draw_pointers(pointers.predecessors(), names, out, "dashed", seen);
 
     size_t index = 0;
     for (auto& items: item_sets)
@@ -103,16 +112,16 @@ namespace
       out << "  label = \"set " << index << "\";\n";
       for (auto& item: items)
       {
-        out << "  \"";
-        item.print(out, names);
-        out << ":" << index << "\";\n";
+        if (seen.count(item))
+        {
+          out << "  \"";
+          item.print(out, names);
+          out << ":" << index << "\";\n";
+        }
       }
       out << "}\n";
       ++index;
     }
-
-    draw_pointers(pointers.reductions(), names, out, "solid");
-    draw_pointers(pointers.predecessors(), names, out, "dashed");
 
     out << "}";
   }
