@@ -562,7 +562,7 @@ process_input(
 
 std::tuple<std::vector<earley::RuleList>,
   std::unordered_map<std::string, size_t>>
-generate_rules(earley::Grammar& grammar);
+generate_rules(const earley::Grammar& grammar);
 
 std::vector<bool>
 find_nullable(const std::vector<earley::RuleList>& rules);

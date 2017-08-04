@@ -37,7 +37,13 @@ int main(int argc, char** argv)
     exit(0);
   }
 
-  earley::parse_ebnf(argv[1], debug, timing);
+  std::string to_parse;
+  if (argc >= 3)
+  {
+    to_parse = argv[2];
+  }
+
+  earley::parse_ebnf(argv[1], debug, timing, to_parse);
 
   return 0;
 }

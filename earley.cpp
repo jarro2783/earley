@@ -230,7 +230,7 @@ make_entry(
 
 std::tuple<std::vector<RuleList>,
   std::unordered_map<std::string, size_t>>
-generate_rules(Grammar& grammar)
+generate_rules(const Grammar& grammar)
 {
   size_t next_id = 0;
   std::unordered_map<std::string, size_t> identifiers;

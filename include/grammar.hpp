@@ -190,6 +190,7 @@ namespace earley
           }
           else if (holds<char>(production))
           {
+            std::cerr << get<char>(production);
             m_productions.push_back(get<char>(production));
           }
         }
@@ -409,13 +410,11 @@ namespace earley
 
       return std::make_shared<GrammarNonterminal>(name->string(), rules_ptrs);
     }
-
-    void
-    print_grammar(GrammarNode grammar);
   }
 
   void
-  parse_ebnf(const std::string& input, bool debug, bool timing);
+  parse_ebnf(const std::string& input, bool debug, bool timing,
+    const std::string& text = std::string());
 }
 
 #endif

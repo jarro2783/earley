@@ -56,6 +56,9 @@ print_rule(GrammarPtr ptr)
     else if (holds<Scanner>(p))
     {
       std::cout << "'scanfn'";
+    } else if (holds<char>(p))
+    {
+      std::cout << " '" << get<char>(p) << "'";
     }
   }
 }
@@ -87,8 +90,6 @@ print_nonterminal(GrammarNode nt)
   std::cout << std::endl;
 }
 
-}
-
 void
 print_grammar(GrammarNode grammar)
 {
@@ -103,6 +104,59 @@ print_grammar(GrammarNode grammar)
   }
 }
 
+std::vector<RuleWithAction>
+build_rules(const std::vector<GrammarPtr>& rules)
+{
+  std::vector<RuleWithAction> built;
+
+  for (auto& ptr: rules)
+  {
+    auto rule = checked_cast<Rule*>(ptr.get());
+    built.push_back(rule->productions());
+  }
+
+  return built;
+}
+
+std::string
+add_nonterminal(earley::Grammar& grammar, GrammarNode tree)
+{
+  check<GrammarPtr>(tree);
+
+  auto ptr = get<GrammarPtr>(tree);
+  auto nt = checked_cast<GrammarNonterminal*>(ptr.get());
+
+  grammar.insert({nt->name(), build_rules(nt->rules())});
+
+  return nt->name();
+}
+
+std::tuple<earley::Grammar, std::string>
+compile_grammar(GrammarNode tree)
+{
+  earley::Grammar grammar;
+
+  check<GrammarPtr>(tree);
+
+  auto ptr = get<GrammarPtr>(tree);
+  auto list = checked_cast<const GrammarList*>(ptr.get());
+
+  std::string start;
+
+  for (auto& nt: list->list())
+  {
+    auto name = add_nonterminal(grammar, nt);
+    if (start.size() == 0)
+    {
+      start = name;
+    }
+  }
+
+  return {grammar, start};
+}
+
+}
+
 std::ostream&
 operator<<(std::ostream& os, const GrammarRange& range)
 {
@@ -110,10 +164,30 @@ operator<<(std::ostream& os, const GrammarRange& range)
   return os;
 }
 
+void
+parse(const earley::Grammar& grammar, const std::string& start,
+  const std::string& text)
+{
+  auto [rules, ids] = generate_rules(grammar);
+  auto [parsed, time, items, pointers] =
+    process_input(false, ids["Grammar"], text, rules, ids);
+
+  if (parsed)
+  {
+    std::cout << "Parsed successfully";
+  }
+  else
+  {
+    std::cout << "Failed to parse";
+  }
+  std::cout << std::endl;
+}
+
 }
 
 void
-parse_ebnf(const std::string& input, bool debug, bool timing)
+parse_ebnf(const std::string& input, bool debug, bool timing,
+  const std::string& text)
 {
   Grammar ebnf = {
     {"Grammar", {
@@ -144,7 +218,6 @@ parse_ebnf(const std::string& input, bool debug, bool timing)
       {{"Rules", "Space", '|', "Rule"}, {"append_list", {0, 3}}},
     }},
     {"Rule", {
-      //{{Epsilon()}, {"rule", {}}},
       {{"Productions"}, {"rule", {0}}},
       {{"Productions", "Action"}, {"rule", {0, 1}}},
     }},
@@ -191,7 +264,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing)
       {{"Chars", "Char"}, {"append_list", {0}}},
     }},
     {"Char", {
-      {{scan_range(' ', '~')}, {"pass", {0}}},
+      {{scan_range('a', 'z')}, {"pass", {0}}},
     }},
   };
 
@@ -242,6 +315,12 @@ parse_ebnf(const std::string& input, bool debug, bool timing)
         ebnf_pointers, ebnf_ids["Grammar"], input, actions, ebnf_items, ebnf_ids);
 
     print_grammar(value);
+    auto [built, start] = compile_grammar(value);
+
+    if (text.size())
+    {
+      parse(built, start, text);
+    }
   }
 }
 
