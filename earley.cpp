@@ -8,6 +8,8 @@
 
 #include "earley.hpp"
 
+#include <earley/variant.hpp>
+
 using namespace earley;
 
 namespace earley
@@ -262,6 +264,56 @@ generate_rules(const Grammar& grammar)
   return std::make_tuple(rule_set, identifiers);
 }
 
+const Item*
+find_transitive_candidate
+(
+  ItemSet& item_set,
+  size_t nonterminal
+)
+{
+  const Item* candidate = nullptr;
+
+  for (auto& item: item_set)
+  {
+    auto position = item.position();
+    if (position != item.end())
+    {
+      auto& entry = *position;
+      // TODO: quasi-complete, not just complete
+      if (holds<size_t>(entry) && get<size_t>(entry) == nonterminal
+          && position+1 == item.end())
+      {
+        candidate = &item;
+      }
+    }
+  }
+
+  return candidate;
+}
+
+void
+add_transitive_items(
+  ItemSetList& item_sets,
+  TransitiveItemSetList& transitive_items,
+  size_t which
+)
+{
+  for (auto& item: item_sets[which])
+  {
+    if (item.position() == item.end())
+    {
+      auto nonterminal = item.nonterminal();
+      auto* candidate = find_transitive_candidate(item_sets[item.where()],
+                                                  nonterminal);
+
+      if (candidate != nullptr)
+      {
+        transitive_items[which].insert({*candidate, nonterminal});
+      }
+    }
+  }
+}
+
 struct RecogniseActions
 {
   RecogniseActions(
@@ -441,6 +493,7 @@ void
 process_set(
   std::vector<Item>& to_process,
   ItemSetList& item_sets,
+  TransitiveItemSetList& transitive_items,
   TreePointers& pointers,
   const std::string& input,
   const std::vector<earley::RuleList>& rules,
@@ -473,6 +526,8 @@ process_set(
       complete(to_process, pointers, current, item_sets, which);
     }
   }
+
+  add_transitive_items(item_sets, transitive_items, which);
 }
 
 std::tuple<
@@ -490,6 +545,7 @@ process_input(
 )
 {
   ItemSetList item_sets(input.size() + 1);
+  TransitiveItemSetList transitive_items(input.size() + 1);
   auto nullable = find_nullable(rules);
 
   auto rule_names = invert_map(names);
@@ -519,7 +575,8 @@ process_input(
 
   for (size_t i = 0; i != input.size() + 1; ++i)
   {
-    process_set(process_stack, item_sets, pointers, input, rules, nullable, i);
+    process_set(process_stack, item_sets, transitive_items, pointers,
+      input, rules, nullable, i);
   }
 
   end = std::chrono::system_clock::now();
@@ -535,6 +592,11 @@ process_input(
       {
         item.print(std::cout, rule_names);
         std::cout << std::endl;
+      }
+
+      for (auto& t: transitive_items[n])
+      {
+        print(std::cout, t, rule_names);
       }
       ++n;
     }

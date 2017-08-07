@@ -283,8 +283,11 @@ namespace earley
   }
 
   //typedef std::unordered_set<Item> ItemSet;
+  typedef std::tuple<Item, size_t> TransitiveItem;
   typedef HashSet<Item> ItemSet;
+  typedef HashSet<TransitiveItem> TransitiveItemSet;
   typedef std::vector<ItemSet> ItemSetList;
+  typedef std::vector<TransitiveItemSet> TransitiveItemSetList;
   typedef std::vector<Rule> RuleList;
 
   inline
@@ -401,6 +404,19 @@ namespace earley
     os << " (" << item.m_start << ')';
 
     return os;
+  }
+
+  inline
+  void
+  print(
+    std::ostream& os,
+    const TransitiveItem& t,
+    const std::unordered_map<size_t, std::string>& names
+  )
+  {
+    os << names.find(std::get<1>(t))->second << ": ";
+    std::get<0>(t).print(os, names);
+    os << std::endl;
   }
 
   // A production is a single item that can produce something to be
@@ -590,6 +606,19 @@ namespace std
 
     return result;
   }
+
+  template <>
+  struct hash<tuple<earley::Item, size_t>>
+  {
+    size_t
+    operator()(const tuple<earley::Item, size_t>& t)
+    {
+      size_t result = get<1>(t);
+      hash<earley::Item> hi;
+      hash_combine(result, hi(get<0>(t)));
+      return result;
+    }
+  };
 }
 
 namespace earley
