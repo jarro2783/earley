@@ -166,11 +166,11 @@ operator<<(std::ostream& os, const GrammarRange& range)
 
 void
 parse(const earley::Grammar& grammar, const std::string& start,
-  const std::string& text)
+  const std::string& text, bool debug)
 {
   auto [rules, ids] = generate_rules(grammar);
   auto [parsed, time, items, pointers] =
-    process_input(false, ids["Grammar"], text, rules, ids);
+    process_input(debug, ids["Grammar"], text, rules, ids);
 
   if (parsed)
   {
@@ -330,7 +330,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
 
     if (text.size())
     {
-      parse(built, start, text);
+      parse(built, start, text, debug);
     }
   }
 }

@@ -268,10 +268,19 @@ const Item*
 find_transitive_candidate
 (
   ItemSet& item_set,
+  TransitiveItemSet& transitive_items,
   size_t nonterminal
 )
 {
   const Item* candidate = nullptr;
+
+  for (auto& ti: transitive_items)
+  {
+    if (std::get<1>(ti) == nonterminal)
+    {
+      return &std::get<0>(ti);
+    }
+  }
 
   for (auto& item: item_set)
   {
@@ -283,6 +292,10 @@ find_transitive_candidate
       if (holds<size_t>(entry) && get<size_t>(entry) == nonterminal
           && position+1 == item.end())
       {
+        if (candidate != nullptr)
+        {
+          return nullptr;
+        }
         candidate = &item;
       }
     }
@@ -304,6 +317,7 @@ add_transitive_items(
     {
       auto nonterminal = item.nonterminal();
       auto* candidate = find_transitive_candidate(item_sets[item.where()],
+                                                  transitive_items[item.where()],
                                                   nonterminal);
 
       if (candidate != nullptr)
