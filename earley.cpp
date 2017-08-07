@@ -264,25 +264,48 @@ generate_rules(const Grammar& grammar)
   return std::make_tuple(rule_set, identifiers);
 }
 
-const Item*
-find_transitive_candidate
+const TransitiveItem*
+find_transitive_item
 (
-  ItemSet& item_set,
-  TransitiveItemSet& transitive_items,
+  const TransitiveItemSet& transitive_items,
   size_t nonterminal
 )
 {
-  const Item* candidate = nullptr;
+  for (auto& ti: transitive_items)
+  {
+    if (std::get<1>(ti) == nonterminal)
+    {
+      return &ti;
+    }
+  }
+
+  return nullptr;
+}
+
+void
+insert_transitive_candidate
+(
+  ItemSetList& item_sets,
+  TransitiveItemSetList& transitive_item_sets,
+  size_t nonterminal,
+  size_t from,
+  size_t which
+)
+{
+  auto& transitive_items = transitive_item_sets[from];
 
   for (auto& ti: transitive_items)
   {
     if (std::get<1>(ti) == nonterminal)
     {
-      return &std::get<0>(ti);
+      transitive_item_sets[which].insert(ti);
+      return;
     }
   }
 
-  for (auto& item: item_set)
+  const Item* candidate = nullptr;
+
+  for (auto& item: item_sets[from])
   {
     auto position = item.position();
     if (position != item.end())
@@ -294,14 +317,17 @@ find_transitive_candidate
       {
         if (candidate != nullptr)
         {
-          return nullptr;
+          return;
         }
         candidate = &item;
       }
     }
   }
 
-  return candidate;
+  if (candidate != nullptr)
+  {
+    transitive_item_sets[which].insert({candidate->next(), nonterminal});
+  }
 }
 
 void
@@ -316,14 +342,11 @@ add_transitive_items(
     if (item.position() == item.end())
     {
       auto nonterminal = item.nonterminal();
-      auto* candidate = find_transitive_candidate(item_sets[item.where()],
-                                                  transitive_items[item.where()],
-                                                  nonterminal);
-
-      if (candidate != nullptr)
-      {
-        transitive_items[which].insert({*candidate, nonterminal});
-      }
+      insert_transitive_candidate(item_sets,
+                                  transitive_items,
+                                  nonterminal,
+                                  item.where(),
+                                  which);
     }
   }
 }
@@ -454,6 +477,7 @@ complete(
   TreePointers& pointers,
   const Item& item,
   std::vector<ItemSet>& item_sets,
+  TransitiveItemSetList& transitive_items,
   size_t which
 )
 {
@@ -462,7 +486,15 @@ complete(
   // we need to advance anything with our non-terminal to the right
   // of the current from where it was predicted into our current set
   auto ours = item.nonterminal();
-  //std::unordered_set<Item> to_add;
+  const TransitiveItem* ti = nullptr;
+
+  if ((ti = find_transitive_item(transitive_items[item.where()], ours)) != nullptr)
+  {
+    transitive_items[which].insert(*ti);
+    item_sets[which].insert(std::get<0>(*ti));
+    return;
+  }
+
   HashSet<Item> to_add(20);
 
   for (auto& consider : item_sets[item.where()])
@@ -537,7 +569,7 @@ process_set(
     }
     else
     {
-      complete(to_process, pointers, current, item_sets, which);
+      complete(to_process, pointers, current, item_sets, transitive_items, which);
     }
   }
 
