@@ -230,7 +230,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
       {{"Space", "Literal"}, {"pass", {1}}},
     }},
     {"Action", {
-      {{"Space", '#', "Space", "Name"}},
+      {{"Space", '#', "Name", "HardSpace", "Numbers"}},
     }},
     {"Literal", {
       {{'\'', "Char", '\''}, {"pass", {1}}},
@@ -265,6 +265,17 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
     }},
     {"Char", {
       {{scan_range('a', 'z')}, {"pass", {0}}},
+    }},
+    {"Numbers", {
+      {{"Space", "Number"}},
+      {{"Numbers", "HardSpace", "Number"}},
+    }},
+    {"Number", {
+      {{"Digit"}},
+      {{"Number", "Digit"}},
+    }},
+    {"Digit", {
+      {{scan_range('0', '9')}},
     }},
   };
 
