@@ -1,3 +1,6 @@
+#ifndef EARLEY_HASH_SET_HPP_INCLUDED
+#define EARLEY_HASH_SET_HPP_INCLUDED
+
 #include <cstddef>
 #include <iterator>
 #include <vector>
@@ -264,3 +267,5 @@ namespace earley
     T* m_memory;
   };
 }
+
+#endif
