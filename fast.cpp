@@ -136,10 +136,10 @@ Parser::item_transition(ItemSet* items, const Item* item, size_t index)
         (void)core;
         // prediction
         // insert initial items for this symbol
-        // for (auto& prediction: grammar.get(get<size_t>(symbol.code)))
-        //{
-        //  add_initial_item(core, get_item(&prediction, 0));
-        //}
+        for (auto& prediction: m_grammar.get(get<size_t>(symbol.code)))
+        {
+          add_initial_item(core, get_item(&prediction, 0));
+        }
       }
     }
 

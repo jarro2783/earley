@@ -368,6 +368,12 @@ namespace earley
       return m_rules;
     }
 
+    auto&
+    get(size_t rule) const
+    {
+      return m_rules[rule];
+    }
+
     private:
     size_t m_start;
     std::vector<RuleList> m_rules;
