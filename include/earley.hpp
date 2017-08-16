@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "earley_hash_set.hpp"
+#include "earley/variant.hpp"
 
 template <typename T>
 struct is_initializer_list;
@@ -67,18 +68,28 @@ namespace earley
     return inverted;
   }
 
+  typedef variant<
+    size_t,
+    char
+  > RawSymbol;
+
   struct Symbol
   {
-    size_t code;
+    RawSymbol code;
     bool empty;
-    bool terminal;
+
+    bool
+    terminal() const
+    {
+      return holds<char>(code);
+    }
   };
 
   inline
   bool
   operator==(const Symbol& lhs, const Symbol& rhs)
   {
-    return lhs.code == rhs.code && lhs.terminal == rhs.terminal;
+    return lhs.code == rhs.code;
   }
 
   inline
@@ -693,13 +704,29 @@ namespace std
   };
 
   template <>
+  struct hash<earley::RawSymbol>
+  {
+    size_t
+    operator()(const earley::RawSymbol& s)
+    {
+      if (earley::holds<size_t>(s))
+      {
+        return earley::get<size_t>(s);
+      }
+      else
+      {
+        return earley::get<char>(s);
+      }
+    }
+  };
+
+  template <>
   struct hash<earley::Symbol>
   {
     size_t
     operator()(const earley::Symbol& s)
     {
-      size_t result = s.code;
-      hash_combine(result, s.terminal);
+      size_t result = hash<earley::RawSymbol>()(s.code);
 
       return result;
     }

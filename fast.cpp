@@ -1,9 +1,13 @@
 #include "earley/fast.hpp"
 
-namespace earley
+namespace earley::fast
 {
-namespace fast
+
+Symbol
+create_token(char c)
 {
+  return Symbol{c, false};
+}
 
 void
 ItemSet::add_start_item(const Item* item, size_t distance)
@@ -27,10 +31,17 @@ Parser::parse(const std::string& input)
 
   while (position < input.size())
   {
-    auto set = create_new_set();
+    auto set = create_new_set(position, input[position]);
 
     // if this is a new set, then expand it
     auto result = m_item_set_hash.insert(set);
+
+    if (result.second)
+    {
+      expand_set(set.get());
+    }
+
+    ++position;
   }
 }
 
@@ -120,12 +131,12 @@ Parser::item_transition(ItemSet* items, const Item* item, size_t index)
     {
       //insert a new set
       iter = new_symbol_index(tuple);
-      if (!symbol.terminal)
+      if (!symbol.terminal())
       {
         (void)core;
         // prediction
         // insert initial items for this symbol
-        // for (auto& prediction: grammar.get(symbol.code))
+        // for (auto& prediction: grammar.get(get<size_t>(symbol.code)))
         //{
         //  add_initial_item(core, get_item(&prediction, 0));
         //}
@@ -164,14 +175,11 @@ Parser::add_initial_item(ItemSetCore* core, const Item* item)
 // Do scans and completions to start the current set
 // find it in the hash table, then expand it if it's new
 std::shared_ptr<ItemSet>
-Parser::create_new_set()
+Parser::create_new_set(size_t position, char input)
 {
-  // TODO: get the current symbol
-  // allocate item set cores
-  Symbol token;
-  size_t position = 0;
-  ItemSetCore* core = nullptr;
-  auto current_set = std::make_shared<ItemSet>(core);
+  Symbol token = create_token(input);
+  auto core = std::make_shared<ItemSetCore>();
+  auto current_set = std::make_shared<ItemSet>(core.get());
 
   auto& previous_set = m_itemSets[position];
   auto& previous_core = *previous_set.core();
@@ -220,5 +228,4 @@ Parser::create_new_set()
   return current_set;
 }
 
-}
 }

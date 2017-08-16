@@ -283,7 +283,7 @@ namespace earley
       }
 
       std::shared_ptr<ItemSet>
-      create_new_set();
+      create_new_set(size_t position, char token);
 
       const ParseGrammar& m_grammar;
       std::vector<ItemSet> m_itemSets;

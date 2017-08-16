@@ -5,6 +5,9 @@
 
 namespace earley
 {
+  template <typename... T>
+  using variant = std::variant<T...>;
+
   using std::get;
   
   template <typename... Q, typename... T>
