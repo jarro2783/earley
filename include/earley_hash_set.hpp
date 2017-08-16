@@ -46,6 +46,12 @@ namespace earley
       return *(m_set->m_memory + m_pos);
     }
 
+    T*
+    operator->() const
+    {
+      return m_set->m_memory + m_pos;
+    }
+
     const HashSet<T>* m_set;
     size_t m_pos;
   };

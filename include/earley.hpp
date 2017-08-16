@@ -67,6 +67,27 @@ namespace earley
     return inverted;
   }
 
+  struct Symbol
+  {
+    size_t code;
+    bool empty;
+    bool terminal;
+  };
+
+  inline
+  bool
+  operator==(const Symbol& lhs, const Symbol& rhs)
+  {
+    return lhs.code == rhs.code && lhs.terminal == rhs.terminal;
+  }
+
+  inline
+  bool
+  operator!=(const Symbol& lhs, const Symbol& rhs)
+  {
+    return !operator==(lhs, rhs);
+  }
+
   template <typename T>
   struct ActionType;
 
@@ -289,6 +310,33 @@ namespace earley
   typedef std::vector<ItemSet> ItemSetList;
   typedef std::vector<TransitiveItemSet> TransitiveItemSetList;
   typedef std::vector<Rule> RuleList;
+
+  class ParseGrammar
+  {
+    public:
+
+    ParseGrammar(size_t start, std::vector<RuleList> rules)
+    : m_start(start)
+    , m_rules(std::move(rules))
+    {
+    }
+
+    size_t
+    start() const
+    {
+      return m_start;
+    }
+
+    const std::vector<RuleList>&
+    rules() const
+    {
+      return m_rules;
+    }
+
+    private:
+    size_t m_start;
+    std::vector<RuleList> m_rules;
+  };
 
   inline
   bool
@@ -616,6 +664,19 @@ namespace std
       size_t result = get<1>(t);
       hash<earley::Item> hi;
       hash_combine(result, hi(get<0>(t)));
+      return result;
+    }
+  };
+
+  template <>
+  struct hash<earley::Symbol>
+  {
+    size_t
+    operator()(const earley::Symbol& s)
+    {
+      size_t result = s.code;
+      hash_combine(result, s.terminal);
+
       return result;
     }
   };
