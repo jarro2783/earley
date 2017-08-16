@@ -99,24 +99,48 @@ namespace earley
 
   struct Epsilon {};
 
-  typedef std::function<bool(char)> Scanner;
+  typedef std::function<bool(char)> ScanFn;
+
+  class Scanner
+  {
+    public:
+    Scanner(ScanFn scan)
+    : m_scan(std::move(scan))
+    {
+    }
+
+    template <typename T>
+    explicit Scanner(T&& fn)
+    : m_scan(std::forward<T>(fn))
+    {
+    }
+
+    auto
+    operator()(char c) const
+    {
+      return m_scan(c);
+    }
+
+    private:
+    ScanFn m_scan;
+  };
 
   inline
   Scanner
   scan_range(char begin, char end)
   {
-    return [=](char c){
+    return Scanner([=](char c){
       return c >= begin && c <= end;
-    };
+    });
   }
 
   inline
   Scanner
   scan_char(char c)
   {
-    return [=](char cc) {
+    return Scanner([=](char cc) {
       return c == cc;
-    };
+    });
   }
 
   inline
@@ -473,7 +497,7 @@ namespace earley
   typedef std::variant<
     Epsilon,
     std::string,
-    std::function<bool(char)>,
+    Scanner,
     char
   > Production;
 
