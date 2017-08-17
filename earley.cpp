@@ -529,7 +529,7 @@ process_set(
 
     if (pos != current.end())
     {
-      std::visit(
+      visit(
         RecogniseActions(rules, nullable, to_process,
                          current, item_sets, which, input, pointers),
         *pos);
@@ -747,7 +747,7 @@ find_nullable(const std::vector<earley::RuleList>& rules)
       //inverted index
       for (auto& entry: rule)
       {
-        std::visit(invert_rule, entry);
+        visit(invert_rule, entry);
       }
     }
     ++i;

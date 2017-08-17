@@ -16,6 +16,7 @@ namespace earley
 {
   namespace fast
   {
+#if 0
     // TODO: consolidate this into the proper Rule class when I fix it
     // for the slow implementation
     class Rule
@@ -64,6 +65,7 @@ namespace earley
       Rule* m_rule;
       std::vector<Symbol>::const_iterator m_dot;
     };
+#endif
 
     class ItemSetCore
     {
@@ -258,8 +260,8 @@ namespace earley
       const Item*
       get_item(const earley::Rule* rule, size_t dot) const;
 
-      const Item*
-      get_item(const Rule* rule, size_t dot) const;
+      //const Item*
+      //get_item(const Rule* rule, size_t dot) const;
 
       void
       expand_set(ItemSet* items);
@@ -293,6 +295,10 @@ namespace earley
       // keep a pointer to them after adding all the items
       std::unordered_map<const Rule*, std::vector<Item>> m_items;
       HashSet<SetSymbolRules> m_set_symbols;
+
+      auto
+      insert_transition(const SetSymbolRules& tuple)
+      -> std::tuple<bool, decltype(m_set_symbols.find(tuple))>;
     };
   }
 }

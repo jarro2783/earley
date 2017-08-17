@@ -181,7 +181,51 @@ namespace earley
   typedef std::variant<
     size_t,
     Scanner
-  > Entry;
+  > RawEntry;
+
+  struct Entry
+  {
+    template <typename T>
+    Entry(T&& t)
+    : entry(std::forward<T>(t))
+    {
+    }
+
+    bool
+    terminal() const
+    {
+      return holds<Scanner>(entry);
+    }
+
+    bool
+    empty() const
+    {
+      return false;
+    }
+
+    RawEntry entry;
+  };
+
+  template <typename T>
+  bool
+  holds(const Entry& e)
+  {
+    return holds<T>(e.entry);
+  }
+
+  template <typename T>
+  auto
+  get(const Entry& e)
+  {
+    return get<T>(e.entry);
+  }
+
+  template <typename T>
+  auto
+  visit(T&& t, const Entry& e)
+  {
+    return std::visit(std::forward<T>(t), e.entry);
+  }
 
   typedef std::tuple<std::string, std::vector<size_t>> ActionArgs;
 
@@ -254,6 +298,12 @@ namespace earley
     position() const
     {
       return m_current;
+    }
+
+    auto
+    dot() const
+    {
+      return this->position();
     }
 
     std::vector<Entry>::const_iterator

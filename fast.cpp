@@ -73,6 +73,7 @@ Parser::get_item(const earley::Rule*, size_t) const
   return nullptr;
 }
 
+#if 0
 const Item*
 Parser::get_item(const Rule*, size_t) const
 {
@@ -80,6 +81,7 @@ Parser::get_item(const Rule*, size_t) const
   //return &m_items.find(rule)->second[dot];
   return nullptr;
 }
+#endif
 
 void
 Parser::add_empty_symbol_items(ItemSet* items)
@@ -93,11 +95,11 @@ Parser::add_empty_symbol_items(ItemSet* items)
     auto item = core->item(i);
     for (
       auto pos = item->dot();
-      pos != item->rule()->end(); // && symbol empty
+      pos != item->rule().end(); // && symbol empty
       ++pos)
     {
       items->add_derived_item(
-        get_item(item->rule(), (pos + 1) - item->rule()->begin()),
+        get_item(&item->rule(), (pos + 1) - item->rule().begin()),
         i);
     }
   }
@@ -118,43 +120,60 @@ Parser::add_non_start_items(ItemSet* items)
 void
 Parser::item_transition(ItemSet* items, const Item* item, size_t index)
 {
-  auto rule = item->rule();
+  auto& rule = item->rule();
   auto core = items->core();
 
-  if (item->dot() != rule->end())
+  if (item->dot() != rule.end())
   {
     auto& symbol = *item->dot();
-    SetSymbolRules tuple{items->core(), symbol, {}};
-    auto iter = m_set_symbols.find(tuple);
 
-    if (iter == m_set_symbols.end())
+    if (symbol.terminal())
     {
-      //insert a new set
-      iter = new_symbol_index(tuple);
-      if (!symbol.terminal())
+      //enumerate the scanner and insert the transitions
+    }
+    else
+    {
+      SetSymbolRules tuple{items->core(), get<size_t>(symbol), {}};
+      auto [inserted, iter] = insert_transition(tuple);
+      if (inserted)
       {
-        (void)core;
         // prediction
         // insert initial items for this symbol
-        for (auto& prediction: m_grammar.get(get<size_t>(symbol.code)))
+        for (auto& prediction: m_grammar.get(get<size_t>(symbol)))
         {
           add_initial_item(core, get_item(&prediction, 0));
         }
       }
+      // TODO: add this item to the (set, symbol) index
+      iter->transitions.push_back(index);
     }
 
-    // TODO: add this item to the (set, symbol) index
-    iter->transitions.push_back(index);
-
     // if this symbol can derive empty then add the next item too
-    if (symbol.empty)
+    if (symbol.empty())
     {
       // nullable completion
-      add_initial_item(core, get_item(rule, rule->end() - item->dot()+1));
+      add_initial_item(core, get_item(&rule, rule.end() - item->dot()+1));
     }
 
     // TODO: what are the reduce vectors?
   }
+}
+
+auto
+Parser::insert_transition(const SetSymbolRules& tuple)
+-> std::tuple<bool, decltype(m_set_symbols.find(tuple))>
+{
+  auto iter = m_set_symbols.find(tuple);
+  bool inserted = false;
+
+  if (iter == m_set_symbols.end())
+  {
+    //insert a new set
+    iter = new_symbol_index(tuple);
+    inserted = true;
+  }
+
+  return std::make_tuple(inserted, iter);
 }
 
 void
@@ -204,7 +223,7 @@ Parser::create_new_set(size_t position, char input)
       auto item = core->item(i);
       auto rule = item->rule();
       // TODO: change this to empty tail
-      if (item->dot() == rule->end())
+      if (item->dot() == rule.end())
       {
         auto from = position - current_set->distance(i);
         auto from_core = m_itemSets[from].core();
@@ -218,7 +237,7 @@ Parser::create_new_set(size_t position, char input)
         for (auto transition: transitions->transitions)
         {
           auto* item = from_core->item(transition);
-          auto* next = get_item(item->rule(), item->dot() - item->rule()->begin() + 1);
+          auto* next = get_item(&item->rule(), item->dot() - item->rule().begin() + 1);
           current_set->add_start_item(next, 0);
         }
       }
