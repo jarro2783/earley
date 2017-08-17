@@ -49,7 +49,7 @@ namespace
       auto& ch = parts[0];
       if (holds<char>(ch))
       {
-        return std::get<char>(ch) - '0';
+        return get<char>(ch) - '0';
       }
       else
       {
@@ -73,7 +73,7 @@ namespace
       if (holds<int>(integer) &&
           holds<char>(character))
       {
-        value = std::get<int>(integer) * 10 + (std::get<char>(character) - '0');
+        value = get<int>(integer) * 10 + (get<char>(character) - '0');
       }
       else
       {
@@ -88,25 +88,25 @@ namespace
   NumberResult
   handle_divide(NumbersParts& parts)
   {
-    return std::get<int>(parts.at(0)) / std::get<int>(parts.at(1));
+    return get<int>(parts.at(0)) / get<int>(parts.at(1));
   }
 
   NumberResult
   handle_sum(NumbersParts& parts)
   {
-    return std::get<int>(parts.at(0)) + std::get<int>(parts.at(1));
+    return get<int>(parts.at(0)) + get<int>(parts.at(1));
   }
 
   NumberResult
   handle_product(NumbersParts& parts)
   {
-    return std::get<int>(parts.at(0)) * std::get<int>(parts.at(1));
+    return get<int>(parts.at(0)) * get<int>(parts.at(1));
   }
 
   NumberResult
   handle_minus(NumbersParts& parts)
   {
-    return std::get<int>(parts.at(0)) - std::get<int>(parts.at(1));
+    return get<int>(parts.at(0)) - get<int>(parts.at(1));
   }
 }
 
@@ -163,7 +163,7 @@ parse_expression(const std::string& expression, bool debug, bool timing)
 
     if (holds<int>(value))
     {
-      std::cout << std::get<int>(value) << std::endl;
+      std::cout << get<int>(value) << std::endl;
     }
     else
     {

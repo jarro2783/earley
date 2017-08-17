@@ -477,11 +477,11 @@ namespace earley
 
       if (holds<size_t>(entry))
       {
-        os << " " << print_nt(names, std::get<size_t>(entry));
+        os << " " << print_nt(names, get<size_t>(entry));
       }
       else if (holds<Scanner>(entry))
       {
-        os << " '" << std::get<Scanner>(entry) << "'";
+        os << " '" << get<Scanner>(entry) << "'";
       }
 
       ++iter;
@@ -505,8 +505,8 @@ namespace earley
     const std::unordered_map<size_t, std::string>& names
   )
   {
-    os << names.find(std::get<1>(t))->second << ": ";
-    std::get<0>(t).print(os, names);
+    os << names.find(get<1>(t))->second << ": ";
+    get<0>(t).print(os, names);
     os << std::endl;
   }
 
@@ -801,18 +801,18 @@ namespace earley
         if (traverse_item(results, actions, item,
             item.rule().begin(), item_sets, position))
         {
-          if (std::get<1>(item.rule().actions()).size() == 0)
+          if (get<1>(item.rule().actions()).size() == 0)
           {
             return values::Empty();
           }
 
           // return the action run on all the parts
           auto& action_runner = item.rule().actions();
-          auto iter = actions.find(std::get<0>(action_runner));
+          auto iter = actions.find(get<0>(action_runner));
           if (iter != actions.end() && iter->second)
           {
             std::vector<Ret> run_actions;
-            for (auto& handle: std::get<1>(action_runner))
+            for (auto& handle: get<1>(action_runner))
             {
               //std::cout << "Processing " << item.nonterminal() << std::endl;
               //std::cout << "Pushing back " << handle << std::endl;
@@ -852,7 +852,7 @@ namespace earley
 
         if (holds<Scanner>(*iter))
         {
-          auto matcher = std::get<Scanner>(*iter);
+          auto matcher = get<Scanner>(*iter);
           if (position != m_input.size() && matcher(m_input[position]))
           {
             results.push_back(m_input[position]);
@@ -871,7 +871,7 @@ namespace earley
         }
         else if (holds<size_t>(*iter))
         {
-          auto to_search = std::get<size_t>(*iter);
+          auto to_search = get<size_t>(*iter);
           for (auto& child: item_sets[position][to_search])
           {
             if (!seen(child) && child.nonterminal() == to_search)
@@ -933,11 +933,11 @@ namespace earley
 
         //run the actual actions on results
         auto& action_runner = item.rule().actions();
-        auto iter = actions.find(std::get<0>(action_runner));
+        auto iter = actions.find(get<0>(action_runner));
         if (iter != actions.end() && iter->second)
         {
           std::vector<Ret> run_actions;
-          for (auto& handle: std::get<1>(action_runner))
+          for (auto& handle: get<1>(action_runner))
           {
             run_actions.push_back(results.at(handle));
           }

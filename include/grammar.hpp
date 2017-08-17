@@ -163,7 +163,7 @@ namespace earley
       void
       process_productions(const GrammarNode& productions)
       {
-        auto& ptr = std::get<GrammarPtr>(productions);
+        auto& ptr = get<GrammarPtr>(productions);
         auto list = dynamic_cast<const GrammarList*>(ptr.get());
         // each of these should be either a name or a literal
         std::cerr << "Parsed rule: ";
@@ -171,7 +171,7 @@ namespace earley
         {
           if (holds<GrammarPtr>(production))
           {
-            auto ptr = std::get<GrammarPtr>(production).get();
+            auto ptr = get<GrammarPtr>(production).get();
             const GrammarString* name = nullptr;
             const GrammarRange* range = nullptr;
 
@@ -207,7 +207,7 @@ namespace earley
 
       std::cerr << "Trying to append to list" << std::endl;
       if (nodes.size() == 2 && holds<GrammarPtr>(nodes[0]) &&
-          (list = dynamic_cast<GrammarList*>(std::get<GrammarPtr>(nodes[0]).get())
+          (list = dynamic_cast<GrammarList*>(get<GrammarPtr>(nodes[0]).get())
            ) != nullptr)
       {
         std::cerr << "Appending to list of size " << list->list().size() << std::endl;
@@ -221,7 +221,7 @@ namespace earley
         {
           // it holds a grammar node, so we collapse a list if it
           // has one
-          auto rhs_ptr = std::get<GrammarPtr>(rhs).get();
+          auto rhs_ptr = get<GrammarPtr>(rhs).get();
           auto rhs_list = dynamic_cast<const GrammarList*>(rhs_ptr);
 
           if (rhs_list != nullptr)
@@ -231,7 +231,7 @@ namespace earley
           }
           else
           {
-            list->list().push_back(std::get<GrammarPtr>(rhs));
+            list->list().push_back(get<GrammarPtr>(rhs));
           }
         }
 
@@ -278,7 +278,7 @@ namespace earley
         {
           return values::Failed();
         }
-        return std::make_shared<GrammarString>(std::get<char>(nodes[0]));
+        return std::make_shared<GrammarString>(get<char>(nodes[0]));
 
         default:
         return values::Failed();
@@ -295,7 +295,7 @@ namespace earley
         return values::Failed();
       }
 
-      auto ptr = std::get<GrammarPtr>(nodes[0]);
+      auto ptr = get<GrammarPtr>(nodes[0]);
       auto gstring = dynamic_cast<GrammarString*>(ptr.get());
 
       if (gstring == nullptr)
@@ -307,12 +307,12 @@ namespace earley
 
       if (holds<char>(nodes[1]))
       {
-        string.append(1, std::get<char>(nodes[1]));
+        string.append(1, get<char>(nodes[1]));
         std::cout << "Made string " << string << std::endl;
       }
       else if (holds<GrammarPtr>(nodes[1]))
       {
-        auto rhs = dynamic_cast<GrammarString*>(std::get<GrammarPtr>(nodes[1]).get());
+        auto rhs = dynamic_cast<GrammarString*>(get<GrammarPtr>(nodes[1]).get());
         if (rhs == nullptr)
         {
           std::cout << "String append failed" << std::endl;
@@ -362,8 +362,8 @@ namespace earley
       }
 
       return std::make_shared<GrammarRange>(
-        std::get<char>(nodes[0]),
-        std::get<char>(nodes[1]));
+        get<char>(nodes[0]),
+        get<char>(nodes[1]));
     }
 
     inline

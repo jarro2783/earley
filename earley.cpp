@@ -273,7 +273,7 @@ find_transitive_item
 {
   for (auto& ti: transitive_items)
   {
-    if (std::get<1>(ti) == nonterminal)
+    if (get<1>(ti) == nonterminal)
     {
       return &ti;
     }
@@ -296,7 +296,7 @@ insert_transitive_candidate
 
   for (auto& ti: transitive_items)
   {
-    if (std::get<1>(ti) == nonterminal)
+    if (get<1>(ti) == nonterminal)
     {
       transitive_item_sets[which].insert(ti);
       return;
@@ -459,7 +459,7 @@ complete(
   if ((ti = find_transitive_item(transitive_items[item.where()], ours)) != nullptr)
   {
     transitive_items[which].insert(*ti);
-    item_sets[which].insert(std::get<0>(*ti));
+    item_sets[which].insert(get<0>(*ti));
     return;
   }
 
@@ -471,7 +471,7 @@ complete(
     auto dot = consider.position();
     if (dot != consider.end() &&
         holds<size_t>(*dot) &&
-        std::get<size_t>(*dot) == ours)
+        get<size_t>(*dot) == ours)
     {
       //bring it into our set
       auto next = consider.next();
@@ -768,7 +768,7 @@ find_nullable(const std::vector<earley::RuleList>& rules)
       for (auto& entry: *wr)
       {
         if (holds<size_t>(entry) &&
-            nullable[std::get<size_t>(entry)])
+            nullable[get<size_t>(entry)])
         {
           next = true;
           break;
