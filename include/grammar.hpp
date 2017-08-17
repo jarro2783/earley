@@ -140,7 +140,6 @@ namespace earley
       Rule()
       {
         std::cout << "Empty rule" << std::endl;
-        m_productions.push_back(Epsilon());
       }
 
       Rule(const GrammarNode& productions)

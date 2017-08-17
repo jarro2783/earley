@@ -195,7 +195,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
       {{"Grammar", "HardSpace", "Nonterminal"}, {"append_list", {0, 2}}},
     }},
     {"Space", {
-      {{Epsilon()}},
+      {{}},
       {{"SpaceRest"}},
     }},
     {"HardSpace", {

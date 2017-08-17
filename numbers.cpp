@@ -14,7 +14,7 @@ namespace
       {{"NumberRest", scan_range('0', '9')}, {"number", {0, 1}}},
     }},
     {"Space", {
-      {{Epsilon()}},
+      {{}},
       {{"Space", scan_char(' ')}},
       {{"Space", scan_char('\t')}},
       {{"Space", scan_char('\n')}},

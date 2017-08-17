@@ -108,8 +108,6 @@ namespace earley
     typedef T type;
   };
 
-  struct Epsilon {};
-
   typedef std::function<bool(char)> ScanFn;
 
   class Scanner
@@ -181,7 +179,6 @@ namespace earley
   // An entry is an epsilon, a pointer to another non-terminal, or
   // any number of ways of specifying a terminal
   typedef std::variant<
-    Epsilon,
     size_t,
     Scanner
   > Entry;
@@ -407,13 +404,6 @@ namespace earley
   }
 
   inline
-  bool
-  operator==(const Epsilon&, const Epsilon&)
-  {
-    return true;
-  }
-
-  inline
   std::ostream&
   operator<<(std::ostream& os, const Item& item)
   {
@@ -485,11 +475,7 @@ namespace earley
 
       auto& entry = *iter;
 
-      if (std::holds_alternative<Epsilon>(entry))
-      {
-        os << u8" ε";
-      }
-      else if (std::holds_alternative<size_t>(entry))
+      if (std::holds_alternative<size_t>(entry))
       {
         os << " " << print_nt(names, std::get<size_t>(entry));
       }
@@ -526,9 +512,8 @@ namespace earley
 
   // A production is a single item that can produce something to be
   // parsed.
-  // Empty, a non-terminal, or a single character
+  // A non-terminal, or a single character
   typedef std::variant<
-    Epsilon,
     std::string,
     Scanner,
     char
@@ -690,17 +675,6 @@ find_nullable(const std::vector<earley::RuleList>& rules);
 
 namespace std
 {
-  template <>
-  struct hash<earley::Epsilon>
-  {
-    inline
-    size_t
-    operator()(const earley::Epsilon&) const
-    {
-      return 43;
-    }
-  };
-
   inline
   size_t
   hash<earley::Item>::operator()(const earley::Item& item) const
@@ -1028,22 +1002,23 @@ namespace earley
         }
         else
         {
-          //we are either at the start or this is a scan
+          //we are either at the start, this is a scan, or the item is nullable
           auto current = item.position();
           if (current == item.rule().begin())
           {
-            //std::cout << "Start" << std::endl;
+            // Do nothing for the start of the chain
             return;
           }
 
           --current;
           if (std::holds_alternative<Scanner>(*current))
           {
-            //std::cout << "Scanning " << m_input[which-1] << " at " << which << std::endl;
             results.push_back(m_input[which-1]);
           }
-          else if (std::holds_alternative<Epsilon>(*current))
+          else
           {
+            // let's just assume that it must be nullable for now
+            // we should probably check this
             results.push_back(values::Empty());
           }
         }

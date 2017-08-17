@@ -361,8 +361,7 @@ struct RecogniseActions
     std::vector<ItemSet>& item_sets,
     size_t which,
     const std::string& input,
-    TreePointers& pointers,
-    std::unordered_map<size_t, Item>& nulled)
+    TreePointers& pointers)
   : m_rules(rules)
   , m_nullable(nullable)
   , m_stack(stack)
@@ -371,7 +370,6 @@ struct RecogniseActions
   , m_which(which)
   , m_input(input)
   , m_pointers(pointers)
-  , m_nulled(nulled)
   {
   }
 
@@ -408,16 +406,6 @@ struct RecogniseActions
       {
         m_stack.push_back(next);
       }
-
-      auto nulled = m_nulled.find(rule);
-      if (nulled != m_nulled.end())
-      {
-        //std::cout << "Nulled prediction adding reduction " 
-        //          << next << ":" << m_which 
-        //          << " -> " << nulled->second << ":" << m_which << std::endl;
-        // The item has already been added, we just add a reduction here
-        m_pointers.reduction(m_which, m_which, next, nulled->second);
-      }
     }
   }
 
@@ -440,25 +428,6 @@ struct RecogniseActions
     }
   }
 
-  void
-  operator()(Epsilon) const
-  {
-    // this is a completion
-    auto next = m_item.next();
-    //std::cout << "Epsilon adding reduction " 
-    //          << next << ":" << m_which 
-    //          << " -> " << m_item << ":" << m_which << std::endl;
-    //m_pointers.reduction(m_which, m_which, next, m_item);
-    if (m_item_sets[m_which].insert(next).second)
-    {
-      m_stack.push_back(next);
-    }
-
-    // TODO: This isn't good enough, I actually need to 
-    // deal with A -> B where B is nullable
-    m_nulled.insert({m_item.nonterminal(), m_item.next()});
-  }
-
   private:
   const std::vector<RuleList>& m_rules;
   const std::vector<bool>& m_nullable;
@@ -468,7 +437,6 @@ struct RecogniseActions
   size_t m_which;
   const std::string& m_input;
   TreePointers& m_pointers;
-  std::unordered_map<size_t, Item>& m_nulled;
 };
 
 void
@@ -547,7 +515,6 @@ process_set(
   size_t which
 )
 {
-  std::unordered_map<size_t, Item> nulled;
   for (auto& item: item_sets[which])
   {
     to_process.push_back(item);
@@ -564,7 +531,7 @@ process_set(
     {
       std::visit(
         RecogniseActions(rules, nullable, to_process,
-                         current, item_sets, which, input, pointers, nulled),
+                         current, item_sets, which, input, pointers),
         *pos);
     }
     else
@@ -770,8 +737,7 @@ find_nullable(const std::vector<earley::RuleList>& rules)
     for (auto& rule : nt)
     {
       //empty rules
-      if (rule.begin() != rule.end() &&
-          std::holds_alternative<earley::Epsilon>(*rule.begin()))
+      if (rule.begin() == rule.end())
       {
         nullable[i] = true;
         work.push_back(i);
