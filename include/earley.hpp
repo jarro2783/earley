@@ -115,14 +115,21 @@ namespace earley
   class Scanner
   {
     public:
-    Scanner(ScanFn scan)
-    : m_scan(std::move(scan))
+    Scanner(char c)
+    : left(c)
+    , right(-1)
+    , m_scan([=](char cc) {
+        return c == cc;
+      })
     {
     }
 
-    template <typename T>
-    explicit Scanner(T&& fn)
-    : m_scan(std::forward<T>(fn))
+    Scanner(char begin, char end)
+    : left(begin)
+    , right(end)
+    , m_scan([=](char c){
+        return c >= begin && c <= end;
+      })
     {
     }
 
@@ -132,7 +139,20 @@ namespace earley
       return m_scan(c);
     }
 
+    void
+    print(std::ostream& os) const
+    {
+      os << '[' << left;
+      if (right != -1)
+      {
+        os << '-' << right;
+      }
+      os << ']';
+    }
+
     private:
+    char left;
+    char right;
     ScanFn m_scan;
   };
 
@@ -140,25 +160,21 @@ namespace earley
   Scanner
   scan_range(char begin, char end)
   {
-    return Scanner([=](char c){
-      return c >= begin && c <= end;
-    });
+    return Scanner(begin, end);
   }
 
   inline
   Scanner
   scan_char(char c)
   {
-    return Scanner([=](char cc) {
-      return c == cc;
-    });
+    return Scanner(c);
   }
 
   inline
   std::ostream&
-  operator<<(std::ostream& os, const Scanner&)
+  operator<<(std::ostream& os, const Scanner& s)
   {
-    os << "scanfn";
+    s.print(os);
     return os;
   }
 

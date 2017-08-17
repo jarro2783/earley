@@ -55,7 +55,7 @@ print_rule(GrammarPtr ptr)
     // TODO: implement Scanner better and print it here
     else if (holds<Scanner>(p))
     {
-      std::cout << "'scanfn'";
+      get<Scanner>(p).print(std::cout);
     } else if (holds<char>(p))
     {
       std::cout << " '" << get<char>(p) << "'";
