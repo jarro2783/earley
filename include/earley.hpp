@@ -475,11 +475,11 @@ namespace earley
 
       auto& entry = *iter;
 
-      if (std::holds_alternative<size_t>(entry))
+      if (holds<size_t>(entry))
       {
         os << " " << print_nt(names, std::get<size_t>(entry));
       }
-      else if (std::holds_alternative<Scanner>(entry))
+      else if (holds<Scanner>(entry))
       {
         os << " '" << std::get<Scanner>(entry) << "'";
       }
@@ -850,7 +850,7 @@ namespace earley
           return true;
         }
 
-        if (std::holds_alternative<Scanner>(*iter))
+        if (holds<Scanner>(*iter))
         {
           auto matcher = std::get<Scanner>(*iter);
           if (position != m_input.size() && matcher(m_input[position]))
@@ -869,7 +869,7 @@ namespace earley
             return false;
           }
         }
-        else if (std::holds_alternative<size_t>(*iter))
+        else if (holds<size_t>(*iter))
         {
           auto to_search = std::get<size_t>(*iter);
           for (auto& child: item_sets[position][to_search])
@@ -881,7 +881,7 @@ namespace earley
               visit(child);
               auto value = process_item(child, item_sets, actions, position);
 
-              if (!std::holds_alternative<values::Failed>(value))
+              if (!holds<values::Failed>(value))
               {
                 results.push_back(value);
                 if (traverse_item(results, actions, item, iter + 1, item_sets,
@@ -1011,7 +1011,7 @@ namespace earley
           }
 
           --current;
-          if (std::holds_alternative<Scanner>(*current))
+          if (holds<Scanner>(*current))
           {
             results.push_back(m_input[which-1]);
           }

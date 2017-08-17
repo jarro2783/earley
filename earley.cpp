@@ -470,7 +470,7 @@ complete(
     //std::cout << "Consider " << item << std::endl;
     auto dot = consider.position();
     if (dot != consider.end() &&
-        std::holds_alternative<size_t>(*dot) &&
+        holds<size_t>(*dot) &&
         std::get<size_t>(*dot) == ours)
     {
       //bring it into our set
@@ -767,7 +767,7 @@ find_nullable(const std::vector<earley::RuleList>& rules)
       bool next = false;
       for (auto& entry: *wr)
       {
-        if (std::holds_alternative<size_t>(entry) &&
+        if (holds<size_t>(entry) &&
             nullable[std::get<size_t>(entry)])
         {
           next = true;

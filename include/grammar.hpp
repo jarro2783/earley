@@ -31,8 +31,8 @@ namespace earley
 
       GrammarList(const GrammarNode& start)
       {
-        if (!std::holds_alternative<earley::values::Empty>(start)
-            && !std::holds_alternative<earley::values::Failed>(start))
+        if (!holds<earley::values::Empty>(start)
+            && !holds<earley::values::Failed>(start))
         {
           m_list.push_back(start);
         }
@@ -169,7 +169,7 @@ namespace earley
         std::cerr << "Parsed rule: ";
         for (auto& production: list->list())
         {
-          if (std::holds_alternative<GrammarPtr>(production))
+          if (holds<GrammarPtr>(production))
           {
             auto ptr = std::get<GrammarPtr>(production).get();
             const GrammarString* name = nullptr;
@@ -206,14 +206,14 @@ namespace earley
       GrammarList* list = nullptr;
 
       std::cerr << "Trying to append to list" << std::endl;
-      if (nodes.size() == 2 && std::holds_alternative<GrammarPtr>(nodes[0]) &&
+      if (nodes.size() == 2 && holds<GrammarPtr>(nodes[0]) &&
           (list = dynamic_cast<GrammarList*>(std::get<GrammarPtr>(nodes[0]).get())
            ) != nullptr)
       {
         std::cerr << "Appending to list of size " << list->list().size() << std::endl;
 
         auto& rhs = nodes[1];
-        if (!std::holds_alternative<GrammarPtr>(rhs))
+        if (!holds<GrammarPtr>(rhs))
         {
           list->list().push_back(rhs);
         }
@@ -274,7 +274,7 @@ namespace earley
         return std::make_shared<GrammarString>();
 
         case 1:
-        if (!std::holds_alternative<char>(nodes[0]))
+        if (!holds<char>(nodes[0]))
         {
           return values::Failed();
         }
@@ -290,7 +290,7 @@ namespace earley
     action_append_string(std::vector<GrammarNode>& nodes)
     {
       std::cout << "Append string" << std::endl;
-      if (nodes.size() != 2 || !std::holds_alternative<GrammarPtr>(nodes[0]))
+      if (nodes.size() != 2 || !holds<GrammarPtr>(nodes[0]))
       {
         return values::Failed();
       }
@@ -305,12 +305,12 @@ namespace earley
 
       auto& string = gstring->string();
 
-      if (std::holds_alternative<char>(nodes[1]))
+      if (holds<char>(nodes[1]))
       {
         string.append(1, std::get<char>(nodes[1]));
         std::cout << "Made string " << string << std::endl;
       }
-      else if (std::holds_alternative<GrammarPtr>(nodes[1]))
+      else if (holds<GrammarPtr>(nodes[1]))
       {
         auto rhs = dynamic_cast<GrammarString*>(std::get<GrammarPtr>(nodes[1]).get());
         if (rhs == nullptr)

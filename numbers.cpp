@@ -47,7 +47,7 @@ namespace
     if (parts.size() == 1)
     {
       auto& ch = parts[0];
-      if (std::holds_alternative<char>(ch))
+      if (holds<char>(ch))
       {
         return std::get<char>(ch) - '0';
       }
@@ -70,8 +70,8 @@ namespace
       auto& integer = parts[0];
       auto& character = parts[1];
 
-      if (std::holds_alternative<int>(integer) &&
-          std::holds_alternative<char>(character))
+      if (holds<int>(integer) &&
+          holds<char>(character))
       {
         value = std::get<int>(integer) * 10 + (std::get<char>(character) - '0');
       }
@@ -161,7 +161,7 @@ parse_expression(const std::string& expression, bool debug, bool timing)
     auto value = earley::run_actions(
         pointers, ids["Input"], expression, actions, item_sets, ids);
 
-    if (std::holds_alternative<int>(value))
+    if (holds<int>(value))
     {
       std::cout << std::get<int>(value) << std::endl;
     }
