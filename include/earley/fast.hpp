@@ -164,6 +164,9 @@ namespace earley
         return m_hash;
       }
 
+      void
+      print(const std::unordered_map<size_t, std::string>& names) const;
+
       private:
       ItemSetCore* m_core;
       std::vector<size_t> m_distances;
@@ -252,7 +255,13 @@ namespace earley
       void
       parse(const std::string& input);
 
+      void
+      print_set(size_t i, const std::unordered_map<size_t, std::string>&);
+
       private:
+
+      void
+      create_all_items();
 
       void
       create_start_set();
@@ -287,14 +296,15 @@ namespace earley
       std::shared_ptr<ItemSet>
       create_new_set(size_t position, char token);
 
-      const ParseGrammar& m_grammar;
-      std::vector<ItemSet> m_itemSets;
+      ParseGrammar m_grammar;
+      std::vector<std::shared_ptr<ItemSet>> m_itemSets;
       HashSet<ItemSetOwner> m_item_set_hash;
 
       // The addresses of these might change after adding another one, so only
       // keep a pointer to them after adding all the items
       std::unordered_map<const Rule*, std::vector<Item>> m_items;
       HashSet<SetSymbolRules> m_set_symbols;
+      std::vector<bool> m_nullable;
 
       auto
       insert_transition(const SetSymbolRules& tuple)

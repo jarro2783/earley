@@ -1,6 +1,7 @@
 #include <typeinfo>
 
 #include "grammar.hpp"
+#include "earley/fast.hpp"
 
 namespace earley
 {
@@ -331,6 +332,19 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
     if (text.size())
     {
       parse(built, start, text, debug);
+
+      //test the fast parser
+      auto [rules, ids] = generate_rules(built);
+      ParseGrammar parse_grammar(ids[start], rules);
+      fast::Parser parser(parse_grammar);
+
+      if (debug)
+      {
+        auto rule_names = invert_map(ids);
+        parser.print_set(0, rule_names);
+      }
+
+      parser.parse(text);
     }
   }
 }

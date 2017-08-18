@@ -1,12 +1,29 @@
+#include <cassert>
+
 #include "earley/fast.hpp"
 
 namespace earley::fast
 {
 
+namespace
+{
+
+ParseGrammar
+augment_start_rule(const ParseGrammar& grammar)
+{
+  auto rules = grammar.rules();
+  Rule rule(rules.size(), {grammar.start()});
+  rules.push_back(std::vector<Rule>{rule});
+
+  return ParseGrammar(rules.size()-1, rules);
+}
+
+}
+
 Symbol
 create_token(char c)
 {
-  return Symbol{c, false};
+  return Symbol{c};
 }
 
 void
@@ -17,9 +34,42 @@ ItemSet::add_start_item(const Item* item, size_t distance)
 }
 
 Parser::Parser(const ParseGrammar& grammar)
-: m_grammar(grammar)
+: m_grammar(augment_start_rule(grammar))
+, m_nullable(find_nullable(m_grammar.rules()))
 {
+  create_all_items();
   create_start_set();
+
+}
+
+void
+Parser::create_all_items()
+{
+  auto& nonterminals = m_grammar.rules();
+  for (size_t i = 0; i != nonterminals.size(); ++i)
+  {
+    for (auto& rule: nonterminals[i])
+    {
+      auto& item_list = m_items[&rule];
+      // create an item for every dot position in the rule
+      // we don't use distances here
+      Item add(rule);
+      for (auto current = rule.begin(); current != rule.end(); ++current)
+      {
+        auto& entry = *add.position();
+        if (holds<size_t>(entry) && m_nullable[get<size_t>(entry)])
+        {
+          const_cast<Entry&>(entry).set_empty();
+        }
+
+        item_list.push_back(add);
+        add = add.next();
+      }
+
+      //we always want the last item too
+      item_list.push_back(add);
+    }
+  }
 }
 
 void
@@ -48,14 +98,19 @@ Parser::parse(const std::string& input)
 void
 Parser::create_start_set()
 {
-  ItemSet* items = nullptr;
+  auto core = std::make_unique<ItemSetCore>();
+  auto items = std::make_shared<ItemSet>(core.get());
+
   for (auto& rule: m_grammar.rules()[m_grammar.start()])
   {
     auto item = get_item(&rule, 0);
     items->add_start_item(item, 0);
   }
 
-  expand_set(items);
+  expand_set(items.get());
+
+  core.release();
+  m_itemSets.push_back(items);
 }
 
 void
@@ -66,11 +121,11 @@ Parser::expand_set(ItemSet* items)
 }
 
 const Item*
-Parser::get_item(const earley::Rule*, size_t) const
+Parser::get_item(const earley::Rule* rule, size_t dot) const
 {
-  // TODO: implement this with the right rule
-  //return &m_items.find(rule)->second[dot];
-  return nullptr;
+  auto iter = m_items.find(rule);
+  assert(iter != m_items.end());
+  return &iter->second[dot];
 }
 
 #if 0
@@ -95,7 +150,7 @@ Parser::add_empty_symbol_items(ItemSet* items)
     auto item = core->item(i);
     for (
       auto pos = item->dot();
-      pos != item->rule().end(); // && symbol empty
+      pos != item->rule().end() && pos->empty();
       ++pos)
     {
       items->add_derived_item(
@@ -200,8 +255,8 @@ Parser::create_new_set(size_t position, char input)
   auto core = std::make_shared<ItemSetCore>();
   auto current_set = std::make_shared<ItemSet>(core.get());
 
-  auto& previous_set = m_itemSets[position];
-  auto& previous_core = *previous_set.core();
+  auto previous_set = m_itemSets[position];
+  auto& previous_core = *previous_set->core();
 
   // look up the symbol index for the previous set
   auto scans = m_set_symbols.find(SetSymbolRules{
@@ -214,7 +269,7 @@ Parser::create_new_set(size_t position, char input)
     {
       // TODO: lookahead
       current_set->add_start_item(previous_core.item(transition),
-        previous_set.distance(transition) + 1);
+        previous_set->distance(transition) + 1);
     }
 
     // now do all the completed items
@@ -226,7 +281,7 @@ Parser::create_new_set(size_t position, char input)
       if (item->dot() == rule.end())
       {
         auto from = position - current_set->distance(i);
-        auto from_core = m_itemSets[from].core();
+        auto from_core = m_itemSets[from]->core();
 
         // find the symbol for the lhs of this rule in set that predicted this
         // i.e., this is a completion: find the items it completes
@@ -245,6 +300,31 @@ Parser::create_new_set(size_t position, char input)
   }
 
   return current_set;
+}
+
+void
+Parser::print_set(size_t i, const std::unordered_map<size_t, std::string>& names)
+{
+  auto set = m_itemSets.at(i);
+  set->print(names);
+}
+
+void
+ItemSet::print(const std::unordered_map<size_t, std::string>& names) const
+{
+  size_t i = 0;
+
+  for (; i != m_core->start_items(); ++i)
+  {
+    m_core->item(i)->print(std::cout, names);
+    std::cout << ": " << m_distances[i] << std::endl;
+  }
+
+  for (; i != m_core->all_items(); ++i)
+  {
+    m_core->item(i)->print(std::cout, names);
+    std::cout << std::endl;
+  }
 }
 
 }

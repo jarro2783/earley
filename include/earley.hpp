@@ -75,6 +75,20 @@ namespace earley
 
   struct Symbol
   {
+    Symbol() = default;
+
+    template <typename T,
+      typename = typename
+        std::enable_if<
+          std::is_constructible<RawSymbol, T>::value
+        >::type
+    >
+    Symbol(T&& s)
+    : code(std::move(s))
+    , empty(false)
+    {
+    }
+
     RawSymbol code;
     bool empty;
 
@@ -200,10 +214,17 @@ namespace earley
     bool
     empty() const
     {
-      return false;
+      return m_empty;
+    }
+
+    void
+    set_empty()
+    {
+      m_empty = true;
     }
 
     RawEntry entry;
+    bool m_empty = false;
   };
 
   template <typename T>
