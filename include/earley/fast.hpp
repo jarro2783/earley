@@ -16,57 +16,6 @@ namespace earley
 {
   namespace fast
   {
-#if 0
-    // TODO: consolidate this into the proper Rule class when I fix it
-    // for the slow implementation
-    class Rule
-    {
-      public:
-      std::vector<Symbol>::const_iterator
-      begin() const
-      {
-        return m_entries.begin();
-      }
-
-      std::vector<Symbol>::const_iterator
-      end() const
-      {
-        return m_entries.end();
-      }
-
-      size_t
-      nonterminal() const
-      {
-        return m_nonterminal;
-      }
-
-      private:
-      size_t m_nonterminal;
-      std::vector<Symbol> m_entries;
-    };
-
-    class Item
-    {
-      public:
-
-      std::vector<Symbol>::const_iterator
-      dot() const
-      {
-        return m_dot;
-      }
-
-      const Rule*
-      rule() const
-      {
-        return m_rule;
-      }
-
-      private:
-      Rule* m_rule;
-      std::vector<Symbol>::const_iterator m_dot;
-    };
-#endif
-
     class ItemSetCore
     {
       public:
@@ -155,6 +104,10 @@ namespace earley
       size_t
       distance(size_t i) const
       {
+        if (i >= m_core->start_items())
+        {
+          return 0;
+        }
         return m_distances[i];
       }
 

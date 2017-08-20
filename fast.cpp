@@ -77,8 +77,6 @@ Parser::parse(const std::string& input)
 {
   size_t position = 0;
 
-  create_start_set();
-
   while (position < input.size())
   {
     auto set = create_new_set(position, input[position]);
@@ -128,16 +126,6 @@ Parser::get_item(const earley::Rule* rule, size_t dot) const
   return &iter->second[dot];
 }
 
-#if 0
-const Item*
-Parser::get_item(const Rule*, size_t) const
-{
-  // TODO: implement this with the right rule
-  //return &m_items.find(rule)->second[dot];
-  return nullptr;
-}
-#endif
-
 void
 Parser::add_empty_symbol_items(ItemSet* items)
 {
@@ -185,6 +173,25 @@ Parser::item_transition(ItemSet* items, const Item* item, size_t index)
     if (symbol.terminal())
     {
       //enumerate the scanner and insert the transitions
+      const auto& scanner = get<Scanner>(symbol);
+
+      if (scanner.right == -1)
+      {
+        SetSymbolRules tuple{items->core(), scanner.left, {}};
+        auto [inserted, iter] = insert_transition(tuple);
+        iter->transitions.push_back(index);
+      }
+      else
+      {
+        auto current = scanner.left;
+        while (current <= scanner.right)
+        {
+          SetSymbolRules tuple{items->core(), current, {}};
+          auto [inserted, iter] = insert_transition(tuple);
+          iter->transitions.push_back(index);
+          ++current;
+        }
+      }
     }
     else
     {
@@ -199,7 +206,6 @@ Parser::item_transition(ItemSet* items, const Item* item, size_t index)
           add_initial_item(core, get_item(&prediction, 0));
         }
       }
-      // TODO: add this item to the (set, symbol) index
       iter->transitions.push_back(index);
     }
 

@@ -162,9 +162,10 @@ namespace earley
       os << ']';
     }
 
+    const char left;
+    const char right;
+
     private:
-    char left;
-    char right;
     ScanFn m_scan;
   };
 

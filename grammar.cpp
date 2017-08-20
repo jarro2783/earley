@@ -338,13 +338,18 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
       ParseGrammar parse_grammar(ids[start], rules);
       fast::Parser parser(parse_grammar);
 
+      auto rule_names = invert_map(ids);
       if (debug)
       {
-        auto rule_names = invert_map(ids);
         parser.print_set(0, rule_names);
       }
 
       parser.parse(text);
+
+      if (debug)
+      {
+        parser.print_set(1, rule_names);
+      }
     }
   }
 }
