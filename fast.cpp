@@ -39,7 +39,6 @@ Parser::Parser(const ParseGrammar& grammar)
 {
   create_all_items();
   create_start_set();
-
 }
 
 void
@@ -73,24 +72,30 @@ Parser::create_all_items()
 }
 
 void
-Parser::parse(const std::string& input)
+Parser::parse_input(const std::string& input)
 {
   size_t position = 0;
-
   while (position < input.size())
   {
-    auto set = create_new_set(position, input[position]);
-
-    // if this is a new set, then expand it
-    auto result = m_item_set_hash.insert(set);
-
-    if (result.second)
-    {
-      expand_set(set.get());
-    }
-
+    parse(input, position);
     ++position;
   }
+}
+
+void
+Parser::parse(const std::string& input, size_t position)
+{
+  auto set = create_new_set(position, input[position]);
+
+  // if this is a new set, then expand it
+  auto result = m_item_set_hash.insert(set);
+
+  if (result.second)
+  {
+    expand_set(set.get());
+  }
+
+  m_itemSets.push_back(result.first->get());
 }
 
 void
@@ -130,9 +135,9 @@ void
 Parser::add_empty_symbol_items(ItemSet* items)
 {
   auto core = items->core();
+
   // for each item in the start items, add the next items
   // as long as the right hand sides can derive empty
-  // TODO: nullable && generate next item
   for (size_t i = 0; i != core->start_items(); ++i)
   {
     auto item = core->item(i);
@@ -155,6 +160,15 @@ Parser::add_non_start_items(ItemSet* items)
   for (size_t i = 0; i < core->all_items(); ++i)
   {
     item_transition(items, core->item(i), i);
+  }
+
+  for (size_t i = 0; i < core->all_items(); ++i)
+  {
+    auto item = core->item(i);
+    if (item->dot() == item->end())
+    {
+      item_completion(items, item, i);
+    }
   }
 }
 
@@ -215,10 +229,19 @@ Parser::item_transition(ItemSet* items, const Item* item, size_t index)
       // nullable completion
       add_initial_item(core, get_item(&rule, rule.end() - item->dot()+1));
     }
-
-    // TODO: what are the reduce vectors?
   }
 }
+
+void
+Parser::item_completion(ItemSet* items, const Item* item, size_t index)
+{
+  // Completion in the current set:
+  // Find the rules that predicted the lhs of this rule in the current set
+  //SetSymbolRules tuple{items->core(), item->rule().nonterminal(), {}};
+  //auto iter = m_set_symbols.find(tuple);
+
+  //assert(iter != m_set_symbols.end());
+};
 
 auto
 Parser::insert_transition(const SetSymbolRules& tuple)
@@ -258,7 +281,7 @@ std::shared_ptr<ItemSet>
 Parser::create_new_set(size_t position, char input)
 {
   Symbol token = create_token(input);
-  auto core = std::make_shared<ItemSetCore>();
+  auto core = std::make_unique<ItemSetCore>();
   auto current_set = std::make_shared<ItemSet>(core.get());
 
   auto previous_set = m_itemSets[position];
@@ -274,7 +297,9 @@ Parser::create_new_set(size_t position, char input)
     for (auto transition: scans->transitions)
     {
       // TODO: lookahead
-      current_set->add_start_item(previous_core.item(transition),
+      auto item = previous_core.item(transition);
+      current_set->add_start_item(
+        get_item(&item->rule(), item->dot_index() + 1),
         previous_set->distance(transition) + 1);
     }
 
@@ -282,29 +307,36 @@ Parser::create_new_set(size_t position, char input)
     for (size_t i = 0; i < core->start_items(); ++i)
     {
       auto item = core->item(i);
-      auto rule = item->rule();
+      auto& rule = item->rule();
       // TODO: change this to empty tail
       if (item->dot() == rule.end())
       {
-        auto from = position - current_set->distance(i);
+        auto from = position + 1 - current_set->distance(i);
         auto from_core = m_itemSets[from]->core();
 
         // find the symbol for the lhs of this rule in set that predicted this
         // i.e., this is a completion: find the items it completes
         auto transitions = m_set_symbols.find(SetSymbolRules{
-          from_core, Symbol(), {}
+          from_core, item->rule().nonterminal(), {}
         });
+
+        if (transitions == m_set_symbols.end())
+        {
+          assert(item->rule().nonterminal() == m_grammar.start());
+          continue;
+        }
 
         for (auto transition: transitions->transitions)
         {
           auto* item = from_core->item(transition);
           auto* next = get_item(&item->rule(), item->dot() - item->rule().begin() + 1);
-          current_set->add_start_item(next, 0);
+          current_set->add_start_item(next, current_set->distance(i));
         }
       }
     }
   }
 
+  core.release();
   return current_set;
 }
 

@@ -341,14 +341,19 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
       auto rule_names = invert_map(ids);
       if (debug)
       {
+        std::cout << "-- Set 0 --" << std::endl;
         parser.print_set(0, rule_names);
       }
 
-      parser.parse(text);
+      parser.parse_input(text);
 
       if (debug)
       {
-        parser.print_set(1, rule_names);
+        for (size_t i = 1; i <= text.size(); ++i)
+        {
+          std::cout << "-- Set " << i << " --" << std::endl;
+          parser.print_set(i, rule_names);
+        }
       }
     }
   }

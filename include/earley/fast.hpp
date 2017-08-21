@@ -206,7 +206,10 @@ namespace earley
       Parser(const ParseGrammar& grammar);
 
       void
-      parse(const std::string& input);
+      parse_input(const std::string& input);
+
+      void
+      parse(const std::string& input, size_t position);
 
       void
       print_set(size_t i, const std::unordered_map<size_t, std::string>&);
@@ -239,6 +242,9 @@ namespace earley
 
       void
       item_transition(ItemSet* items, const Item* item, size_t i);
+
+      void
+      item_completion(ItemSet*, const Item*, size_t i);
 
       HashSet<SetSymbolRules>::iterator
       new_symbol_index(const SetSymbolRules& item)

@@ -328,6 +328,12 @@ namespace earley
       return this->position();
     }
 
+    auto
+    dot_index() const
+    {
+      return this->position() - m_rule->begin();
+    }
+
     std::vector<Entry>::const_iterator
     end() const
     {
