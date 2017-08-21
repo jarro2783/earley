@@ -29,6 +29,9 @@ create_token(char c)
 void
 ItemSet::add_start_item(const Item* item, size_t distance)
 {
+  hash_combine(m_hash, std::hash<const Item*>()(item));
+  hash_combine(m_hash, distance);
+
   m_core->add_start_item(item);
   m_distances.push_back(distance);
 }
@@ -296,6 +299,8 @@ Parser::create_new_set(size_t position, char input)
     // do all the scans
     for (auto transition: scans->transitions)
     {
+      std::cout << "Bringing in scan from " << transition 
+        << " with distance " << previous_set->distance(transition) + 1 << std::endl;
       // TODO: lookahead
       auto item = previous_core.item(transition);
       current_set->add_start_item(
@@ -311,8 +316,10 @@ Parser::create_new_set(size_t position, char input)
       // TODO: change this to empty tail
       if (item->dot() == rule.end())
       {
-        auto from = position + 1 - current_set->distance(i);
-        auto from_core = m_itemSets[from]->core();
+        auto distance = current_set->distance(i);
+        auto from = position + 1 - distance;
+        auto from_set = m_itemSets[from];
+        auto from_core = from_set->core();
 
         // find the symbol for the lhs of this rule in set that predicted this
         // i.e., this is a completion: find the items it completes
@@ -330,7 +337,8 @@ Parser::create_new_set(size_t position, char input)
         {
           auto* item = from_core->item(transition);
           auto* next = get_item(&item->rule(), item->dot() - item->rule().begin() + 1);
-          current_set->add_start_item(next, current_set->distance(i));
+          current_set->add_start_item(next,
+            distance + from_set->distance(transition));
         }
       }
     }
@@ -357,6 +365,8 @@ ItemSet::print(const std::unordered_map<size_t, std::string>& names) const
     m_core->item(i)->print(std::cout, names);
     std::cout << ": " << m_distances[i] << std::endl;
   }
+
+  std::cout << "--------" << std::endl;
 
   for (; i != m_core->all_items(); ++i)
   {

@@ -85,6 +85,9 @@ namespace earley
       void
       add_derived_item(const Item* item, size_t parent)
       {
+        hash_combine(m_hash, std::hash<const Item*>()(item));
+        hash_combine(m_hash, parent + 123456789);
+
         m_distances.push_back(parent);
         m_core->add_derived_item(item);
       }
@@ -109,6 +112,12 @@ namespace earley
           return 0;
         }
         return m_distances[i];
+      }
+
+      const auto&
+      distances() const
+      {
+        return m_distances;
       }
 
       size_t
@@ -173,6 +182,12 @@ namespace earley
         {
           return false;
         }
+      }
+
+      // we also have to compare the distances
+      if (pl->distances() != pr->distances())
+      {
+        return false;
       }
 
       return true;

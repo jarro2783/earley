@@ -345,14 +345,14 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
         parser.print_set(0, rule_names);
       }
 
-      parser.parse_input(text);
-
-      if (debug)
+      for (size_t i = 0; i < text.size(); ++i)
       {
-        for (size_t i = 1; i <= text.size(); ++i)
+        parser.parse(text, i);
+
+        if (debug)
         {
-          std::cout << "-- Set " << i << " --" << std::endl;
-          parser.print_set(i, rule_names);
+          std::cout << "-- Set " << i+1 << " --" << std::endl;
+          parser.print_set(i+1, rule_names);
         }
       }
     }
