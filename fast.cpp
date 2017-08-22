@@ -299,8 +299,8 @@ Parser::create_new_set(size_t position, char input)
     // do all the scans
     for (auto transition: scans->transitions)
     {
-      std::cout << "Bringing in scan from " << transition 
-        << " with distance " << previous_set->distance(transition) + 1 << std::endl;
+      //std::cout << "Bringing in scan from " << transition 
+      //  << " with distance " << previous_set->distance(transition) + 1 << std::endl;
       // TODO: lookahead
       auto item = previous_core.item(transition);
       current_set->add_start_item(

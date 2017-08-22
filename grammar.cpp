@@ -1,3 +1,4 @@
+#include <chrono>
 #include <typeinfo>
 
 #include "grammar.hpp"
@@ -336,6 +337,10 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
       //test the fast parser
       auto [rules, ids] = generate_rules(built);
       ParseGrammar parse_grammar(ids[start], rules);
+
+      std::chrono::time_point<std::chrono::system_clock> start_time, end;
+      start_time = std::chrono::system_clock::now();
+
       fast::Parser parser(parse_grammar);
 
       auto rule_names = invert_map(ids);
@@ -355,6 +360,14 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
           parser.print_set(i+1, rule_names);
         }
       }
+
+      end = std::chrono::system_clock::now();
+      std::chrono::duration<double> elapsed_seconds = end-start_time;
+
+      std::cout << "Fast parser took "
+        << std::chrono::duration_cast<std::chrono::microseconds>(
+          elapsed_seconds).count()
+        << " microseconds" << std::endl;
     }
   }
 }
