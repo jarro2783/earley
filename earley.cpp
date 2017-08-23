@@ -519,7 +519,6 @@ process_set(
 {
   for (auto& item: item_sets[which])
   {
-    std::cout << "Processing " << item << std::endl;
     to_process.push_back(item);
   }
 

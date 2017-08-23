@@ -42,6 +42,22 @@ checked_cast(U* u)
   return t;
 }
 
+std::string
+escape(char c)
+{
+  switch (c)
+  {
+    case '\t':
+    return "\\t";
+
+    case '\n':
+    return "\\n";
+
+    default:
+    return std::string(1, c);
+  }
+}
+
 void
 print_rule(GrammarPtr ptr)
 {
@@ -54,13 +70,14 @@ print_rule(GrammarPtr ptr)
     {
       std::cout << " " << get<std::string>(p);
     }
-    // TODO: implement Scanner better and print it here
     else if (holds<Scanner>(p))
     {
+      std::cout << ' ';
       get<Scanner>(p).print(std::cout);
-    } else if (holds<char>(p))
+    }
+    else if (holds<char>(p))
     {
-      std::cout << " '" << get<char>(p) << "'";
+      std::cout << " '" << escape(get<char>(p)) << "'";
     }
   }
 }
@@ -168,7 +185,7 @@ operator<<(std::ostream& os, const GrammarRange& range)
 
 void
 parse(const earley::Grammar& grammar, const std::string& start,
-  const std::string& text, bool debug)
+  const std::string& text, bool debug, bool timing)
 {
   auto [rules, ids] = generate_rules(grammar);
   auto [parsed, time, items, pointers] =
@@ -183,6 +200,10 @@ parse(const earley::Grammar& grammar, const std::string& start,
     std::cout << "Failed to parse";
   }
   std::cout << std::endl;
+  if (timing)
+  {
+    std::cout << "Parser took " << time << " microseconds" << std::endl;
+  }
 }
 
 }
@@ -272,6 +293,11 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
       {{'\\', 'n'}, {"escape", {1}}},
       {{' '}, {"pass", {0}}},
       {{'+'}, {"pass", {0}}},
+      {{'-'}, {"pass", {0}}},
+      {{'/'}, {"pass", {0}}},
+      {{'*'}, {"pass", {0}}},
+      {{'('}, {"pass", {0}}},
+      {{')'}, {"pass", {0}}},
     }},
     {"Numbers", {
       {{"Space", "Number"}},
@@ -337,7 +363,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
 
     if (text.size())
     {
-      parse(built, start, text, debug);
+      parse(built, start, text, debug, timing);
 
       //test the fast parser
       auto [rules, ids] = generate_rules(built);
@@ -369,10 +395,13 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
       end = std::chrono::system_clock::now();
       std::chrono::duration<double> elapsed_seconds = end-start_time;
 
-      std::cout << "Fast parser took "
-        << std::chrono::duration_cast<std::chrono::microseconds>(
-          elapsed_seconds).count()
-        << " microseconds" << std::endl;
+      if (timing)
+      {
+        std::cout << "Fast parser took "
+          << std::chrono::duration_cast<std::chrono::microseconds>(
+            elapsed_seconds).count()
+          << " microseconds" << std::endl;
+      }
     }
   }
 }
