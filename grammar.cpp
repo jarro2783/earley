@@ -187,9 +187,14 @@ void
 parse(const earley::Grammar& grammar, const std::string& start,
   const std::string& text, bool debug, bool timing)
 {
+  if (debug)
+  {
+    std::cout << "Start symbol is " << start << std::endl;
+  }
+
   auto [rules, ids] = generate_rules(grammar);
   auto [parsed, time, items, pointers] =
-    process_input(debug, ids["Grammar"], text, rules, ids);
+    process_input(debug, ids[start], text, rules, ids);
 
   if (parsed)
   {
