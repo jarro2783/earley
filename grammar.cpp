@@ -368,6 +368,11 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
 
     if (text.size())
     {
+      if (debug)
+      {
+        std::cout << "Parsing:" << std::endl;
+        std::cout << text << std::endl;
+      }
       parse(built, start, text, debug, timing);
 
       //test the fast parser
