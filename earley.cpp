@@ -456,18 +456,19 @@ complete(
   auto ours = item.nonterminal();
   const TransitiveItem* ti = nullptr;
 
-  if ((ti = find_transitive_item(transitive_items[item.where()], ours)) != nullptr)
-  {
-    transitive_items[which].insert(*ti);
-    item_sets[which].insert(get<0>(*ti));
-    return;
-  }
+  //if ((ti = find_transitive_item(transitive_items[item.where()], ours)) != nullptr)
+  //{
+  //  transitive_items[which].insert(*ti);
+  //  item_sets[which].insert(get<0>(*ti));
+  //  return;
+  //}
 
   HashSet<Item> to_add(20);
 
+  //std::cout << "Completed: " << item << std::endl;
   for (auto& consider : item_sets[item.where()])
   {
-    //std::cout << "Consider " << item << std::endl;
+    //std::cout << "Consider " << consider << std::endl;
     auto dot = consider.position();
     if (dot != consider.end() &&
         holds<size_t>(*dot) &&
@@ -475,9 +476,6 @@ complete(
     {
       //bring it into our set
       auto next = consider.next();
-      //std::cout << "Completion adding reduction " 
-      //          << next << ":" << which 
-      //          << " -> " << item << ":" << which << std::endl;
       pointers.reduction(which, item.where(), next, item);
 
       if (dot != consider.rule().begin())
@@ -486,10 +484,14 @@ complete(
         //          << " -> " << consider << ":" << item.where() << std::endl;
         pointers.predecessor(which, item.where(), item.where(), next, consider);
       }
-      if (item_sets[which].count(next) == 0 && to_add.count(next) == 0)
+      if (item_sets[which].count(next) == 0)
       {
-        to_add.insert(next);
-        stack.push_back(next);
+        if (to_add.insert(next).second)
+        {
+          //std::cout << "Adding " << next << std::endl;
+          to_add.insert(next);
+          stack.push_back(next);
+        }
       }
     }
   }
@@ -517,6 +519,7 @@ process_set(
 {
   for (auto& item: item_sets[which])
   {
+    std::cout << "Processing " << item << std::endl;
     to_process.push_back(item);
   }
 
@@ -600,7 +603,7 @@ process_input(
     size_t n = 0;
     for (auto& items : item_sets)
     {
-      std::cout << "Position " << n << std::endl;
+      std::cout << "-- Position " << n << " --" << std::endl;
       for (auto& item : items)
       {
         item.print(std::cout, rule_names);

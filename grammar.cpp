@@ -220,6 +220,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
       {{"Rules", "Space", '|', "Rule"}, {"append_list", {0, 3}}},
     }},
     {"Rule", {
+      {{}, {"rule", {}}},
       {{"Productions"}, {"rule", {0}}},
       {{"Productions", "Action"}, {"rule", {0, 1}}},
     }},
@@ -267,6 +268,10 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
     }},
     {"Char", {
       {{scan_range('a', 'z')}, {"pass", {0}}},
+      {{'\\', 't'}, {"escape", {1}}},
+      {{'\\', 'n'}, {"escape", {1}}},
+      {{' '}, {"pass", {0}}},
+      {{'+'}, {"pass", {0}}},
     }},
     {"Numbers", {
       {{"Space", "Number"}},
@@ -341,9 +346,9 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
       std::chrono::time_point<std::chrono::system_clock> start_time, end;
       start_time = std::chrono::system_clock::now();
 
-      fast::Parser parser(parse_grammar);
-
       auto rule_names = invert_map(ids);
+      fast::Parser parser(parse_grammar, rule_names);
+
       if (debug)
       {
         std::cout << "-- Set 0 --" << std::endl;

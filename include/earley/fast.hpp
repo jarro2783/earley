@@ -41,7 +41,14 @@ namespace earley
       }
 
       void
-      add_derived_item(const Item* item)
+      add_derived_item(const Item* item, size_t parent)
+      {
+        m_items.push_back(item);
+        m_parent_indexes.push_back(parent);
+      }
+
+      void
+      add_initial_item(const Item* item)
       {
         m_items.push_back(item);
       }
@@ -64,10 +71,23 @@ namespace earley
         return m_items;
       }
 
+      size_t
+      all_distances() const
+      {
+        return m_start_items + m_parent_indexes.size();
+      }
+
+      size_t
+      parent_distance(size_t distance)
+      {
+        return m_parent_indexes.at(distance - m_start_items);
+      }
+
       private:
       size_t m_start_items = 0;
       std::vector<const Item*> m_items;
       size_t m_hash = 0;
+      std::vector<size_t> m_parent_indexes;
     };
 
     class ItemSet
@@ -89,7 +109,7 @@ namespace earley
         hash_combine(m_hash, parent + 123456789);
 
         m_distances.push_back(parent);
-        m_core->add_derived_item(item);
+        m_core->add_derived_item(item, parent);
       }
 
       const ItemSetCore*
@@ -124,6 +144,23 @@ namespace earley
       hash() const
       {
         return m_hash;
+      }
+
+      size_t
+      actual_distance(size_t item) const
+      {
+        if (item < m_core->start_items())
+        {
+          return m_distances[item];
+        }
+        else if (item < m_distances.size())
+        {
+          return m_distances[m_distances[item]];
+        }
+        else
+        {
+          return 0;
+        }
       }
 
       void
@@ -218,7 +255,8 @@ namespace earley
     {
       public:
 
-      Parser(const ParseGrammar& grammar);
+      Parser(const ParseGrammar& grammar,
+        std::unordered_map<size_t, std::string> names);
 
       void
       parse_input(const std::string& input);
@@ -279,6 +317,8 @@ namespace earley
       std::unordered_map<const Rule*, std::vector<Item>> m_items;
       HashSet<SetSymbolRules> m_set_symbols;
       std::vector<bool> m_nullable;
+
+      std::unordered_map<size_t, std::string> m_names;
 
       auto
       insert_transition(const SetSymbolRules& tuple)

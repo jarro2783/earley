@@ -36,9 +36,13 @@ ItemSet::add_start_item(const Item* item, size_t distance)
   m_distances.push_back(distance);
 }
 
-Parser::Parser(const ParseGrammar& grammar)
+Parser::Parser(
+  const ParseGrammar& grammar,
+  std::unordered_map<size_t, std::string> names
+)
 : m_grammar(augment_start_rule(grammar))
 , m_nullable(find_nullable(m_grammar.rules()))
+, m_names(std::move(names))
 {
   create_all_items();
   create_start_set();
@@ -50,7 +54,7 @@ Parser::create_all_items()
   auto& nonterminals = m_grammar.rules();
   for (size_t i = 0; i != nonterminals.size(); ++i)
   {
-    for (auto& rule: nonterminals[i])
+    for (auto& rule: nonterminals.at(i))
     {
       auto& item_list = m_items[&rule];
       // create an item for every dot position in the rule
@@ -61,6 +65,7 @@ Parser::create_all_items()
         auto& entry = *add.position();
         if (holds<size_t>(entry) && m_nullable[get<size_t>(entry)])
         {
+          // TODO: fix this
           const_cast<Entry&>(entry).set_empty();
         }
 
@@ -131,7 +136,7 @@ Parser::get_item(const earley::Rule* rule, size_t dot) const
 {
   auto iter = m_items.find(rule);
   assert(iter != m_items.end());
-  return &iter->second[dot];
+  return &iter->second.at(dot);
 }
 
 void
@@ -227,10 +232,10 @@ Parser::item_transition(ItemSet* items, const Item* item, size_t index)
     }
 
     // if this symbol can derive empty then add the next item too
-    if (symbol.empty())
+    if (symbol.empty() && item->dot() != rule.end())
     {
       // nullable completion
-      add_initial_item(core, get_item(&rule, rule.end() - item->dot()+1));
+      add_initial_item(core, get_item(&rule, item->dot() - rule.begin() + 1));
     }
   }
 }
@@ -275,7 +280,7 @@ Parser::add_initial_item(ItemSetCore* core, const Item* item)
     }
   }
 
-  core->add_derived_item(item);
+  core->add_initial_item(item);
 }
 
 // Do scans and completions to start the current set
@@ -305,7 +310,7 @@ Parser::create_new_set(size_t position, char input)
       auto item = previous_core.item(transition);
       current_set->add_start_item(
         get_item(&item->rule(), item->dot_index() + 1),
-        previous_set->distance(transition) + 1);
+        previous_set->actual_distance(transition) + 1);
     }
 
     // now do all the completed items
@@ -317,8 +322,8 @@ Parser::create_new_set(size_t position, char input)
       if (item->dot() == rule.end())
       {
         auto distance = current_set->distance(i);
-        auto from = position + 1 - distance;
-        auto from_set = m_itemSets[from];
+        auto from = position - distance + 1;
+        auto from_set = m_itemSets.at(from);
         auto from_core = from_set->core();
 
         // find the symbol for the lhs of this rule in set that predicted this
@@ -329,7 +334,21 @@ Parser::create_new_set(size_t position, char input)
 
         if (transitions == m_set_symbols.end())
         {
-          assert(item->rule().nonterminal() == m_grammar.start());
+          if (item->rule().nonterminal() != m_grammar.start())
+          {
+            std::cerr << "At position " << position << ", Completing item: ";
+            item->print(std::cerr, m_names);
+            std::cerr << ": " << current_set->distance(i) << std::endl;
+            std::cerr << "Can't find " << m_names[item->rule().nonterminal()]
+              << " in set " << from << std::endl;
+            for (size_t print_i = 0; print_i <= position; ++print_i)
+            {
+              std::cerr << "-- Set " << print_i << " -- " << std::endl;
+              print_set(print_i, m_names);
+            }
+            exit(1);
+          }
+
           continue;
         }
 
@@ -337,8 +356,8 @@ Parser::create_new_set(size_t position, char input)
         {
           auto* item = from_core->item(transition);
           auto* next = get_item(&item->rule(), item->dot() - item->rule().begin() + 1);
-          current_set->add_start_item(next,
-            distance + from_set->distance(transition));
+          current_set->add_start_item(next, 
+            from_set->actual_distance(transition) + distance);
         }
       }
     }
