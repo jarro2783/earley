@@ -63,7 +63,6 @@ namespace earley
       GrammarString(char c)
       : m_string(1, c)
       {
-        std::cout << "Create string " << m_string << std::endl;
       }
 
       const std::string&
@@ -139,7 +138,6 @@ namespace earley
 
       Rule()
       {
-        std::cout << "Empty rule" << std::endl;
       }
 
       Rule(const GrammarNode& productions)
@@ -166,7 +164,6 @@ namespace earley
         auto& ptr = get<GrammarPtr>(productions);
         auto list = dynamic_cast<const GrammarList*>(ptr.get());
         // each of these should be either a name or a literal
-        std::cerr << "Parsed rule: ";
         for (auto& production: list->list())
         {
           if (holds<GrammarPtr>(production))
@@ -177,23 +174,19 @@ namespace earley
 
             if ((name = dynamic_cast<const GrammarString*>(ptr)) != nullptr)
             {
-              std::cerr << name->string() << ' ';
               m_productions.push_back(name->string());
             }
             else if ((range = dynamic_cast<const GrammarRange*>(ptr)) != nullptr)
             {
               // Build a range here out of a GrammarRange
-              std::cerr << "Range: " << *range << std::endl;
               m_productions.push_back(range->make_scanner());
             }
           }
           else if (holds<char>(production))
           {
-            std::cerr << get<char>(production);
             m_productions.push_back(get<char>(production));
           }
         }
-        std::cerr << std::endl;
       }
 
       std::vector<Production> m_productions;
@@ -205,13 +198,10 @@ namespace earley
     {
       GrammarList* list = nullptr;
 
-      std::cerr << "Trying to append to list" << std::endl;
       if (nodes.size() == 2 && holds<GrammarPtr>(nodes[0]) &&
           (list = dynamic_cast<GrammarList*>(get<GrammarPtr>(nodes[0]).get())
            ) != nullptr)
       {
-        std::cerr << "Appending to list of size " << list->list().size() << std::endl;
-
         auto& rhs = nodes[1];
         if (!holds<GrammarPtr>(rhs))
         {
@@ -237,10 +227,6 @@ namespace earley
 
         return nodes[0];
       }
-      else
-      {
-        std::cerr << "Unable to append to list" << std::endl;
-      }
 
       return earley::values::Failed();
     }
@@ -251,12 +237,10 @@ namespace earley
     {
       if (nodes.size() == 0)
       {
-        std::cerr << "Creating a list of size 0" << std::endl;
         return std::make_shared<GrammarList>();
       }
       else if (nodes.size() == 1)
       {
-        std::cerr << "Creating a list of size 1" << std::endl;
         return std::make_shared<GrammarList>(nodes[0]);
       }
 
@@ -267,7 +251,6 @@ namespace earley
     GrammarNode
     action_create_string(std::vector<GrammarNode>& nodes)
     {
-      std::cout << "Create string" << std::endl;
       switch (nodes.size())
       {
         case 0:
@@ -289,7 +272,6 @@ namespace earley
     GrammarNode
     action_append_string(std::vector<GrammarNode>& nodes)
     {
-      std::cout << "Append string" << std::endl;
       if (nodes.size() != 2 || !holds<GrammarPtr>(nodes[0]))
       {
         return values::Failed();
@@ -308,23 +290,19 @@ namespace earley
       if (holds<char>(nodes[1]))
       {
         string.append(1, get<char>(nodes[1]));
-        std::cout << "Made string " << string << std::endl;
       }
       else if (holds<GrammarPtr>(nodes[1]))
       {
         auto rhs = dynamic_cast<GrammarString*>(get<GrammarPtr>(nodes[1]).get());
         if (rhs == nullptr)
         {
-          std::cout << "String append failed" << std::endl;
           return values::Failed();
         }
 
         string.append(rhs->string());
-        std::cout << "Made string " << string << std::endl;
       }
       else
       {
-        std::cout << "String append failed" << std::endl;
         return values::Failed();
       }
 
@@ -335,7 +313,6 @@ namespace earley
     GrammarNode
     action_rule(std::vector<GrammarNode>& nodes)
     {
-      std::cout << "Building a rule" << std::endl;
       switch (nodes.size())
       {
         case 0:
@@ -370,7 +347,6 @@ namespace earley
     GrammarNode
     action_create_nonterminal(std::vector<GrammarNode>& nodes)
     {
-      std::cout << "Trying to make a nonterminal" << std::endl;
       if (nodes.size() != 2)
       {
         return values::Failed();
@@ -405,14 +381,12 @@ namespace earley
         rules_ptrs.push_back(get<GrammarPtr>(node));
       }
 
-      std::cout << "Built nonterminal" << std::endl;
-
       return std::make_shared<GrammarNonterminal>(name->string(), rules_ptrs);
     }
   }
 
   void
-  parse_ebnf(const std::string& input, bool debug, bool timing,
+  parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
     const std::string& text = std::string());
 }
 

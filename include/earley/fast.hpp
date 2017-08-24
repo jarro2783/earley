@@ -20,6 +20,11 @@ namespace earley
     {
       public:
 
+      ItemSetCore()
+      {
+        m_items.reserve(100);
+      }
+
       void
       add_start_item(const Item* item)
       {

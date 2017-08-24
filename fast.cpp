@@ -41,6 +41,7 @@ Parser::Parser(
   std::unordered_map<size_t, std::string> names
 )
 : m_grammar(augment_start_rule(grammar))
+, m_set_symbols(20000)
 , m_nullable(find_nullable(m_grammar.rules()))
 , m_names(std::move(names))
 {
@@ -101,6 +102,11 @@ Parser::parse(const std::string& input, size_t position)
   if (result.second)
   {
     expand_set(set.get());
+  }
+  else
+  {
+    //std::cout << "Reused a set at position " << position << std::endl;
+    //result.first->get()->print(m_names);
   }
 
   m_itemSets.push_back(result.first->get());
@@ -262,6 +268,7 @@ Parser::insert_transition(const SetSymbolRules& tuple)
   {
     //insert a new set
     iter = new_symbol_index(tuple);
+    iter->transitions.reserve(64);
     inserted = true;
   }
 

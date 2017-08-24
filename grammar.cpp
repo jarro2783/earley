@@ -214,7 +214,7 @@ parse(const earley::Grammar& grammar, const std::string& start,
 }
 
 void
-parse_ebnf(const std::string& input, bool debug, bool timing,
+parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
   const std::string& text)
 {
   Grammar ebnf = {
@@ -373,7 +373,11 @@ parse_ebnf(const std::string& input, bool debug, bool timing,
         std::cout << "Parsing:" << std::endl;
         std::cout << text << std::endl;
       }
-      parse(built, start, text, debug, timing);
+
+      if (slow)
+      {
+        parse(built, start, text, debug, timing);
+      }
 
       //test the fast parser
       auto [rules, ids] = generate_rules(built);

@@ -13,6 +13,7 @@ int main(int argc, char** argv)
     ("expression", "parse a simple expression", cxxopts::value<std::string>())
     ("h,help", "show help")
     ("t,timing", "print timing")
+    ("slow", "Run the slow parser")
   ;
 
   options.parse(argc, argv);
@@ -25,6 +26,7 @@ int main(int argc, char** argv)
 
   bool debug = options.count("debug");
   bool timing = options.count("timing");
+  bool slow = options.count("slow");
 
   if (options.count("expression"))
   {
@@ -43,7 +45,7 @@ int main(int argc, char** argv)
     to_parse = argv[2];
   }
 
-  earley::parse_ebnf(argv[1], debug, timing, to_parse);
+  earley::parse_ebnf(argv[1], debug, timing, slow, to_parse);
 
   return 0;
 }
