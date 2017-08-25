@@ -6,12 +6,15 @@ rule cxx
 rule cxx_link
   command = g++ $in -o $out
 
+build .build/grammar_util.o: cxx src/grammar_util.cpp
+
 build earley.o: cxx earley.cpp
 build fast.o: cxx fast.cpp
 build grammar.o: cxx grammar.cpp
 build main.o: cxx main.cpp
 build numbers.o: cxx numbers.cpp
-build earley: cxx_link earley.o fast.o grammar.o main.o numbers.o
+build earley: cxx_link earley.o fast.o grammar.o main.o numbers.o $
+  .build/grammar_util.o
 
 # tests
 build test/main.o: cxx test/main.cpp
