@@ -17,6 +17,8 @@ build earley: cxx_link earley.o fast.o grammar.o main.o numbers.o $
   .build/grammar_util.o
 
 # tests
-build test/main.o: cxx test/main.cpp
-build test/hash.o: cxx test/hash.cpp
-build test/hash: cxx_link test/main.o test/hash.o
+build test/.build/grammar_util.o: cxx test/grammar_util.cpp
+build test/.build/main.o: cxx test/main.cpp
+build test/.build/hash.o: cxx test/hash.cpp
+build test/hash: cxx_link test/.build/main.o test/.build/hash.o
+build test/grammar: cxx_link test/.build/main.o test/.build/grammar_util.o
