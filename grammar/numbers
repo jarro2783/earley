@@ -1,0 +1,26 @@
+Input -> Sum Space
+
+Number ->
+    Space [1-9] NumberRest
+  | Space [1-9]
+
+NumberRest ->
+    [0-9]
+  | NumberRest [0-9]
+
+Space -> 
+  | Space ' '
+
+Sum ->
+    Product
+  | Sum Space '+' Product
+  | Sum Space '-' Product
+
+Product ->
+    Facter
+  | Product Space '*' Facter
+  | Product Space '/' Facter
+
+Facter ->
+    Number
+  | '(' Sum ')'
