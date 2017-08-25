@@ -24,12 +24,6 @@ first_sets(const ParseGrammar& grammar)
   auto& rules = grammar.rules();
   std::unordered_map<size_t, std::unordered_set<int>> first_set;
 
-  // I don't think I need this
-  //for (auto& rule_list: rules)
-  //{
-  //  first_set[rule_list.begin()->nonterminal()];
-  //}
-
   bool changed = true;
   while (changed)
   {
@@ -69,6 +63,8 @@ first_sets(const ParseGrammar& grammar)
             }
             else
             {
+              // TODO: get rid of this dirty hack
+              // it's too fragile because I enumerate this in several places
               while (left <= scanner.right)
               {
                 if (set.insert(static_cast<int>(left)).second)
