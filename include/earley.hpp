@@ -191,8 +191,8 @@ namespace earley
     return os;
   }
 
-  // An entry is an epsilon, a pointer to another non-terminal, or
-  // any number of ways of specifying a terminal
+  // An entry is a non-terminal, or
+  // a scanner for a terminal
   typedef std::variant<
     size_t,
     Scanner
@@ -236,7 +236,7 @@ namespace earley
   }
 
   template <typename T>
-  auto
+  decltype(auto)
   get(const Entry& e)
   {
     return get<T>(e.entry);

@@ -18,6 +18,111 @@ augment_start_rule(const ParseGrammar& grammar)
   return ParseGrammar(rules.size()-1, rules);
 }
 
+auto
+first_sets(const ParseGrammar& grammar)
+{
+  auto& rules = grammar.rules();
+  std::unordered_map<size_t, std::unordered_set<int>> first_set;
+
+  // I don't think I need this
+  //for (auto& rule_list: rules)
+  //{
+  //  first_set[rule_list.begin()->nonterminal()];
+  //}
+
+  bool changed = true;
+  while (changed)
+  {
+    changed = false;
+
+    for (size_t i = 0; i != rules.size(); ++i)
+    {
+      auto& rule_list = rules[i];
+      auto nt = i;
+      auto& set = first_set[nt];
+
+      for (auto& rule: rule_list)
+      {
+        if (rule.begin() == rule.end())
+        {
+          if (set.insert(-1).second)
+          {
+            changed = true;
+          }
+          continue;
+        }
+
+        auto entry_iter = rule.begin();
+        while (entry_iter != rule.end())
+        {
+          auto& entry = *entry_iter;
+          if (holds<Scanner>(entry))
+          {
+            auto& scanner = get<Scanner>(entry);
+            auto left = scanner.left;
+            if (scanner.right == -1)
+            {
+              if (set.insert(static_cast<int>(left)).second)
+              {
+                changed = true;
+              }
+            }
+            else
+            {
+              while (left <= scanner.right)
+              {
+                if (set.insert(static_cast<int>(left)).second)
+                {
+                  changed = true;
+                }
+                ++left;
+              }
+            }
+
+            break;
+          }
+          else
+          {
+            auto next = get<size_t>(entry);
+            auto& next_first = first_set[next];
+
+            for (auto first: next_first)
+            {
+              // skip epsilon for this set
+              if (first == -1)
+              {
+                continue;
+              }
+              if (set.insert(first).second)
+              {
+                changed = true;
+              }
+            }
+
+            // bail if epsilon isn't in this item's first set
+            if (next_first.count(-1) == 0)
+            {
+              break;
+            }
+          }
+          ++entry_iter;
+        }
+
+        // add epsilon for this set if we got all the way to the end
+        if (entry_iter == rule.end())
+        {
+          if (set.insert(-1).second)
+          {
+            changed = true;
+          }
+        }
+      }
+    }
+  }
+
+  return first_set;
+}
+
 }
 
 Symbol
@@ -47,6 +152,25 @@ Parser::Parser(
 {
   create_all_items();
   create_start_set();
+
+  auto firsts = first_sets(grammar);
+
+  for (auto& nt: firsts)
+  {
+    std::cout << m_names[nt.first] << ":";
+    for (auto& item: nt.second)
+    {
+      if (item >= 0 && item < 128)
+      {
+        std::cout << " '" << static_cast<char>(item) << "'";
+      }
+      else
+      {
+        std::cout << " " << item;
+      }
+    }
+    std::cout << std::endl;
+  }
 }
 
 void
@@ -261,18 +385,17 @@ auto
 Parser::insert_transition(const SetSymbolRules& tuple)
 -> std::tuple<bool, decltype(m_set_symbols.find(tuple))>
 {
-  auto iter = m_set_symbols.find(tuple);
+  auto iter = m_set_symbols.insert(tuple);
   bool inserted = false;
 
-  if (iter == m_set_symbols.end())
+  if (iter.second)
   {
     //insert a new set
-    iter = new_symbol_index(tuple);
-    iter->transitions.reserve(64);
+    iter.first->transitions.reserve(64);
     inserted = true;
   }
 
-  return std::make_tuple(inserted, iter);
+  return std::make_tuple(inserted, iter.first);
 }
 
 void
