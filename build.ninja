@@ -21,4 +21,5 @@ build test/.build/grammar_util.o: cxx test/grammar_util.cpp
 build test/.build/main.o: cxx test/main.cpp
 build test/.build/hash.o: cxx test/hash.cpp
 build test/hash: cxx_link test/.build/main.o test/.build/hash.o
-build test/grammar: cxx_link test/.build/main.o test/.build/grammar_util.o
+build test/grammar: cxx_link test/.build/main.o test/.build/grammar_util.o $
+  .build/grammar_util.o
