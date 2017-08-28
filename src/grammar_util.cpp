@@ -135,14 +135,17 @@ follow_sets
           {
             auto nt = get<size_t>(*position);
             auto first = first_set(position+1, rule.end(), firsts);
-            changed |= insert_range(first.begin(), first.end(), follows[nt]);
 
             if (first.count(EPSILON))
             {
               changed |= insert_range(follows[lhs].begin(),
                 follows[lhs].end(),
                 follows[nt]);
+
+              first.erase(EPSILON);
             }
+
+            changed |= insert_range(first.begin(), first.end(), follows[nt]);
           }
 
           ++position;

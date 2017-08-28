@@ -153,3 +153,19 @@ SCENARIO("Follow set", "[follow]")
     CHECK(follow[1].count('a'));
   }
 }
+
+SCENARIO("Insert scanner", "[insert]")
+{
+  std::unordered_set<int> set;
+
+  WHEN("The set is empty")
+  {
+    THEN("insert_scanner returns true")
+    {
+      CHECK(earley::insert_scanner(earley::scan_range('a', 'c'), set));
+      CHECK(set.count('a'));
+      CHECK(set.count('b'));
+      CHECK(set.count('c'));
+    }
+  }
+}

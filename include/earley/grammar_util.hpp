@@ -29,9 +29,10 @@ namespace earley
       bool changed = false;
       auto left = scanner.left;
 
-      while (left < scanner.right)
+      while (left <= scanner.right)
       {
         changed |= set.insert(left).second;
+        ++left;
       }
 
       return changed;

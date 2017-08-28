@@ -48,9 +48,28 @@ Parser::Parser(
   create_all_items();
   create_start_set();
 
-  auto firsts = first_sets(grammar);
+  auto firsts = first_sets(m_grammar);
 
   for (auto& nt: firsts)
+  {
+    std::cout << m_names[nt.first] << ":";
+    for (auto& item: nt.second)
+    {
+      if (item >= 0 && item < 128)
+      {
+        std::cout << " '" << static_cast<char>(item) << "'";
+      }
+      else
+      {
+        std::cout << " " << item;
+      }
+    }
+    std::cout << std::endl;
+  }
+
+  auto follow = follow_sets(m_grammar, firsts);
+
+  for (auto& nt: follow)
   {
     std::cout << m_names[nt.first] << ":";
     for (auto& item: nt.second)
