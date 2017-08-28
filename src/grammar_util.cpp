@@ -104,4 +104,39 @@ first_sets(const ParseGrammar& grammar)
   return first_set;
 }
 
+std::unordered_map<size_t, std::unordered_set<int>>
+follow_sets
+(
+  const ParseGrammar& grammar,
+  const std::unordered_map<size_t, std::unordered_set<int>>& firsts
+)
+{
+  std::unordered_map<size_t, std::unordered_set<int>> follows;
+  auto& rules = grammar.rules();
+
+  bool changed = true;
+  while (changed)
+  {
+    changed = false;
+
+    for (size_t i = 0; i != rules.size(); ++i)
+    {
+      auto nt = i;
+      auto& rule_list = rules[nt];
+
+      for (auto& rule: rule_list)
+      {
+        auto position = rule.begin();
+        while (position != rule.end())
+        {
+          first_set(position, rule.end(), firsts);
+          ++position;
+        }
+      }
+    }
+  }
+
+  return follows;
+}
+
 }

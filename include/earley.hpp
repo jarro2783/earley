@@ -236,6 +236,13 @@ namespace earley
   }
 
   template <typename T>
+  bool
+  holds(Entry& e)
+  {
+    return holds<T>(e.entry);
+  }
+
+  template <typename T>
   decltype(auto)
   get(const Entry& e)
   {

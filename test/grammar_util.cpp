@@ -86,3 +86,41 @@ TEST_CASE("Complex first set", "[firsts]")
   CHECK(first2.count('c'));
   CHECK(first2.count('d'));
 }
+
+SCENARIO("First set of symbol sequence", "[firsts]")
+{
+  GIVEN("A sequence beginning with a terminal") {
+    std::vector<earley::Entry> terminal{scan_char('a')};
+    auto first = earley::first_set(terminal.begin(), terminal.end(), {});
+
+    CHECK(first.size() == 1);
+    CHECK(first.count('a'));
+  }
+
+  GIVEN("A sequence with a terminating nonterminal") {
+    std::vector<earley::Entry> nonterminal{0};
+    earley::FirstSet firsts{
+      {0, {'a'}},
+    };
+
+    auto first = earley::first_set(nonterminal.begin(), nonterminal.end(), firsts);
+
+    CHECK(first.size() == 1);
+    CHECK(first.count('a'));
+  }
+
+  GIVEN("A sequence with an epsilon nonterminal") {
+    std::vector<earley::Entry> sequence{0, 1};
+    earley::FirstSet firsts{
+      {0, {earley::EPSILON, 'a'}},
+      {1, {'b'}},
+    };
+
+    auto first = earley::first_set(sequence.begin(), sequence.end(), firsts);
+
+    CHECK(first.size() == 3);
+    CHECK(first.count(earley::EPSILON));
+    CHECK(first.count('a'));
+    CHECK(first.count('b'));
+  }
+}
