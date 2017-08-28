@@ -124,3 +124,32 @@ SCENARIO("First set of symbol sequence", "[firsts]")
     CHECK(first.count('b'));
   }
 }
+
+SCENARIO("Follow set", "[follow]")
+{
+  GIVEN("A basic grammar")
+  {
+    std::vector<earley::RuleList> rules
+    {
+      {
+        {0, {1, scan_char('a')}},
+      },
+      {
+        {1, {'b'}},
+      },
+    };
+
+    earley::ParseGrammar grammar(0, rules);
+
+    auto firsts = earley::first_sets(grammar);
+
+    auto follow = earley::follow_sets(grammar, firsts);
+
+    REQUIRE(follow.count(0));
+    REQUIRE(follow.count(1));
+    CHECK(follow[0].size() == 1);
+    CHECK(follow[0].count(earley::END_OF_INPUT));
+    CHECK(follow[1].size() == 1);
+    CHECK(follow[1].count('a'));
+  }
+}

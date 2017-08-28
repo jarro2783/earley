@@ -114,6 +114,8 @@ follow_sets
   std::unordered_map<size_t, std::unordered_set<int>> follows;
   auto& rules = grammar.rules();
 
+  follows[grammar.start()].insert(END_OF_INPUT);
+
   bool changed = true;
   while (changed)
   {
@@ -121,15 +123,28 @@ follow_sets
 
     for (size_t i = 0; i != rules.size(); ++i)
     {
-      auto nt = i;
-      auto& rule_list = rules[nt];
+      auto lhs = i;
+      auto& rule_list = rules[lhs];
 
       for (auto& rule: rule_list)
       {
         auto position = rule.begin();
         while (position != rule.end())
         {
-          first_set(position, rule.end(), firsts);
+          if (holds<size_t>(*position))
+          {
+            auto nt = get<size_t>(*position);
+            auto first = first_set(position+1, rule.end(), firsts);
+            changed |= insert_range(first.begin(), first.end(), follows[nt]);
+
+            if (first.count(EPSILON))
+            {
+              changed |= insert_range(follows[lhs].begin(),
+                follows[lhs].end(),
+                follows[nt]);
+            }
+          }
+
           ++position;
         }
       }
