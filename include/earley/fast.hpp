@@ -7,6 +7,8 @@
 #include "earley.hpp"
 #include "earley_hash_set.hpp"
 
+#include "earley/grammar_util.hpp"
+
 namespace earley::fast
 {
   struct ItemSetOwner;
@@ -311,7 +313,10 @@ namespace earley
       }
 
       std::shared_ptr<ItemSet>
-      create_new_set(size_t position, char token);
+      create_new_set(size_t position, const std::string& input);
+
+      void
+      set_item_lookahead(Item& item);
 
       ParseGrammar m_grammar;
       std::vector<std::shared_ptr<ItemSet>> m_itemSets;
@@ -324,6 +329,10 @@ namespace earley
       std::vector<bool> m_nullable;
 
       std::unordered_map<size_t, std::string> m_names;
+
+      // follow and first sets
+      FirstSet m_first_sets;
+      FollowSet m_follow_sets;
 
       auto
       insert_transition(const SetSymbolRules& tuple)

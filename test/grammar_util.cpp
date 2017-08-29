@@ -89,6 +89,14 @@ TEST_CASE("Complex first set", "[firsts]")
 
 SCENARIO("First set of symbol sequence", "[firsts]")
 {
+  GIVEN("An empty sequence")
+  {
+    std::vector<earley::Entry> sequence;
+    auto first = earley::first_set(sequence.begin(), sequence.end(), {});
+    CHECK(first.size() == 1);
+    CHECK(first.count(earley::EPSILON));
+  }
+
   GIVEN("A sequence beginning with a terminal") {
     std::vector<earley::Entry> terminal{scan_char('a')};
     auto first = earley::first_set(terminal.begin(), terminal.end(), {});
@@ -142,7 +150,6 @@ SCENARIO("Follow set", "[follow]")
     earley::ParseGrammar grammar(0, rules);
 
     auto firsts = earley::first_sets(grammar);
-
     auto follow = earley::follow_sets(grammar, firsts);
 
     REQUIRE(follow.count(0));

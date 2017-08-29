@@ -207,7 +207,7 @@ parse(const earley::Grammar& grammar, const std::string& start,
   std::cout << std::endl;
   if (timing)
   {
-    std::cout << "Parser took " << time << " microseconds" << std::endl;
+    std::cout << "Slow parser took " << time << " microseconds" << std::endl;
   }
 }
 
@@ -342,7 +342,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
   {
     if (timing)
     {
-      std::cout << ebnf_time << std::endl;
+      std::cout << "ebnf: " << ebnf_time << std::endl;
     }
 
     std::unordered_map<std::string, ast::GrammarNode(*)(

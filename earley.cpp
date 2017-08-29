@@ -623,7 +623,10 @@ process_input(
   {
     if (item.position() == item.end() && item.where() == 0 && item.nonterminal() == start)
     {
-      dump_pointers(item_sets, pointers, rule_names);
+      if (debug)
+      {
+        dump_pointers(item_sets, pointers, rule_names);
+      }
 
       parsed = true;
       if (debug)

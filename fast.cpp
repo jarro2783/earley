@@ -45,12 +45,12 @@ Parser::Parser(
 , m_nullable(find_nullable(m_grammar.rules()))
 , m_names(std::move(names))
 {
-  create_all_items();
-  create_start_set();
+  m_names.insert({m_grammar.rules().size()-1, "S^"});
 
-  auto firsts = first_sets(m_grammar);
+  std::cout << "First Sets" << std::endl;
+  m_first_sets = first_sets(m_grammar);
 
-  for (auto& nt: firsts)
+  for (auto& nt: m_first_sets)
   {
     std::cout << m_names[nt.first] << ":";
     for (auto& item: nt.second)
@@ -67,9 +67,10 @@ Parser::Parser(
     std::cout << std::endl;
   }
 
-  auto follow = follow_sets(m_grammar, firsts);
+  std::cout << "Follow Sets" << std::endl;
+  m_follow_sets = follow_sets(m_grammar, m_first_sets);
 
-  for (auto& nt: follow)
+  for (auto& nt: m_follow_sets)
   {
     std::cout << m_names[nt.first] << ":";
     for (auto& item: nt.second)
@@ -84,6 +85,30 @@ Parser::Parser(
       }
     }
     std::cout << std::endl;
+  }
+
+  create_all_items();
+  create_start_set();
+}
+
+void
+Parser::set_item_lookahead(Item& item)
+{
+  auto first = first_set(item.position(), item.end(), m_first_sets);
+
+  if (first.count(EPSILON))
+  {
+    for (auto symbol: m_follow_sets[item.nonterminal()])
+    {
+      item.add_lookahead(symbol);
+    }
+  }
+
+  first.erase(EPSILON);
+
+  for (auto symbol: first)
+  {
+    item.add_lookahead(symbol);
   }
 }
 
@@ -108,11 +133,13 @@ Parser::create_all_items()
           const_cast<Entry&>(entry).set_empty();
         }
 
+        set_item_lookahead(add);
         item_list.push_back(add);
         add = add.next();
       }
 
       //we always want the last item too
+      set_item_lookahead(add);
       item_list.push_back(add);
     }
   }
@@ -132,7 +159,7 @@ Parser::parse_input(const std::string& input)
 void
 Parser::parse(const std::string& input, size_t position)
 {
-  auto set = create_new_set(position, input[position]);
+  auto set = create_new_set(position, input);
 
   // if this is a new set, then expand it
   auto result = m_item_set_hash.insert(set);
@@ -330,9 +357,10 @@ Parser::add_initial_item(ItemSetCore* core, const Item* item)
 // Do scans and completions to start the current set
 // find it in the hash table, then expand it if it's new
 std::shared_ptr<ItemSet>
-Parser::create_new_set(size_t position, char input)
+Parser::create_new_set(size_t position, const std::string& input)
 {
-  Symbol token = create_token(input);
+  auto symbol = input[position];
+  Symbol token = create_token(symbol);
   auto core = std::make_unique<ItemSetCore>();
   auto current_set = std::make_shared<ItemSet>(core.get());
 
@@ -348,12 +376,17 @@ Parser::create_new_set(size_t position, char input)
     // do all the scans
     for (auto transition: scans->transitions)
     {
-      //std::cout << "Bringing in scan from " << transition 
-      //  << " with distance " << previous_set->distance(transition) + 1 << std::endl;
-      // TODO: lookahead
       auto item = previous_core.item(transition);
+      auto next = get_item(&item->rule(), item->dot_index() + 1);
+
+      if (position < input.size()-1 &&
+          !next->in_lookahead(input[position+1]))
+      {
+        continue;
+      }
+
       current_set->add_start_item(
-        get_item(&item->rule(), item->dot_index() + 1),
+        next,
         previous_set->actual_distance(transition) + 1);
     }
 
@@ -400,6 +433,12 @@ Parser::create_new_set(size_t position, char input)
         {
           auto* item = from_core->item(transition);
           auto* next = get_item(&item->rule(), item->dot() - item->rule().begin() + 1);
+
+          if (position < input.size()-1 &&
+              !next->in_lookahead(input[position+1]))
+          {
+            continue;
+          }
           current_set->add_start_item(next, 
             from_set->actual_distance(transition) + distance);
         }

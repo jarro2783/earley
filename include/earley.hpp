@@ -353,6 +353,9 @@ namespace earley
       Item incremented(*this);
       ++incremented.m_current;
 
+      // TODO: this is a bit of a hack
+      incremented.m_lookahead.clear();
+
       return incremented;
     }
 
@@ -382,6 +385,18 @@ namespace earley
       return *m_rule;
     }
 
+    void
+    add_lookahead(int symbol)
+    {
+      m_lookahead.insert(symbol);
+    }
+
+    bool
+    in_lookahead(int symbol) const
+    {
+      return m_lookahead.count(symbol);
+    }
+
     std::ostream&
     print(std::ostream&, const std::unordered_map<size_t, std::string>&) const;
 
@@ -393,6 +408,7 @@ namespace earley
     const Rule* m_rule;
     size_t m_start;
     std::vector<Entry>::const_iterator m_current;
+    std::unordered_set<int> m_lookahead;
   };
 
   inline
@@ -577,7 +593,14 @@ namespace earley
       os << " ·";
     }
 
-    os << " (" << item.m_start << ')';
+    os << " (" << item.m_start << ") : (";
+
+    for (auto symbol: m_lookahead)
+    {
+      os << symbol << " ";
+    }
+
+    os << ")";
 
     return os;
   }
