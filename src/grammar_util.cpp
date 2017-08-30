@@ -24,10 +24,7 @@ first_sets(const ParseGrammar& grammar)
       {
         if (rule.begin() == rule.end())
         {
-          if (set.insert(-1).second)
-          {
-            changed = true;
-          }
+          changed |= insert_value(-1, set);
           continue;
         }
 
@@ -38,28 +35,7 @@ first_sets(const ParseGrammar& grammar)
           if (holds<Scanner>(entry))
           {
             auto& scanner = get<Scanner>(entry);
-            auto left = scanner.left;
-            if (scanner.right == -1)
-            {
-              if (set.insert(static_cast<int>(left)).second)
-              {
-                changed = true;
-              }
-            }
-            else
-            {
-              // TODO: get rid of this dirty hack
-              // it's too fragile because I enumerate this in several places
-              while (left <= scanner.right)
-              {
-                if (set.insert(static_cast<int>(left)).second)
-                {
-                  changed = true;
-                }
-                ++left;
-              }
-            }
-
+            changed |= insert_scanner(scanner, set);
             break;
           }
           else
@@ -74,10 +50,7 @@ first_sets(const ParseGrammar& grammar)
               {
                 continue;
               }
-              if (set.insert(first).second)
-              {
-                changed = true;
-              }
+              changed |= insert_value(first, set);
             }
 
             // bail if epsilon isn't in this item's first set
@@ -92,10 +65,7 @@ first_sets(const ParseGrammar& grammar)
         // add epsilon for this set if we got all the way to the end
         if (entry_iter == rule.end())
         {
-          if (set.insert(-1).second)
-          {
-            changed = true;
-          }
+          changed |= insert_value(-1, set);
         }
       }
     }

@@ -54,6 +54,13 @@ namespace earley
     return changed;
   }
 
+  template <typename Value, typename Set>
+  bool
+  insert_value(Value&& v, Set& set)
+  {
+    return set.insert(std::forward<Value>(v)).second;
+  }
+
   std::unordered_map<size_t, std::unordered_set<int>>
   first_sets(const ParseGrammar& grammar);
 
