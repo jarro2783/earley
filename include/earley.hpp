@@ -642,6 +642,7 @@ namespace earley
     {
     }
 
+    // TODO: this is badly named
     const ProductionList&
     productions() const
     {

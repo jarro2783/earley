@@ -35,13 +35,15 @@ build test/grammar: cxx_link test/.build/main.o test/.build/grammar_util.o $
 build test/fast: cxx_link test/.build/main.o test/.build/fast.o $
   .build/fast/grammar.o
 
-build test_fast: TEST_COMMAND
+build test_fast: TEST_COMMAND test/fast
   COMMAND = test/fast
 
-build test_grammar: TEST_COMMAND
+build test_grammar: TEST_COMMAND test/grammar
   COMMAND = test/grammar
 
-build test_hash: TEST_COMMAND
+build test_hash: TEST_COMMAND test/hash
   COMMAND = test/hash
 
 build test: phony test_fast test_grammar test_hash 
+
+default earley test/fast test/grammar test/hash
