@@ -691,7 +691,7 @@ process_input(
     std::chrono::duration_cast<std::chrono::microseconds>(
       elapsed_seconds).count(),
     std::move(item_sets),
-    pointers);
+    std::move(pointers));
 }
 
 struct InvertVisitor

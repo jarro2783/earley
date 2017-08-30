@@ -664,6 +664,10 @@ namespace earley
   {
     public:
 
+    TreePointers() = default;
+    TreePointers(const TreePointers&) = default;
+    TreePointers(TreePointers&&) = default;
+
     typedef std::map<size_t, std::set<std::pair<Item, size_t>>> ItemLabels;
     typedef std::unordered_map<Item, ItemLabels> Pointers;
     typedef std::vector<Pointers> PointerList;
