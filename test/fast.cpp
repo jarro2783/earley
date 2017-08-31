@@ -16,4 +16,16 @@ TEST_CASE("Next nonterminal", "[names]")
 
 TEST_CASE("Build grammar", "[grammar]")
 {
+  earley::Grammar grammar{
+    {
+      "S", {
+        {{'a'}},
+        {{"S", 'a'}},
+      },
+    },
+  };
+
+  auto g = build_grammar(grammar);
+
+  CHECK(g.rules("S").size() == 2);
 }

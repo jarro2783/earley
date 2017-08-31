@@ -8,12 +8,26 @@ namespace earley::fast::grammar
     bool terminal;
   };
 
+  typedef std::vector<std::vector<Symbol>> RuleList;
+
   class Grammar
   {
     public:
 
     void
-    insert_nonterminal(int index, std::vector<std::vector<Symbol>> rules);
+    insert_nonterminal(
+      int index,
+      const std::string& name,
+      std::vector<std::vector<Symbol>> rules
+    );
+
+    const RuleList&
+    rules(const std::string& name);
+
+    private:
+    std::unordered_map<std::string, int> m_indices;
+    std::unordered_map<int, std::string> m_names;
+    std::vector<RuleList> m_nonterminal_rules;
   };
 
   class NonterminalIndices
@@ -37,7 +51,6 @@ namespace earley::fast::grammar
   (
     NonterminalIndices& nonterminal_indices,
     const TerminalIndices& terminals,
-    const std::string& name,
     const std::vector<RuleWithAction>& rules
   );
 

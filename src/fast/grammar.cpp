@@ -1,11 +1,40 @@
+#include <cassert>
 #include "earley/fast/grammar.hpp"
 
 namespace earley::fast::grammar
 {
 
 void
-Grammar::insert_nonterminal(int index, std::vector<std::vector<Symbol>> rules)
+Grammar::insert_nonterminal(
+  int index,
+  const std::string& name,
+  std::vector<std::vector<Symbol>> rules
+)
 {
+  m_indices.insert({name, index});
+  m_names.insert({index, name});
+
+  assert(index >= 0);
+
+  if (m_nonterminal_rules.size() <= static_cast<size_t>(index))
+  {
+    m_nonterminal_rules.resize(index+1);
+  }
+
+  m_nonterminal_rules[index] = std::move(rules);
+}
+
+const RuleList&
+Grammar::rules(const std::string& name)
+{
+  auto iter = m_indices.find(name);
+
+  if (iter == m_indices.end())
+  {
+    throw name + " not found";
+  }
+
+  return m_nonterminal_rules.at(iter->second);
 }
 
 int
@@ -69,8 +98,8 @@ build_grammar(const ::earley::Grammar& grammar)
   for (auto& [name, rules]: grammar)
   {
     auto index = nonterminals.index(name);
-    auto symbol_lists = build_nonterminal(nonterminals, terminals, name, rules);
-    result.insert_nonterminal(index, symbol_lists);
+    auto symbol_lists = build_nonterminal(nonterminals, terminals, rules);
+    result.insert_nonterminal(index, name, symbol_lists);
   }
 
   return result;
@@ -81,7 +110,6 @@ build_nonterminal
 (
   NonterminalIndices& nonterminal_indices,
   const TerminalIndices& terminals,
-  const std::string& name,
   const std::vector<RuleWithAction>& rules
 )
 {
