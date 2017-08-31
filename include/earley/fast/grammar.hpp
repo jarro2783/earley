@@ -4,19 +4,27 @@ namespace earley::fast::grammar
 {
   struct Symbol
   {
-    size_t index;
+    int index;
     bool terminal;
+  };
+
+  class Grammar
+  {
+    public:
+
+    void
+    insert_nonterminal(int index, std::vector<std::vector<Symbol>> rules);
   };
 
   class NonterminalIndices
   {
     public:
 
-    size_t
+    int
     index(const std::string& name);
 
-    size_t m_next = 0;
-    std::unordered_map<std::string, size_t> m_names;
+    int m_next = 0;
+    std::unordered_map<std::string, int> m_names;
   };
 
   typedef std::unordered_map<std::string, size_t> TerminalIndices;
@@ -24,13 +32,21 @@ namespace earley::fast::grammar
   Grammar
   build_grammar(const ::earley::Grammar& grammar);
 
-  void
+  std::vector<std::vector<Symbol>>
   build_nonterminal
   (
     NonterminalIndices& nonterminal_indices,
     const TerminalIndices& terminals,
     const std::string& name,
     const std::vector<RuleWithAction>& rules
+  );
+
+  Symbol
+  build_symbol
+  (
+    NonterminalIndices& nonterminal_indices,
+    const TerminalIndices& terminals,
+    const ::earley::Production& grammar_symbol
   );
 
   inline

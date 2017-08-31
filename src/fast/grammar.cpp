@@ -3,7 +3,12 @@
 namespace earley::fast::grammar
 {
 
-size_t
+void
+Grammar::insert_nonterminal(int index, std::vector<std::vector<Symbol>> rules)
+{
+}
+
+int
 NonterminalIndices::index(const std::string& name)
 {
   auto iter = m_names.find(name);
@@ -16,6 +21,44 @@ NonterminalIndices::index(const std::string& name)
   return m_names.insert({name, m_next++}).first->second;
 }
 
+Symbol
+build_symbol
+(
+  NonterminalIndices& nonterminal_indices,
+  const TerminalIndices& terminals,
+  const ::earley::Production& grammar_symbol
+)
+{
+  // A symbol can be a name or a character.
+  // A character is always a terminal.
+  // A name could be another non-terminal or a declared terminal.
+  if (holds<std::string>(grammar_symbol))
+  {
+    auto& symbol_name = get<std::string>(grammar_symbol);
+    if (is_terminal(terminals, symbol_name))
+    {
+      return Symbol
+      {
+        terminal_index(terminals, symbol_name),
+        true,
+      };
+    }
+    else
+    {
+      return Symbol
+      {
+        nonterminal_indices.index(symbol_name),
+        false,
+      };
+    }
+  }
+  else
+  {
+    // it must hold a character
+    return Symbol{get<char>(grammar_symbol), true};
+  }
+}
+
 Grammar
 build_grammar(const ::earley::Grammar& grammar)
 {
@@ -25,13 +68,15 @@ build_grammar(const ::earley::Grammar& grammar)
 
   for (auto& [name, rules]: grammar)
   {
-    build_nonterminal(nonterminals, terminals, name, rules);
+    auto index = nonterminals.index(name);
+    auto symbol_lists = build_nonterminal(nonterminals, terminals, name, rules);
+    result.insert_nonterminal(index, symbol_lists);
   }
 
   return result;
 }
 
-void
+std::vector<std::vector<Symbol>>
 build_nonterminal
 (
   NonterminalIndices& nonterminal_indices,
@@ -40,8 +85,11 @@ build_nonterminal
   const std::vector<RuleWithAction>& rules
 )
 {
+  std::vector<std::vector<Symbol>> nonterminal;
+
   for (auto& rule: rules)
   {
+    std::vector<Symbol> symbols;
     for (auto& gsym: rule.productions())
     {
       if (holds<Scanner>(gsym))
@@ -49,36 +97,13 @@ build_nonterminal
         throw "Unsupported Scanner for symbol";
       }
 
-      // A symbol can be a name or a character.
-      // A character is always a terminal.
-      // A name could be another non-terminal or a declared terminal.
-      if (holds<std::string>(gsym))
-      {
-        auto& symbol_name = get<std::string>(gsym);
-        if (is_terminal(terminals, symbol_name))
-        {
-          Symbol symbol
-          {
-            terminal_index(terminals, symbol_name),
-            true,
-          };
-        }
-        else
-        {
-          Symbol symbol
-          {
-            nonterminal_indices.index(symbol_name),
-            false,
-          };
-        }
-      }
-      else
-      {
-        // it must hold a character
-        Symbol symbol{get<char>(gsym), true};
-      }
+      symbols.push_back(build_symbol(nonterminal_indices, terminals, gsym));
     }
+
+    nonterminal.push_back(std::move(symbols));
   }
+
+  return nonterminal;
 }
 
 }
