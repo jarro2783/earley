@@ -55,6 +55,7 @@ namespace earley::fast::grammar
     std::unordered_map<std::string, int> m_indices;
     std::unordered_map<int, std::string> m_names;
     std::vector<RuleList> m_nonterminal_rules;
+    std::vector<bool> m_nullable;
 
     NonterminalIndices m_nonterminal_indices;
     TerminalIndices m_terminals;

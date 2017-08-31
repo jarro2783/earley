@@ -4,6 +4,16 @@
 namespace earley::fast::grammar
 {
 
+Grammar::Grammar(const ::earley::Grammar& grammar)
+{
+  for (auto& [name, rules]: grammar)
+  {
+    auto index = m_nonterminal_indices.index(name);
+    auto symbol_lists = build_nonterminal(rules);
+    insert_nonterminal(index, name, symbol_lists);
+  }
+}
+
 void
 Grammar::insert_nonterminal(
   int index,
@@ -83,16 +93,6 @@ Grammar::build_symbol
   {
     // it must hold a character
     return Symbol{get<char>(grammar_symbol), true};
-  }
-}
-
-Grammar::Grammar(const ::earley::Grammar& grammar)
-{
-  for (auto& [name, rules]: grammar)
-  {
-    auto index = m_nonterminal_indices.index(name);
-    auto symbol_lists = build_nonterminal(rules);
-    insert_nonterminal(index, name, symbol_lists);
   }
 }
 
