@@ -25,7 +25,7 @@ TEST_CASE("Build grammar", "[grammar]")
     },
   };
 
-  auto g = build_grammar(grammar);
+  Grammar g(grammar);
 
   CHECK(g.rules("S").size() == 2);
 }

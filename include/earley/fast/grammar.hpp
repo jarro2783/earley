@@ -10,26 +10,6 @@ namespace earley::fast::grammar
 
   typedef std::vector<std::vector<Symbol>> RuleList;
 
-  class Grammar
-  {
-    public:
-
-    void
-    insert_nonterminal(
-      int index,
-      const std::string& name,
-      std::vector<std::vector<Symbol>> rules
-    );
-
-    const RuleList&
-    rules(const std::string& name);
-
-    private:
-    std::unordered_map<std::string, int> m_indices;
-    std::unordered_map<int, std::string> m_names;
-    std::vector<RuleList> m_nonterminal_rules;
-  };
-
   class NonterminalIndices
   {
     public:
@@ -43,24 +23,42 @@ namespace earley::fast::grammar
 
   typedef std::unordered_map<std::string, size_t> TerminalIndices;
 
-  Grammar
-  build_grammar(const ::earley::Grammar& grammar);
+  class Grammar
+  {
+    public:
 
-  std::vector<std::vector<Symbol>>
-  build_nonterminal
-  (
-    NonterminalIndices& nonterminal_indices,
-    const TerminalIndices& terminals,
-    const std::vector<RuleWithAction>& rules
-  );
+    Grammar(const ::earley::Grammar& bnf);
 
-  Symbol
-  build_symbol
-  (
-    NonterminalIndices& nonterminal_indices,
-    const TerminalIndices& terminals,
-    const ::earley::Production& grammar_symbol
-  );
+    const RuleList&
+    rules(const std::string& name);
+
+    private:
+    void
+    insert_nonterminal(
+      int index,
+      const std::string& name,
+      std::vector<std::vector<Symbol>> rules
+    );
+
+    std::vector<std::vector<Symbol>>
+    build_nonterminal
+    (
+      const std::vector<RuleWithAction>& rules
+    );
+
+    Symbol
+    build_symbol
+    (
+      const ::earley::Production& grammar_symbol
+    );
+
+    std::unordered_map<std::string, int> m_indices;
+    std::unordered_map<int, std::string> m_names;
+    std::vector<RuleList> m_nonterminal_rules;
+
+    NonterminalIndices m_nonterminal_indices;
+    TerminalIndices m_terminals;
+  };
 
   inline
   bool

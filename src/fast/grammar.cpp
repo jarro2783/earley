@@ -51,10 +51,8 @@ NonterminalIndices::index(const std::string& name)
 }
 
 Symbol
-build_symbol
+Grammar::build_symbol
 (
-  NonterminalIndices& nonterminal_indices,
-  const TerminalIndices& terminals,
   const ::earley::Production& grammar_symbol
 )
 {
@@ -64,11 +62,11 @@ build_symbol
   if (holds<std::string>(grammar_symbol))
   {
     auto& symbol_name = get<std::string>(grammar_symbol);
-    if (is_terminal(terminals, symbol_name))
+    if (is_terminal(m_terminals, symbol_name))
     {
       return Symbol
       {
-        terminal_index(terminals, symbol_name),
+        terminal_index(m_terminals, symbol_name),
         true,
       };
     }
@@ -76,7 +74,7 @@ build_symbol
     {
       return Symbol
       {
-        nonterminal_indices.index(symbol_name),
+        m_nonterminal_indices.index(symbol_name),
         false,
       };
     }
@@ -88,28 +86,19 @@ build_symbol
   }
 }
 
-Grammar
-build_grammar(const ::earley::Grammar& grammar)
+Grammar::Grammar(const ::earley::Grammar& grammar)
 {
-  Grammar result;
-  NonterminalIndices nonterminals;
-  TerminalIndices terminals;
-
   for (auto& [name, rules]: grammar)
   {
-    auto index = nonterminals.index(name);
-    auto symbol_lists = build_nonterminal(nonterminals, terminals, rules);
-    result.insert_nonterminal(index, name, symbol_lists);
+    auto index = m_nonterminal_indices.index(name);
+    auto symbol_lists = build_nonterminal(rules);
+    insert_nonterminal(index, name, symbol_lists);
   }
-
-  return result;
 }
 
 std::vector<std::vector<Symbol>>
-build_nonterminal
+Grammar::build_nonterminal
 (
-  NonterminalIndices& nonterminal_indices,
-  const TerminalIndices& terminals,
   const std::vector<RuleWithAction>& rules
 )
 {
@@ -125,7 +114,7 @@ build_nonterminal
         throw "Unsupported Scanner for symbol";
       }
 
-      symbols.push_back(build_symbol(nonterminal_indices, terminals, gsym));
+      symbols.push_back(build_symbol(gsym));
     }
 
     nonterminal.push_back(std::move(symbols));
