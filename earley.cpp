@@ -772,8 +772,8 @@ find_nullable(const std::vector<earley::RuleList>& rules)
       bool next = false;
       for (auto& entry: *wr)
       {
-        if (holds<size_t>(entry) &&
-            nullable[get<size_t>(entry)])
+        if (!holds<size_t>(entry) ||
+            !nullable[get<size_t>(entry)])
         {
           next = true;
           break;

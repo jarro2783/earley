@@ -80,6 +80,37 @@ TEST_CASE("Invert rules", "[invert]")
   CHECK(inverted[0][1] == &rule1);
 }
 
+TEST_CASE("Nullable rules", "[nullable]")
+{
+  // 0 is nullable
+  // 1 refers to 0
+  // 2 is not nullable
+  std::vector<RuleList> rules{
+    {
+      {0, {}},
+      {0, {{2, false}}},
+    },
+    {
+      {1, {{0, false}}},
+      {1, {{1, false}, {2, false}}},
+    },
+    {
+      {2, {{32, true}, {45, true}}},
+    },
+    {
+      {3, {{0, false}, {1, false}, {2, false}}},
+    },
+  };
+
+  auto nullable = find_nullable(rules);
+
+  REQUIRE(nullable.size() == 4);
+  CHECK(nullable[0]);
+  CHECK(nullable[1]);
+  CHECK(!nullable[2]);
+  CHECK(!nullable[3]);
+}
+
 TEST_CASE("Build grammar", "[grammar]")
 {
   earley::Grammar grammar{

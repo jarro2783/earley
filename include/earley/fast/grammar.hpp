@@ -177,8 +177,8 @@ namespace earley::fast::grammar
         bool next = false;
         for (auto& entry: *wr)
         {
-          if (!entry.terminal &&
-              nullable[entry.index])
+          if (entry.terminal ||
+              !nullable[entry.index])
           {
             next = true;
             break;
