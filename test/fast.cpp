@@ -14,6 +14,72 @@ TEST_CASE("Next nonterminal", "[names]")
   CHECK(indices.index("baz") == 2);
 }
 
+TEST_CASE("Rules", "[rule]")
+{
+  Rule rule(0,
+    {
+      {0, false},
+      {1, false},
+      {2, false},
+    }
+  );
+
+  CHECK(rule.nonterminal() == 0);
+  CHECK(rule.begin() != rule.end());
+
+  for (int i = 0; i != 3; ++i)
+  {
+    REQUIRE(rule.begin() + i < rule.end());
+  }
+
+  CHECK(rule.begin() + 3 == rule.end());
+}
+
+TEST_CASE("Invert rules", "[invert]")
+{
+  std::vector<Symbol> symbols{
+    {0, false},
+    {32, true},
+    {1, false},
+  };
+  Rule rule0(0, symbols);
+  std::vector<std::vector<const Rule*>> inverted;
+
+  invert_rule(inverted, &rule0, *rule0.begin());
+
+  REQUIRE(inverted.size() == 1);
+  CHECK(inverted[0].size() == 1);
+  CHECK(inverted[0][0] == &rule0);
+
+  invert_rule(inverted, &rule0, *(rule0.begin()+1));
+
+  REQUIRE(inverted.size() == 1);
+  REQUIRE(inverted[0].size() == 1);
+
+  invert_rule(inverted, &rule0, *(rule0.begin()+2));
+
+  REQUIRE(inverted.size() == 2);
+  REQUIRE(inverted[1].size() == 1);
+  CHECK(inverted[1][0] == &rule0);
+
+  Rule rule1(1, {
+    {1, false},
+    {0, false},
+  });
+
+  invert_rule(inverted, &rule1, *rule1.begin());
+
+  REQUIRE(inverted.size() == 2);
+  REQUIRE(inverted[1].size() == 2);
+  CHECK(inverted[1][1] == &rule1);
+
+  invert_rule(inverted, &rule1, *(rule1.begin() + 1));
+
+  REQUIRE(inverted.size() == 2);
+  REQUIRE(inverted[0].size() == 2);
+  CHECK(inverted[0][1] == &rule1);
+}
+
 TEST_CASE("Build grammar", "[grammar]")
 {
   earley::Grammar grammar{

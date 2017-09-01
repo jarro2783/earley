@@ -9,7 +9,7 @@ Grammar::Grammar(const ::earley::Grammar& grammar)
   for (auto& [name, rules]: grammar)
   {
     auto index = m_nonterminal_indices.index(name);
-    auto symbol_lists = build_nonterminal(rules);
+    auto symbol_lists = build_nonterminal(index, rules);
     insert_nonterminal(index, name, symbol_lists);
   }
 }
@@ -18,7 +18,7 @@ void
 Grammar::insert_nonterminal(
   int index,
   const std::string& name,
-  std::vector<std::vector<Symbol>> rules
+  std::vector<Rule> rules
 )
 {
   m_indices.insert({name, index});
@@ -96,14 +96,14 @@ Grammar::build_symbol
   }
 }
 
-std::vector<std::vector<Symbol>>
+std::vector<Rule>
 Grammar::build_nonterminal
 (
+  int index,
   const std::vector<RuleWithAction>& rules
 )
 {
-  std::vector<std::vector<Symbol>> nonterminal;
-
+  std::vector<Rule> nonterminal;
   for (auto& rule: rules)
   {
     std::vector<Symbol> symbols;
@@ -117,7 +117,7 @@ Grammar::build_nonterminal
       symbols.push_back(build_symbol(gsym));
     }
 
-    nonterminal.push_back(std::move(symbols));
+    nonterminal.push_back(Rule(index, std::move(symbols)));
   }
 
   return nonterminal;

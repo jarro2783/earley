@@ -1,3 +1,5 @@
+#include <deque>
+
 #include "earley.hpp"
 
 namespace earley::fast::grammar
@@ -8,7 +10,42 @@ namespace earley::fast::grammar
     bool terminal;
   };
 
-  typedef std::vector<std::vector<Symbol>> RuleList;
+  class Rule
+  {
+    public:
+
+    Rule(int nonterminal, std::vector<Symbol> symbols)
+    : m_nonterminal(nonterminal)
+    , m_entries(std::move(symbols))
+    {
+    }
+
+    int
+    nonterminal() const
+    {
+      return m_nonterminal;
+    }
+
+    std::vector<Symbol>::const_iterator
+    begin() const
+    {
+      return m_entries.begin();
+    }
+
+    std::vector<Symbol>::const_iterator
+    end() const
+    {
+      return m_entries.end();
+    }
+
+    private:
+
+    int m_nonterminal;
+    std::vector<Symbol> m_entries;
+    ActionArgs m_actions;
+  };
+
+  typedef std::vector<Rule> RuleList;
 
   class NonterminalIndices
   {
@@ -37,12 +74,13 @@ namespace earley::fast::grammar
     insert_nonterminal(
       int index,
       const std::string& name,
-      std::vector<std::vector<Symbol>> rules
+      std::vector<Rule> rules
     );
 
-    std::vector<std::vector<Symbol>>
+    std::vector<Rule>
     build_nonterminal
     (
+      int index,
       const std::vector<RuleWithAction>& rules
     );
 
@@ -76,4 +114,90 @@ namespace earley::fast::grammar
 
     return iter != indices.end() ? iter->second : -1;
   }
+
+  inline
+  void
+  invert_rule(
+    std::vector<std::vector<const Rule*>>& inverted,
+    const Rule* current,
+    const Symbol& symbol
+  )
+  {
+    if (!symbol.terminal)
+    {
+      if (inverted.size() < static_cast<size_t>(symbol.index + 1))
+      {
+        inverted.resize(symbol.index + 1);
+      }
+
+      inverted[symbol.index].push_back(current);
+    }
+  }
+
+  inline
+  std::vector<bool>
+  find_nullable(const std::vector<RuleList>& rules)
+  {
+    std::vector<bool> nullable(rules.size(), false);
+    std::deque<int> work;
+    std::vector<std::vector<const Rule*>> inverted;
+
+    size_t i = 0;
+    for (auto& nt: rules)
+    {
+      for (auto& rule : nt)
+      {
+        //empty rules
+        if (rule.begin() == rule.end())
+        {
+          nullable[i] = true;
+          work.push_back(i);
+        }
+
+        //inverted index
+        for (auto& entry: rule)
+        {
+          invert_rule(inverted, &rule, entry);
+        }
+      }
+      ++i;
+    }
+
+    while (work.size() != 0)
+    {
+      auto symbol = work.front();
+      auto& work_rules = inverted[symbol];
+      for (auto& wr: work_rules)
+      {
+        if (nullable[wr->nonterminal()])
+        {
+          continue;
+        }
+
+        bool next = false;
+        for (auto& entry: *wr)
+        {
+          if (!entry.terminal &&
+              nullable[entry.index])
+          {
+            next = true;
+            break;
+          }
+        }
+
+        if (next)
+        {
+          continue;
+        }
+
+        nullable[wr->nonterminal()] = true;
+        work.push_back(wr->nonterminal());
+      }
+
+      work.pop_front();
+    }
+
+    return nullable;
+  }
+
 }
