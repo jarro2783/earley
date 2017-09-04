@@ -19,9 +19,10 @@ build main.o: cxx main.cpp
 build numbers.o: cxx numbers.cpp
 
 build .build/fast/grammar.o: cxx src/fast/grammar.cpp
+build .build/fast/items.o: cxx src/fast/items.cpp
 
 build earley: cxx_link earley.o fast.o grammar.o main.o numbers.o $
-  .build/grammar_util.o
+  .build/grammar_util.o .build/fast/items.o
 
 # tests
 build test/.build/fast.o: cxx test/fast.cpp
