@@ -4,14 +4,34 @@
 namespace earley::fast::grammar
 {
 
-Grammar::Grammar(const ::earley::Grammar& grammar)
+Grammar::Grammar(const std::string& start, const ::earley::Grammar& grammar)
 {
   for (auto& [name, rules]: grammar)
   {
     auto index = m_nonterminal_indices.index(name);
-    auto symbol_lists = build_nonterminal(index, rules);
-    insert_nonterminal(index, name, symbol_lists);
+    insert_nonterminal(index, name,
+      build_nonterminal(index, rules));
   }
+
+  // Add a special start rule to make things easier
+  std::string start_name("^");
+  auto start_index = m_nonterminal_indices.index(start_name);
+  m_indices.insert({start_name, start_index});
+  m_names.insert({start_index, start_name});
+
+  m_start = start_index;
+
+  if (static_cast<size_t>(start_index) >= m_nonterminal_rules.size())
+  {
+    m_nonterminal_rules.resize(start_index+1);
+  }
+  m_nonterminal_rules[start_index].push_back(
+    {start_index, {{m_indices[start], false}}}
+  );
+
+  m_nullable = find_nullable(m_nonterminal_rules);
+
+  // TODO: calculate first sets with the new rule class
 }
 
 void

@@ -8,6 +8,7 @@
 #include "earley_hash_set.hpp"
 
 #include "earley/grammar_util.hpp"
+#include "earley/fast/grammar.hpp"
 
 namespace earley::fast
 {
@@ -318,7 +319,10 @@ namespace earley
       void
       set_item_lookahead(Item& item);
 
+      // TODO: fix these
       ParseGrammar m_grammar;
+      Grammar m_grammar_new;
+
       std::vector<std::shared_ptr<ItemSet>> m_itemSets;
       HashSet<ItemSetOwner> m_item_set_hash;
 

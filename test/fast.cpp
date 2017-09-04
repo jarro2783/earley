@@ -116,13 +116,18 @@ TEST_CASE("Build grammar", "[grammar]")
   earley::Grammar grammar{
     {
       "S", {
+        {{}},
         {{'a'}},
         {{"S", 'a'}},
       },
     },
   };
 
-  Grammar g(grammar);
+  Grammar g("S", grammar);
 
-  CHECK(g.rules("S").size() == 2);
+  CHECK(g.rules("S").size() == 3);
+  CHECK(&g.rules("S") == &g.rules(0));
+  REQUIRE(g.start() == 1);
+  CHECK(g.nullable(0));
+  CHECK(g.nullable(1));
 }

@@ -64,10 +64,28 @@ namespace earley::fast::grammar
   {
     public:
 
-    Grammar(const ::earley::Grammar& bnf);
+    Grammar(const std::string& start, const ::earley::Grammar& bnf);
 
     const RuleList&
     rules(const std::string& name);
+
+    const RuleList&
+    rules(int id)
+    {
+      return m_nonterminal_rules[id];
+    }
+
+    bool
+    nullable(int nonterminal)
+    {
+      return m_nullable[nonterminal];
+    }
+
+    int
+    start()
+    {
+      return m_start;
+    }
 
     private:
     void
@@ -93,10 +111,14 @@ namespace earley::fast::grammar
     std::unordered_map<std::string, int> m_indices;
     std::unordered_map<int, std::string> m_names;
     std::vector<RuleList> m_nonterminal_rules;
+    int m_start;
     std::vector<bool> m_nullable;
 
     NonterminalIndices m_nonterminal_indices;
     TerminalIndices m_terminals;
+
+    //FirstSet m_first_sets;
+    //FollowSet m_first_sets;
   };
 
   inline
@@ -163,6 +185,9 @@ namespace earley::fast::grammar
       ++i;
     }
 
+    // Ensure that there is an entry for every rule
+    inverted.resize(rules.size());
+
     while (work.size() != 0)
     {
       auto symbol = work.front();
@@ -199,5 +224,4 @@ namespace earley::fast::grammar
 
     return nullable;
   }
-
 }
