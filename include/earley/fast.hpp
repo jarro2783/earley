@@ -322,9 +322,15 @@ namespace earley
       void
       set_item_lookahead(Item& item);
 
+      bool
+      nullable(const Entry& symbol)
+      {
+        return symbol.empty();
+      }
+
       // TODO: fix these
       ParseGrammar m_grammar;
-      Grammar m_grammar_new;
+      //Grammar m_grammar_new;
 
       std::vector<std::shared_ptr<ItemSet>> m_itemSets;
       HashSet<ItemSetOwner> m_item_set_hash;

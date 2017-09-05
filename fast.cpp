@@ -222,7 +222,7 @@ Parser::add_empty_symbol_items(ItemSet* items)
     auto item = core->item(i);
     for (
       auto pos = item->dot();
-      pos != item->rule().end() && pos->empty();
+      pos != item->rule().end() && nullable(*pos);
       ++pos)
     {
       items->add_derived_item(
@@ -303,7 +303,7 @@ Parser::item_transition(ItemSet* items, const Item* item, size_t index)
     }
 
     // if this symbol can derive empty then add the next item too
-    if (symbol.empty() && item->dot() != rule.end())
+    if (nullable(symbol) && item->dot() != rule.end())
     {
       // nullable completion
       add_initial_item(core, get_item(&rule, item->dot() - rule.begin() + 1));
