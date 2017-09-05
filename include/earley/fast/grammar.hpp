@@ -4,6 +4,7 @@
 #include <deque>
 
 #include "earley.hpp"
+#include "earley/grammar_util.hpp"
 
 namespace earley::fast::grammar
 {
@@ -12,6 +13,14 @@ namespace earley::fast::grammar
     int index;
     bool terminal;
   };
+
+  enum Terminals {
+    EPSILON = -1,
+    END_OF_INPUT = -2,
+  };
+
+  typedef std::unordered_map<size_t, std::unordered_set<int>> FirstSets;
+  typedef std::unordered_map<size_t, std::unordered_set<int>> FollowSets;
 
   class Rule
   {
@@ -229,6 +238,54 @@ namespace earley::fast::grammar
     }
 
     return nullable;
+  }
+
+  template <typename Iterator,
+    typename = std::enable_if<
+      std::is_same<
+        typename Iterator::value_type,
+        Symbol
+      >::value
+    >
+  >
+  std::unordered_set<size_t>
+  first_set(Iterator begin, Iterator end,
+    const std::unordered_map<size_t, std::unordered_set<int>>& firsts)
+  {
+    std::unordered_set<size_t> result;
+
+    while (begin != end)
+    {
+      auto& entry = *begin;
+
+      if (entry.terminal)
+      {
+        insert_value(entry.index, result);
+        break;
+      }
+      else
+      {
+        auto iter = firsts.find(entry.index);
+        if (iter != firsts.end())
+        {
+          insert_range(iter->second.begin(), iter->second.end(), result);
+
+          if (iter->second.count(EPSILON) == 0)
+          {
+            break;
+          }
+        }
+      }
+
+      ++begin;
+    }
+
+    if (begin == end)
+    {
+      result.insert(EPSILON);
+    }
+
+    return result;
   }
 }
 

@@ -167,3 +167,50 @@ TEST_CASE("Items generation", "[items]")
   CHECK(i000->dot() == r00->begin());
   CHECK(i000->dot() == i000->position());
 }
+
+SCENARIO("First set of symbol sequence", "[firsts]")
+{
+  GIVEN("An empty sequence")
+  {
+    std::vector<Symbol> sequence;
+    auto first = first_set(sequence.begin(), sequence.end(), {});
+    CHECK(first.size() == 1);
+    CHECK(first.count(EPSILON));
+  }
+
+  GIVEN("A sequence beginning with a terminal") {
+    std::vector<Symbol> terminal{{'a', true}};
+    auto first = first_set(terminal.begin(), terminal.end(), {});
+
+    CHECK(first.size() == 1);
+    CHECK(first.count('a'));
+  }
+
+  GIVEN("A sequence with a terminating nonterminal") {
+    std::vector<Symbol> nonterminal{{0, false}};
+    FirstSets firsts{
+      {0, {'a'}},
+    };
+
+    auto first = first_set(nonterminal.begin(), nonterminal.end(), firsts);
+
+    CHECK(first.size() == 1);
+    CHECK(first.count('a'));
+  }
+
+  GIVEN("A sequence with an epsilon nonterminal") {
+    std::vector<Symbol> sequence{{0, false}, {1, false}};
+    FirstSets firsts{
+      {0, {EPSILON, 'a'}},
+      {1, {'b'}},
+    };
+
+    auto first = first_set(sequence.begin(), sequence.end(), firsts);
+
+    CHECK(first.size() == 3);
+    CHECK(first.count(EPSILON));
+    CHECK(first.count('a'));
+    CHECK(first.count('b'));
+  }
+}
+
