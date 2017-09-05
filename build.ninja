@@ -1,6 +1,6 @@
 rule cxx
   command = g++ -I include -c -std=c++17 -fdiagnostics-color=always $
-    -O3 -Wall -Wextra -g -MMD -MF $out.d -o $out $in
+    $CFLAGS -O3 -Wall -Wextra -g -MMD -MF $out.d -o $out $in
   depfile = $out.d
 
 rule cxx_link
@@ -47,4 +47,10 @@ build test_hash: TEST_COMMAND test/hash
 
 build test: phony test_fast test_grammar test_hash 
 
-default earley test/fast test/grammar test/hash
+# lexer
+build .build/lexer.o: cxx lexer.cpp
+  CFLAGS=-I../lexertl14
+
+build lexer: cxx_link .build/lexer.o
+
+default earley test/fast test/grammar test/hash lexer

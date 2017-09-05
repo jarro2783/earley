@@ -1,6 +1,7 @@
 .build/
 *.o
 earley
+lexer
 .ninja_*
 *.o.d
 !include/earley/
