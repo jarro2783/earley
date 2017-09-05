@@ -151,14 +151,14 @@ TEST_CASE("Items generation", "[items]")
   auto i000 = items.get_item(r00, 0);
   auto i010 = items.get_item(r01, 0);
 
-  REQUIRE(i000->rule() == r00);
-  REQUIRE(i010->rule() == r01);
+  REQUIRE(&i000->rule() == r00);
+  REQUIRE(&i010->rule() == r01);
 
   CHECK(i000->position() == r00->begin());
   CHECK(i010->position() == r01->begin());
 
   auto i001 = items.get_item(r00, 1);
-  REQUIRE(i001->rule() == r00);
+  REQUIRE(&i001->rule() == r00);
   CHECK(i001->position() == r00->begin()+1);
 
   CHECK_THROWS(items.get_item(r00, 10));

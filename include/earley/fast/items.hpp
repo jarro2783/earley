@@ -28,10 +28,10 @@ namespace earley::fast
       return m_position;
     }
 
-    const grammar::Rule*
+    const grammar::Rule&
     rule() const
     {
-      return m_rule;
+      return *m_rule;
     }
 
     int
