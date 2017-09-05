@@ -1,3 +1,6 @@
+#ifndef EARLEY_FAST_GRAMMAR_HPP_INCLUDED
+#define EARLEY_FAST_GRAMMAR_HPP_INCLUDED
+
 #include <deque>
 
 #include "earley.hpp"
@@ -43,6 +46,9 @@ namespace earley::fast::grammar
     int m_nonterminal;
     std::vector<Symbol> m_entries;
     ActionArgs m_actions;
+
+    public:
+    typedef decltype(m_entries)::const_iterator iterator;
   };
 
   typedef std::vector<Rule> RuleList;
@@ -225,3 +231,5 @@ namespace earley::fast::grammar
     return nullable;
   }
 }
+
+#endif

@@ -3,7 +3,18 @@
 namespace earley::fast
 {
 
-Items::Items(const std::vector<RuleList>& nonterminals)
+// TODO: move this to utils and test it
+template <typename T>
+void
+ensure_size(T& t, size_t size)
+{
+  if (size >= t.size())
+  {
+    t.resize(size+1);
+  }
+}
+
+Items::Items(const std::vector<grammar::RuleList>& nonterminals)
 {
   for (auto& rules: nonterminals)
   {
@@ -12,6 +23,35 @@ Items::Items(const std::vector<RuleList>& nonterminals)
       m_item_map[&rule];
     }
   }
+}
+
+const Item*
+Items::get_item(const grammar::Rule* rule, int position)
+{
+  auto iter = m_item_map.find(rule);
+
+  if (iter == m_item_map.end())
+  {
+    throw NoSuchItem();
+  }
+
+  auto length = rule->end() - rule->begin();
+
+  if (position > length)
+  {
+    throw NoSuchItem();
+  }
+
+  ensure_size(iter->second, position);
+
+  auto& ptr = iter->second[position];
+
+  if (ptr == nullptr)
+  {
+    ptr = std::make_shared<Item>(rule, rule->begin()+position);
+  }
+
+  return ptr.get();
 }
 
 }

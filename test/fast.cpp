@@ -1,7 +1,9 @@
 #include "catch.hpp"
 #include "earley/fast/grammar.hpp"
+#include "earley/fast/items.hpp"
 
 using namespace earley::fast::grammar;
+using namespace earley::fast;
 
 TEST_CASE("Next nonterminal", "[names]")
 {
@@ -130,4 +132,34 @@ TEST_CASE("Build grammar", "[grammar]")
   REQUIRE(g.start() == 1);
   CHECK(g.nullable(0));
   CHECK(g.nullable(1));
+}
+
+TEST_CASE("Items generation", "[items]")
+{
+  std::vector<RuleList> rules{
+    {
+      {0, {{0, false}, {'a', true}}},
+      {0, {{'a', true}}},
+    },
+  };
+
+  Items items(rules);
+
+  const Rule* r00 = &rules[0][0];
+  const Rule* r01 = &rules[0][1];
+
+  auto i000 = items.get_item(r00, 0);
+  auto i010 = items.get_item(r01, 0);
+
+  REQUIRE(i000->rule() == r00);
+  REQUIRE(i010->rule() == r01);
+
+  CHECK(i000->position() == r00->begin());
+  CHECK(i010->position() == r01->begin());
+
+  auto i001 = items.get_item(r00, 1);
+  REQUIRE(i001->rule() == r00);
+  CHECK(i001->position() == r00->begin()+1);
+
+  CHECK_THROWS(items.get_item(r00, 10));
 }
