@@ -16,7 +16,12 @@ namespace earley::fast
   {
     public:
 
-    Item(const grammar::Rule* rule, grammar::Rule::iterator position)
+    Item
+    (
+      const grammar::Rule* rule,
+      grammar::Rule::iterator position,
+      HashSet<int> lookahead
+    )
     : m_rule(rule)
     , m_position(position)
     {
@@ -60,14 +65,20 @@ namespace earley::fast
   class Items
   {
     public:
-    Items(const std::vector<grammar::RuleList>& rules);
+    Items(const std::vector<grammar::RuleList>& rules,
+      const grammar::FirstSets&,
+      const grammar::FollowSets&);
 
     const Item*
     get_item(const grammar::Rule*, int position);
 
     private:
+
     std::unordered_map<const grammar::Rule*, std::vector<std::shared_ptr<Item>>>
       m_item_map;
+
+    const grammar::FirstSets& m_firsts;
+    const grammar::FollowSets& m_follows;
   };
 }
 

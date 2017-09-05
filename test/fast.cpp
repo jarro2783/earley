@@ -143,7 +143,10 @@ TEST_CASE("Items generation", "[items]")
     },
   };
 
-  Items items(rules);
+  auto firsts = first_sets(rules);
+  auto follows = follow_sets(0, rules, firsts);
+
+  Items items(rules, firsts, follows);
 
   const Rule* r00 = &rules[0][0];
   const Rule* r01 = &rules[0][1];
