@@ -214,3 +214,79 @@ SCENARIO("First set of symbol sequence", "[firsts]")
   }
 }
 
+TEST_CASE("Simple first sets", "[firsts]")
+{
+  std::vector<RuleList> rules{
+    {
+      {0, {{'a', true}}},
+    },
+  };
+
+  auto firsts = first_sets(rules);
+
+  REQUIRE(firsts.count(0));
+  auto& first0 = firsts[0];
+  CHECK(first0.size() == 1);
+  CHECK(first0.count('a'));
+}
+
+TEST_CASE("Epsilon in first set", "[firsts]")
+{
+  std::vector<RuleList> rules{
+    {
+      {0, {}},
+      {0, {{'a', true}}},
+    },
+  };
+
+  auto firsts = first_sets(rules);
+
+  REQUIRE(firsts.count(0));
+
+  auto& first0 = firsts[0];
+  CHECK(first0.size() == 2);
+  CHECK(first0.count(-1));
+  CHECK(first0.count('a'));
+}
+
+TEST_CASE("Complex first set", "[firsts]")
+{
+  std::vector<RuleList> rules{
+    {
+      {0, {}},
+      {0, {{'a', true}}},
+    },
+    {
+      {1, {{'b', true}}},
+      {1, {{'c', true}}},
+      {1, {{'d', true}}},
+    },
+    {
+      {2, {{0, false}, {1, false}}},
+    },
+  };
+
+  auto firsts = first_sets(rules);
+
+  REQUIRE(firsts.count(0));
+  REQUIRE(firsts.count(1));
+  REQUIRE(firsts.count(2));
+
+  auto& first0 = firsts[0];
+  auto& first1 = firsts[1];
+  auto& first2 = firsts[2];
+
+  CHECK(first0.count(-1));
+  CHECK(first0.count('a'));
+
+  CHECK(first1.size() == 3);
+  CHECK(first1.count('b'));
+  CHECK(first1.count('c'));
+  CHECK(first1.count('d'));
+
+  CHECK(first2.size() == 4);
+  CHECK(first2.count('a'));
+  CHECK(first2.count('b'));
+  CHECK(first2.count('c'));
+  CHECK(first2.count('d'));
+}

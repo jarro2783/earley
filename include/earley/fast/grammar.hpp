@@ -75,6 +75,9 @@ namespace earley::fast::grammar
 
   typedef std::unordered_map<std::string, size_t> TerminalIndices;
 
+  std::unordered_map<size_t, std::unordered_set<int>>
+  first_sets(const std::vector<RuleList>& rules);
+
   class Grammar
   {
     public:
