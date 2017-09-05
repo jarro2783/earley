@@ -138,8 +138,8 @@ namespace earley::fast::grammar
     NonterminalIndices m_nonterminal_indices;
     TerminalIndices m_terminals;
 
-    //FirstSet m_first_sets;
-    //FollowSet m_first_sets;
+    FirstSet m_first_sets;
+    FollowSet m_follow_sets;
   };
 
   inline
