@@ -162,4 +162,8 @@ TEST_CASE("Items generation", "[items]")
   CHECK(i001->position() == r00->begin()+1);
 
   CHECK_THROWS(items.get_item(r00, 10));
+
+  CHECK(i000->end() == r00->end());
+  CHECK(i000->dot() == r00->begin());
+  CHECK(i000->dot() == i000->position());
 }

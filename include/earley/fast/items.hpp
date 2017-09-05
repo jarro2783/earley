@@ -34,6 +34,24 @@ namespace earley::fast
       return m_rule;
     }
 
+    int
+    nonterminal() const
+    {
+      return m_rule->nonterminal();
+    }
+
+    auto
+    end() const
+    {
+      return m_rule->end();
+    }
+
+    auto
+    dot() const
+    {
+      return position();
+    }
+
     private:
     const grammar::Rule* m_rule;
     grammar::Rule::iterator m_position;
