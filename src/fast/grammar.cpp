@@ -212,4 +212,52 @@ first_sets(const std::vector<RuleList>& rules)
   return first_set;
 }
 
+FollowSets
+follow_sets(int start, const std::vector<RuleList>& rules, FirstSets& firsts)
+{
+  FollowSets follows;
+
+  follows[start].insert(END_OF_INPUT);
+
+  bool changed = true;
+  while (changed)
+  {
+    changed = false;
+
+    for (size_t i = 0; i != rules.size(); ++i)
+    {
+      auto lhs = i;
+      auto& rule_list = rules[lhs];
+
+      for (auto& rule: rule_list)
+      {
+        auto position = rule.begin();
+        while (position != rule.end())
+        {
+          if (!position->terminal)
+          {
+            auto nt = position->index;
+            auto first = first_set(position+1, rule.end(), firsts);
+
+            if (first.count(EPSILON))
+            {
+              changed |= insert_range(follows[lhs].begin(),
+                follows[lhs].end(),
+                follows[nt]);
+
+              first.erase(EPSILON);
+            }
+
+            changed |= insert_range(first.begin(), first.end(), follows[nt]);
+          }
+
+          ++position;
+        }
+      }
+    }
+  }
+
+  return follows;
+}
+
 }

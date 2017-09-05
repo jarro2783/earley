@@ -290,3 +290,29 @@ TEST_CASE("Complex first set", "[firsts]")
   CHECK(first2.count('c'));
   CHECK(first2.count('d'));
 }
+
+SCENARIO("Follow set", "[follow]")
+{
+  GIVEN("A basic grammar")
+  {
+    std::vector<RuleList> rules
+    {
+      {
+        {0, {{1, false}, {'a', true}}},
+      },
+      {
+        {1, {{'b', true}}},
+      },
+    };
+
+    auto firsts = first_sets(rules);
+    auto follow = follow_sets(0, rules, firsts);
+
+    REQUIRE(follow.count(0));
+    REQUIRE(follow.count(1));
+    CHECK(follow[0].size() == 1);
+    CHECK(follow[0].count(earley::END_OF_INPUT));
+    CHECK(follow[1].size() == 1);
+    CHECK(follow[1].count('a'));
+  }
+}
