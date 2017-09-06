@@ -24,6 +24,7 @@ namespace earley::fast
     )
     : m_rule(rule)
     , m_position(position)
+    , m_lookahead(std::move(lookahead))
     {
     }
 
@@ -57,9 +58,16 @@ namespace earley::fast
       return position();
     }
 
+    bool
+    in_lookahead(int symbol) const
+    {
+      return m_lookahead.count(symbol) > 0;
+    }
+
     private:
     const grammar::Rule* m_rule;
     grammar::Rule::iterator m_position;
+    HashSet<int> m_lookahead;
   };
 
   class Items

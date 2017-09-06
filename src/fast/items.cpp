@@ -52,7 +52,8 @@ Items::get_item(const grammar::Rule* rule, int position)
 
   if (ptr == nullptr)
   {
-    HashSet<int> lookahead;
+    auto lookahead = sequence_lookahead(*rule, rule->begin() + position,
+      m_firsts, m_follows);
     ptr = std::make_shared<Item>(rule, rule->begin()+position, std::move(lookahead));
   }
 
