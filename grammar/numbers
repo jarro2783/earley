@@ -1,12 +1,12 @@
 Input -> Sum Space
 
 Number ->
-    Space [1-9] NumberRest
-  | Space [1-9]
+    Space OneNine NumberRest
+  | Space OneNine
 
 NumberRest ->
-    [0-9]
-  | NumberRest [0-9]
+    ZeroNine
+  | NumberRest ZeroNine
 
 Space -> 
   | Space ' '
@@ -24,3 +24,6 @@ Product ->
 Facter ->
     Number
   | '(' Sum ')'
+
+OneNine -> '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+ZeroNine -> '0' | OneNine

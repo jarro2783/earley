@@ -266,7 +266,7 @@ namespace earley
     {
       public:
 
-      Parser(const ParseGrammar& grammar,
+      Parser(const grammar::Grammar&, const ParseGrammar& grammar,
         std::unordered_map<size_t, std::string> names);
 
       void
@@ -288,9 +288,6 @@ namespace earley
 
       const earley::Item*
       get_item(const earley::Rule* rule, size_t dot) const;
-
-      //const Item*
-      //get_item(const Rule* rule, size_t dot) const;
 
       void
       expand_set(ItemSet* items);
@@ -330,7 +327,7 @@ namespace earley
 
       // TODO: fix these
       ParseGrammar m_grammar;
-      //Grammar m_grammar_new;
+      grammar::Grammar m_grammar_new;
 
       std::vector<std::shared_ptr<ItemSet>> m_itemSets;
       HashSet<ItemSetOwner> m_item_set_hash;

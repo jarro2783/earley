@@ -117,6 +117,18 @@ namespace earley::fast::grammar
       return m_start;
     }
 
+    auto&
+    first_sets() const
+    {
+      return m_first_sets;
+    }
+
+    auto&
+    follow_sets() const
+    {
+      return m_follow_sets;
+    }
+
     private:
     void
     insert_nonterminal(

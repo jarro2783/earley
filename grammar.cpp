@@ -4,6 +4,8 @@
 #include "grammar.hpp"
 #include "earley/fast.hpp"
 
+#include "earley/fast/grammar.hpp"
+
 namespace earley
 {
 
@@ -382,12 +384,13 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
       //test the fast parser
       auto [rules, ids] = generate_rules(built);
       ParseGrammar parse_grammar(ids[start], rules);
+      earley::fast::grammar::Grammar grammar_new(start, built);
 
       std::chrono::time_point<std::chrono::system_clock> start_time, end;
       start_time = std::chrono::system_clock::now();
 
       auto rule_names = invert_map(ids);
-      fast::Parser parser(parse_grammar, rule_names);
+      fast::Parser parser(grammar_new, parse_grammar, rule_names);
 
       if (debug)
       {

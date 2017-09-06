@@ -31,8 +31,8 @@ Grammar::Grammar(const std::string& start, const ::earley::Grammar& grammar)
 
   m_nullable = find_nullable(m_nonterminal_rules);
 
-  m_first_sets = first_sets(m_nonterminal_rules);
-  m_follow_sets = follow_sets(start_index, m_nonterminal_rules, m_first_sets);
+  m_first_sets = grammar::first_sets(m_nonterminal_rules);
+  m_follow_sets = grammar::follow_sets(start_index, m_nonterminal_rules, m_first_sets);
 }
 
 void

@@ -37,10 +37,12 @@ ItemSet::add_start_item(const earley::Item* item, size_t distance)
 }
 
 Parser::Parser(
+  const grammar::Grammar& grammar_new,
   const ParseGrammar& grammar,
   std::unordered_map<size_t, std::string> names
 )
 : m_grammar(augment_start_rule(grammar))
+, m_grammar_new(grammar_new)
 , m_set_symbols(20000)
 , m_nullable(find_nullable(m_grammar.rules()))
 , m_names(std::move(names))
