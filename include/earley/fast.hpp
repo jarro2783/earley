@@ -24,6 +24,22 @@ namespace earley
   {
     typedef earley::Item PItem;
     typedef earley::Rule PRule;
+    //typedef Item PItem;
+    //typedef grammar::Rule PRule;
+
+    inline
+    int
+    get_terminal(const earley::Entry& s)
+    {
+      return s.terminal();
+    }
+
+    inline
+    int
+    get_terminal(const grammar::Symbol& s)
+    {
+      return s.terminal;
+    }
 
     class ItemSetCore
     {
@@ -289,8 +305,11 @@ namespace earley
       void
       create_start_set();
 
-      const PItem*
-      get_item(const PRule* rule, size_t dot) const;
+      const earley::Item*
+      get_item(const earley::Rule* rule, size_t dot) const;
+
+      const Item*
+      get_item(const grammar::Rule* rule, int dot) const;
 
       void
       expand_set(ItemSet* items);
@@ -320,7 +339,7 @@ namespace earley
       create_new_set(size_t position, const std::string& input);
 
       void
-      set_item_lookahead(PItem& item);
+      set_item_lookahead(earley::Item& item);
 
       bool
       nullable(const Entry& symbol)
@@ -337,7 +356,9 @@ namespace earley
 
       // The addresses of these might change after adding another one, so only
       // keep a pointer to them after adding all the items
-      std::unordered_map<const PRule*, std::vector<PItem>> m_items;
+      // TODO: this is going away
+      std::unordered_map<const earley::Rule*, std::vector<earley::Item>> m_items;
+
       HashSet<SetSymbolRules> m_set_symbols;
       std::vector<bool> m_nullable;
 

@@ -13,8 +13,8 @@ ParseGrammar
 augment_start_rule(const ParseGrammar& grammar)
 {
   auto rules = grammar.rules();
-  PRule rule(rules.size(), {grammar.start()});
-  rules.push_back(std::vector<PRule>{rule});
+  Rule rule(rules.size(), {grammar.start()});
+  rules.push_back(std::vector<Rule>{rule});
 
   return ParseGrammar(rules.size()-1, rules);
 }
@@ -94,7 +94,7 @@ Parser::Parser(
 }
 
 void
-Parser::set_item_lookahead(PItem& item)
+Parser::set_item_lookahead(earley::Item& item)
 {
   auto first = first_set(item.position(), item.end(), m_first_sets);
 
@@ -125,7 +125,7 @@ Parser::create_all_items()
       auto& item_list = m_items[&rule];
       // create an item for every dot position in the rule
       // we don't use distances here
-      PItem add(rule);
+      earley::Item add(rule);
       for (auto current = rule.begin(); current != rule.end(); ++current)
       {
         auto& entry = *add.position();
@@ -204,8 +204,8 @@ Parser::expand_set(ItemSet* items)
   add_non_start_items(items);
 }
 
-const PItem*
-Parser::get_item(const PRule* rule, size_t dot) const
+const earley::Item*
+Parser::get_item(const earley::Rule* rule, size_t dot) const
 {
   auto iter = m_items.find(rule);
   assert(iter != m_items.end());
@@ -265,7 +265,7 @@ Parser::item_transition(ItemSet* items, const PItem* item, size_t index)
   {
     auto& symbol = *item->dot();
 
-    if (symbol.terminal())
+    if (get_terminal(symbol))
     {
       //enumerate the scanner and insert the transitions
       const auto& scanner = get<Scanner>(symbol);
