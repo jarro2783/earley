@@ -296,6 +296,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
     }},
     {"Char", {
       {{scan_range('a', 'z')}, {"pass", {0}}},
+      {{scan_range('0', '9')}, {"pass", {0}}},
       {{'\\', 't'}, {"escape", {1}}},
       {{'\\', 'n'}, {"escape", {1}}},
       {{' '}, {"pass", {0}}},

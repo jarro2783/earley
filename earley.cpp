@@ -592,6 +592,27 @@ process_input(
   {
     process_set(process_stack, item_sets, transitive_items, pointers,
       input, rules, nullable, i);
+
+    if (item_sets[i].size() == 0)
+    {
+      //failed here
+      std::cout << "Parse error at " << i << ", expecting: ";
+
+      //look for all the scans and print out what we were expecting
+      for (auto& item: item_sets[i-1])
+      {
+        if (item.position() != item.end() && holds<Scanner>(*item.position()))
+        {
+          auto& scanner = get<Scanner>(*item.position());
+          scanner.print(std::cout);
+          std::cout << ", ";
+        }
+      }
+
+      std::cout << std::endl;
+
+      break;
+    }
   }
 
   end = std::chrono::system_clock::now();
