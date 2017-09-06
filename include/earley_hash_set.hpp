@@ -120,6 +120,18 @@ namespace earley
       m_memory = static_cast<T*>(malloc(m_size * sizeof(T)));
     }
 
+    HashSet(const HashSet&) = delete;
+
+    HashSet(HashSet&& rhs)
+    : m_occupied(std::move(rhs.m_occupied))
+    {
+      m_memory = rhs.m_memory;
+      rhs.m_memory = nullptr;
+      m_first = rhs.m_first;
+      m_size = rhs.m_size;
+      m_elements = rhs.m_elements;
+    }
+
     ~HashSet()
     {
       for (size_t i = 0; i != m_size; ++i)
@@ -182,6 +194,18 @@ namespace earley
       }
 
       return std::make_pair(HashSetIterator<T>(this, pos), inserted);
+    }
+
+    size_t
+    size() const
+    {
+      return m_elements;
+    }
+
+    size_t
+    capacity() const
+    {
+      return m_size;
     }
 
     private:

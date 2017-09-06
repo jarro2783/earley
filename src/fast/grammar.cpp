@@ -261,4 +261,33 @@ follow_sets(int start, const std::vector<RuleList>& rules, FirstSets& firsts)
   return follows;
 }
 
+HashSet<int>
+sequence_lookahead(
+  const Rule& rule,
+  Rule::iterator begin,
+  const FirstSets& firsts,
+  const FollowSets& follows)
+{
+  HashSet<int> result;
+
+  auto first = first_set(begin, rule.end(), firsts);
+
+  if (first.count(EPSILON))
+  {
+    for (auto symbol: follows.find(rule.nonterminal())->second)
+    {
+      result.insert(symbol);
+    }
+  }
+
+  first.erase(EPSILON);
+
+  for (auto symbol: first)
+  {
+    result.insert(symbol);
+  }
+
+  return result;
+}
+
 }

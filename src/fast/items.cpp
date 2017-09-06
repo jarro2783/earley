@@ -53,7 +53,7 @@ Items::get_item(const grammar::Rule* rule, int position)
   if (ptr == nullptr)
   {
     HashSet<int> lookahead;
-    ptr = std::make_shared<Item>(rule, rule->begin()+position, lookahead);
+    ptr = std::make_shared<Item>(rule, rule->begin()+position, std::move(lookahead));
   }
 
   return ptr.get();

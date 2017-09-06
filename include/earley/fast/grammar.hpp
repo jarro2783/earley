@@ -60,6 +60,15 @@ namespace earley::fast::grammar
     typedef decltype(m_entries)::const_iterator iterator;
   };
 
+  HashSet<int>
+  sequence_lookahead
+  (
+    const Rule& rule,
+    Rule::iterator begin,
+    const FirstSets&,
+    const FollowSets&
+  );
+
   typedef std::vector<Rule> RuleList;
 
   class NonterminalIndices

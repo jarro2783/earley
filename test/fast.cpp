@@ -319,3 +319,30 @@ SCENARIO("Follow set", "[follow]")
     CHECK(follow[1].count('a'));
   }
 }
+
+TEST_CASE("Sequence lookahead", "[lookahead]")
+{
+  std::vector<RuleList> rules
+  {
+    {
+      {0, {{1, false}}},
+    },
+    {
+      {1, {{'a', true}}},
+      {1, {{'b', true}}},
+    },
+  };
+
+  auto firsts = first_sets(rules);
+  auto follows = follow_sets(0, rules, firsts);
+
+  Items items(rules, firsts, follows);
+
+  auto& r00 = rules[0][0];
+
+  auto lookahead = sequence_lookahead(r00, r00.begin(), firsts, follows);
+
+  CHECK(lookahead.size() == 2);
+  CHECK(lookahead.count('a') != 0);
+  CHECK(lookahead.count('b') != 0);
+}
