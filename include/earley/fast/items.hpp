@@ -58,6 +58,12 @@ namespace earley::fast
       return position();
     }
 
+    auto
+    dot_index() const
+    {
+      return position() - m_rule->begin();
+    }
+
     bool
     in_lookahead(int symbol) const
     {
