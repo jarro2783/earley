@@ -13,8 +13,8 @@ ParseGrammar
 augment_start_rule(const ParseGrammar& grammar)
 {
   auto rules = grammar.rules();
-  earley::Rule rule(rules.size(), {grammar.start()});
-  rules.push_back(std::vector<earley::Rule>{rule});
+  PRule rule(rules.size(), {grammar.start()});
+  rules.push_back(std::vector<PRule>{rule});
 
   return ParseGrammar(rules.size()-1, rules);
 }
@@ -205,7 +205,7 @@ Parser::expand_set(ItemSet* items)
 }
 
 const PItem*
-Parser::get_item(const earley::Rule* rule, size_t dot) const
+Parser::get_item(const PRule* rule, size_t dot) const
 {
   auto iter = m_items.find(rule);
   assert(iter != m_items.end());

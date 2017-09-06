@@ -23,6 +23,7 @@ namespace earley
   namespace fast
   {
     typedef earley::Item PItem;
+    typedef earley::Rule PRule;
 
     class ItemSetCore
     {
@@ -289,7 +290,7 @@ namespace earley
       create_start_set();
 
       const PItem*
-      get_item(const earley::Rule* rule, size_t dot) const;
+      get_item(const PRule* rule, size_t dot) const;
 
       void
       expand_set(ItemSet* items);
@@ -336,7 +337,7 @@ namespace earley
 
       // The addresses of these might change after adding another one, so only
       // keep a pointer to them after adding all the items
-      std::unordered_map<const earley::Rule*, std::vector<PItem>> m_items;
+      std::unordered_map<const PRule*, std::vector<PItem>> m_items;
       HashSet<SetSymbolRules> m_set_symbols;
       std::vector<bool> m_nullable;
 
