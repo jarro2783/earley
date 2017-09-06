@@ -27,9 +27,9 @@ create_token(char c)
 }
 
 void
-ItemSet::add_start_item(const earley::Item* item, size_t distance)
+ItemSet::add_start_item(const PItem* item, size_t distance)
 {
-  hash_combine(m_hash, std::hash<const earley::Item*>()(item));
+  hash_combine(m_hash, std::hash<const PItem*>()(item));
   hash_combine(m_hash, distance);
 
   m_core->add_start_item(item);
@@ -94,7 +94,7 @@ Parser::Parser(
 }
 
 void
-Parser::set_item_lookahead(earley::Item& item)
+Parser::set_item_lookahead(PItem& item)
 {
   auto first = first_set(item.position(), item.end(), m_first_sets);
 
@@ -125,7 +125,7 @@ Parser::create_all_items()
       auto& item_list = m_items[&rule];
       // create an item for every dot position in the rule
       // we don't use distances here
-      earley::Item add(rule);
+      PItem add(rule);
       for (auto current = rule.begin(); current != rule.end(); ++current)
       {
         auto& entry = *add.position();
@@ -204,7 +204,7 @@ Parser::expand_set(ItemSet* items)
   add_non_start_items(items);
 }
 
-const earley::Item*
+const PItem*
 Parser::get_item(const earley::Rule* rule, size_t dot) const
 {
   auto iter = m_items.find(rule);
@@ -256,7 +256,7 @@ Parser::add_non_start_items(ItemSet* items)
 // If this item has a symbol after the dot, add an index for
 // (current item set, item->symbol) -> item
 void
-Parser::item_transition(ItemSet* items, const earley::Item* item, size_t index)
+Parser::item_transition(ItemSet* items, const PItem* item, size_t index)
 {
   auto& rule = item->rule();
   auto core = items->core();
@@ -314,7 +314,7 @@ Parser::item_transition(ItemSet* items, const earley::Item* item, size_t index)
 }
 
 void
-Parser::item_completion(ItemSet* items, const earley::Item* item, size_t index)
+Parser::item_completion(ItemSet* items, const PItem* item, size_t index)
 {
   // Completion in the current set:
   // Find the rules that predicted the lhs of this rule in the current set
@@ -342,7 +342,7 @@ Parser::insert_transition(const SetSymbolRules& tuple)
 }
 
 void
-Parser::add_initial_item(ItemSetCore* core, const earley::Item* item)
+Parser::add_initial_item(ItemSetCore* core, const PItem* item)
 {
   // add the item if it doesn't already exist
   for (size_t i = core->start_items(); i != core->all_items(); ++i)

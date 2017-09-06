@@ -22,6 +22,8 @@ namespace earley
 {
   namespace fast
   {
+    typedef earley::Item PItem;
+
     class ItemSetCore
     {
       public:
@@ -32,7 +34,7 @@ namespace earley
       }
 
       void
-      add_start_item(const earley::Item* item)
+      add_start_item(const PItem* item)
       {
         ++m_start_items;
         m_items.push_back(item);
@@ -52,19 +54,19 @@ namespace earley
       }
 
       void
-      add_derived_item(const earley::Item* item, size_t parent)
+      add_derived_item(const PItem* item, size_t parent)
       {
         m_items.push_back(item);
         m_parent_indexes.push_back(parent);
       }
 
       void
-      add_initial_item(const earley::Item* item)
+      add_initial_item(const PItem* item)
       {
         m_items.push_back(item);
       }
 
-      const earley::Item*
+      const PItem*
       item(size_t i)
       {
         return m_items[i];
@@ -76,7 +78,7 @@ namespace earley
         return m_hash;
       }
 
-      const std::vector<const earley::Item*>
+      const std::vector<const PItem*>
       items() const
       {
         return m_items;
@@ -96,7 +98,7 @@ namespace earley
 
       private:
       size_t m_start_items = 0;
-      std::vector<const earley::Item*> m_items;
+      std::vector<const PItem*> m_items;
       size_t m_hash = 0;
       std::vector<size_t> m_parent_indexes;
     };
@@ -111,12 +113,12 @@ namespace earley
       }
 
       void
-      add_start_item(const earley::Item* item, size_t distance);
+      add_start_item(const PItem* item, size_t distance);
 
       void
-      add_derived_item(const earley::Item* item, size_t parent)
+      add_derived_item(const PItem* item, size_t parent)
       {
-        hash_combine(m_hash, std::hash<const earley::Item*>()(item));
+        hash_combine(m_hash, std::hash<const PItem*>()(item));
         hash_combine(m_hash, parent + 123456789);
 
         m_distances.push_back(parent);
@@ -286,7 +288,7 @@ namespace earley
       void
       create_start_set();
 
-      const earley::Item*
+      const PItem*
       get_item(const earley::Rule* rule, size_t dot) const;
 
       void
@@ -299,13 +301,13 @@ namespace earley
       add_non_start_items(ItemSet* items);
 
       void
-      add_initial_item(ItemSetCore*, const earley::Item* item);
+      add_initial_item(ItemSetCore*, const PItem* item);
 
       void
-      item_transition(ItemSet* items, const earley::Item* item, size_t i);
+      item_transition(ItemSet* items, const PItem* item, size_t i);
 
       void
-      item_completion(ItemSet*, const earley::Item*, size_t i);
+      item_completion(ItemSet*, const PItem*, size_t i);
 
       HashSet<SetSymbolRules>::iterator
       new_symbol_index(const SetSymbolRules& item)
@@ -317,7 +319,7 @@ namespace earley
       create_new_set(size_t position, const std::string& input);
 
       void
-      set_item_lookahead(earley::Item& item);
+      set_item_lookahead(PItem& item);
 
       bool
       nullable(const Entry& symbol)
@@ -334,7 +336,7 @@ namespace earley
 
       // The addresses of these might change after adding another one, so only
       // keep a pointer to them after adding all the items
-      std::unordered_map<const earley::Rule*, std::vector<earley::Item>> m_items;
+      std::unordered_map<const earley::Rule*, std::vector<PItem>> m_items;
       HashSet<SetSymbolRules> m_set_symbols;
       std::vector<bool> m_nullable;
 
