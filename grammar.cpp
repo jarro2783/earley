@@ -198,6 +198,9 @@ parse(const earley::Grammar& grammar, const std::string& start,
   auto [parsed, time, items, pointers] =
     process_input(debug, ids[start], text, rules, ids);
 
+  (void)items;
+  (void)pointers;
+
   if (parsed)
   {
     std::cout << "Parsed successfully";

@@ -253,6 +253,34 @@ Parser::add_non_start_items(ItemSet* items)
   }
 }
 
+void
+Parser::insert_transitions(ItemSetCore* core, const Entry& symbol, size_t index)
+{
+  const auto& scanner = get<Scanner>(symbol);
+
+  if (scanner.right == -1)
+  {
+    SetSymbolRules tuple{core, scanner.left, {}};
+    auto [inserted, iter] = insert_transition(tuple);
+    iter->transitions.push_back(index);
+
+    (void)inserted;
+  }
+  else
+  {
+    auto current = scanner.left;
+    while (current <= scanner.right)
+    {
+      SetSymbolRules tuple{core, current, {}};
+      auto [inserted, iter] = insert_transition(tuple);
+      iter->transitions.push_back(index);
+      ++current;
+
+      (void)inserted;
+    }
+  }
+}
+
 // If this item has a symbol after the dot, add an index for
 // (current item set, item->symbol) -> item
 void
@@ -265,38 +293,20 @@ Parser::item_transition(ItemSet* items, const PItem* item, size_t index)
   {
     auto& symbol = *item->dot();
 
-    if (get_terminal(symbol))
+    if (is_terminal(symbol))
     {
       //enumerate the scanner and insert the transitions
-      const auto& scanner = get<Scanner>(symbol);
-
-      if (scanner.right == -1)
-      {
-        SetSymbolRules tuple{items->core(), scanner.left, {}};
-        auto [inserted, iter] = insert_transition(tuple);
-        iter->transitions.push_back(index);
-      }
-      else
-      {
-        auto current = scanner.left;
-        while (current <= scanner.right)
-        {
-          SetSymbolRules tuple{items->core(), current, {}};
-          auto [inserted, iter] = insert_transition(tuple);
-          iter->transitions.push_back(index);
-          ++current;
-        }
-      }
+      insert_transitions(items->core(), symbol, index);
     }
     else
     {
-      SetSymbolRules tuple{items->core(), get<size_t>(symbol), {}};
+      SetSymbolRules tuple{core, get_terminal(symbol), {}};
       auto [inserted, iter] = insert_transition(tuple);
       if (inserted)
       {
         // prediction
         // insert initial items for this symbol
-        for (auto& prediction: m_grammar.get(get<size_t>(symbol)))
+        for (auto& prediction: m_grammar.get(get_terminal(symbol)))
         {
           add_initial_item(core, get_item(&prediction, 0));
         }
@@ -314,7 +324,7 @@ Parser::item_transition(ItemSet* items, const PItem* item, size_t index)
 }
 
 void
-Parser::item_completion(ItemSet* items, const PItem* item, size_t index)
+Parser::item_completion(ItemSet*, const PItem*, size_t)
 {
   // Completion in the current set:
   // Find the rules that predicted the lhs of this rule in the current set

@@ -70,6 +70,10 @@ namespace earley::fast
       return m_lookahead.count(symbol) > 0;
     }
 
+    void
+    print(std::ostream&, const std::unordered_map<size_t, std::string>&)
+      const;
+
     private:
     const grammar::Rule* m_rule;
     grammar::Rule::iterator m_position;

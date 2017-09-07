@@ -22,23 +22,37 @@ namespace earley
 {
   namespace fast
   {
+//#define NEW_GRAMMAR
+
+#ifndef NEW_GRAMMAR
     typedef earley::Item PItem;
     typedef earley::Rule PRule;
-    //typedef Item PItem;
-    //typedef grammar::Rule PRule;
+#define fast_namespace
+#else
+    typedef Item PItem;
+    typedef grammar::Rule PRule;
+#define fast_namespace grammar::
+#endif
 
     inline
-    int
-    get_terminal(const earley::Entry& s)
+    auto
+    is_terminal(const earley::Entry& s)
     {
       return s.terminal();
     }
 
     inline
-    int
-    get_terminal(const grammar::Symbol& s)
+    auto
+    is_terminal(const grammar::Symbol& s)
     {
       return s.terminal;
+    }
+
+    inline
+    auto
+    get_terminal(const earley::Entry& e)
+    {
+      return get<size_t>(e);
     }
 
     class ItemSetCore
@@ -263,7 +277,7 @@ namespace earley
     struct SetSymbolRules
     {
       ItemSetCore* set;
-      Symbol symbol;
+      fast_namespace Symbol symbol;
       std::vector<uint16_t> transitions;
     };
 
@@ -329,6 +343,12 @@ namespace earley
       void
       item_completion(ItemSet*, const PItem*, size_t i);
 
+      void
+      insert_transitions(ItemSetCore*, const Entry& symbol, size_t);
+
+      void
+      insert_transitions(ItemSetCore*, const grammar::Symbol&, size_t);
+
       HashSet<SetSymbolRules>::iterator
       new_symbol_index(const SetSymbolRules& item)
       {
@@ -345,6 +365,12 @@ namespace earley
       nullable(const Entry& symbol)
       {
         return symbol.empty();
+      }
+
+      bool
+      nullable(const grammar::Symbol& symbol)
+      {
+        return m_grammar_new.nullable(symbol.terminal);
       }
 
       // TODO: fix these
@@ -378,13 +404,26 @@ namespace earley
 namespace std
 {
   template <>
+  struct hash<earley::fast::grammar::Symbol>
+  {
+    size_t
+    operator()(const earley::fast::grammar::Symbol& s)
+    {
+      size_t result = s.index;
+      hash_combine(result, s.terminal);
+
+      return result;
+    }
+  };
+
+  template <>
   struct hash<earley::fast::SetSymbolRules>
   {
     size_t
     operator()(const earley::fast::SetSymbolRules& s)
     {
       size_t result = std::hash<decltype(s.set)>()(s.set);
-      size_t entry_hash = std::hash<earley::Symbol>()(s.symbol);
+      size_t entry_hash = std::hash<decltype(s.symbol)>()(s.symbol);
       hash_combine(result, entry_hash);
 
       return result;

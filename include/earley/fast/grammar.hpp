@@ -14,6 +14,14 @@ namespace earley::fast::grammar
     bool terminal;
   };
 
+  inline
+  bool
+  operator==(const Symbol& lhs, const Symbol& rhs)
+  {
+    return lhs.index == rhs.index &&
+      lhs.terminal == rhs.terminal;
+  }
+
   enum Terminals {
     EPSILON = -1,
     END_OF_INPUT = -2,
