@@ -60,4 +60,10 @@ Items::get_item(const grammar::Rule* rule, int position)
   return ptr.get();
 }
 
+void
+Item::print(std::ostream&, const std::unordered_map<size_t, std::string>&)
+  const
+{
+}
+
 }

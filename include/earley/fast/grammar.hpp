@@ -137,6 +137,12 @@ namespace earley::fast::grammar
       return m_follow_sets;
     }
 
+    auto&
+    all_rules() const
+    {
+      return m_nonterminal_rules;
+    }
+
     private:
     void
     insert_nonterminal(

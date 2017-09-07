@@ -22,7 +22,7 @@ namespace earley
 {
   namespace fast
   {
-//#define NEW_GRAMMAR
+#define NEW_GRAMMAR
 
 #ifndef NEW_GRAMMAR
     typedef earley::Item PItem;
@@ -53,6 +53,20 @@ namespace earley
     get_terminal(const earley::Entry& e)
     {
       return get<size_t>(e);
+    }
+
+    inline
+    auto
+    get_symbol(const earley::Entry& e)
+    {
+      return get<size_t>(e);
+    }
+
+    inline
+    auto
+    get_symbol(const grammar::Symbol& s)
+    {
+      return s;
     }
 
     inline
@@ -330,7 +344,7 @@ namespace earley
       get_item(const earley::Rule* rule, size_t dot) const;
 
       const Item*
-      get_item(const grammar::Rule* rule, int dot) const;
+      get_item(const grammar::Rule* rule, int dot);
 
       void
       expand_set(ItemSet* items);
@@ -400,6 +414,8 @@ namespace earley
       // follow and first sets
       FirstSet m_first_sets;
       FollowSet m_follow_sets;
+
+      Items m_all_items;
 
       auto
       insert_transition(const SetSymbolRules& tuple)

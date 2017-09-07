@@ -54,6 +54,9 @@ Parser::Parser(
 , m_set_symbols(20000)
 , m_nullable(find_nullable(m_grammar.rules()))
 , m_names(std::move(names))
+, m_all_items(m_grammar_new.all_rules(),
+    m_grammar_new.first_sets(),
+    m_grammar_new.follow_sets())
 {
   m_names.insert({m_grammar.rules().size()-1, "S^"});
 
@@ -216,6 +219,12 @@ Parser::expand_set(ItemSet* items)
   add_non_start_items(items);
 }
 
+const Item*
+Parser::get_item(const grammar::Rule* rule, int dot)
+{
+  return m_all_items.get_item(rule, dot);
+}
+
 const earley::Item*
 Parser::get_item(const earley::Rule* rule, size_t dot) const
 {
@@ -266,6 +275,13 @@ Parser::add_non_start_items(ItemSet* items)
 }
 
 void
+Parser::insert_transitions(ItemSetCore*, const grammar::Symbol&, size_t)
+{
+#warning Finish
+}
+
+#ifndef NEW_GRAMMAR
+void
 Parser::insert_transitions(ItemSetCore* core, const Entry& symbol, size_t index)
 {
   const auto& scanner = get<Scanner>(symbol);
@@ -292,6 +308,7 @@ Parser::insert_transitions(ItemSetCore* core, const Entry& symbol, size_t index)
     }
   }
 }
+#endif
 
 // If this item has a symbol after the dot, add an index for
 // (current item set, item->symbol) -> item
@@ -312,7 +329,7 @@ Parser::item_transition(ItemSet* items, const PItem* item, size_t index)
     }
     else
     {
-      SetSymbolRules tuple{core, get_terminal(symbol), {}};
+      SetSymbolRules tuple{core, get_symbol(symbol), {}};
       auto [inserted, iter] = insert_transition(tuple);
       if (inserted)
       {
@@ -434,12 +451,12 @@ Parser::create_new_set(size_t position, const std::string& input)
         // find the symbol for the lhs of this rule in set that predicted this
         // i.e., this is a completion: find the items it completes
         auto transitions = m_set_symbols.find(SetSymbolRules{
-          from_core, item->rule().nonterminal(), {}
+          from_core, {item->rule().nonterminal(), false}, {}
         });
 
         if (transitions == m_set_symbols.end())
         {
-          if (item->rule().nonterminal() != m_grammar.start())
+          if (static_cast<size_t>(item->rule().nonterminal()) != m_grammar.start())
           {
             std::cerr << "At position " << position << ", Completing item: ";
             item->print(std::cerr, m_names);
