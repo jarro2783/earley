@@ -20,11 +20,19 @@ augment_start_rule(const ParseGrammar& grammar)
 }
 }
 
+#ifdef NEW_GRAMMAR
+grammar::Symbol
+create_token(char c)
+{
+  return grammar::Symbol{c, true};
+}
+#else
 Symbol
 create_token(char c)
 {
   return Symbol{c};
 }
+#endif
 
 void
 ItemSet::add_start_item(const PItem* item, size_t distance)
@@ -185,7 +193,11 @@ Parser::create_start_set()
   auto core = std::make_unique<ItemSetCore>();
   auto items = std::make_shared<ItemSet>(core.get());
 
+#ifdef NEW_GRAMMAR
+  for (auto& rule: m_grammar_new.rules(m_grammar_new.start()))
+#else
   for (auto& rule: m_grammar.rules()[m_grammar.start()])
+#endif
   {
     auto item = get_item(&rule, 0);
     items->add_start_item(item, 0);
@@ -306,7 +318,11 @@ Parser::item_transition(ItemSet* items, const PItem* item, size_t index)
       {
         // prediction
         // insert initial items for this symbol
+#ifdef NEW_GRAMMAR
+        for (auto& prediction: m_grammar_new.rules(get_terminal(symbol)))
+#else
         for (auto& prediction: m_grammar.get(get_terminal(symbol)))
+#endif
         {
           add_initial_item(core, get_item(&prediction, 0));
         }
@@ -372,7 +388,7 @@ std::shared_ptr<ItemSet>
 Parser::create_new_set(size_t position, const std::string& input)
 {
   auto symbol = input[position];
-  Symbol token = create_token(symbol);
+  auto token = create_token(symbol);
   auto core = std::make_unique<ItemSetCore>();
   auto current_set = std::make_shared<ItemSet>(core.get());
 

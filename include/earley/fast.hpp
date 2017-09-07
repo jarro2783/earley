@@ -55,6 +55,13 @@ namespace earley
       return get<size_t>(e);
     }
 
+    inline
+    auto
+    get_terminal(const grammar::Symbol& s)
+    {
+      return s.index;
+    }
+
     class ItemSetCore
     {
       public:
