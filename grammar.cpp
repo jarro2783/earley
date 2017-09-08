@@ -404,7 +404,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
 
       for (size_t i = 0; i < text.size(); ++i)
       {
-        parser.parse(text, i);
+        parser.parse(fast::TerminalList(text.begin(), text.end()), i);
 
         if (debug)
         {

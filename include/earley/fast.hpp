@@ -34,6 +34,8 @@ namespace earley
 #define fast_namespace grammar::
 #endif
 
+    typedef std::vector<size_t> TerminalList;
+
     inline
     auto
     is_terminal(const earley::Entry& s)
@@ -324,10 +326,10 @@ namespace earley
         std::unordered_map<size_t, std::string> names);
 
       void
-      parse_input(const std::string& input);
+      parse_input(const TerminalList& input);
 
       void
-      parse(const std::string& input, size_t position);
+      parse(const TerminalList& input, size_t position);
 
       void
       print_set(size_t i, const std::unordered_map<size_t, std::string>&);
@@ -377,7 +379,7 @@ namespace earley
       }
 
       std::shared_ptr<ItemSet>
-      create_new_set(size_t position, const std::string& input);
+      create_new_set(size_t position, const TerminalList& input);
 
       void
       set_item_lookahead(earley::Item& item);

@@ -159,7 +159,7 @@ Parser::create_all_items()
 }
 
 void
-Parser::parse_input(const std::string& input)
+Parser::parse_input(const TerminalList& input)
 {
   size_t position = 0;
   while (position < input.size())
@@ -170,7 +170,7 @@ Parser::parse_input(const std::string& input)
 }
 
 void
-Parser::parse(const std::string& input, size_t position)
+Parser::parse(const TerminalList& input, size_t position)
 {
   auto set = create_new_set(position, input);
 
@@ -407,7 +407,7 @@ Parser::add_initial_item(ItemSetCore* core, const PItem* item)
 // Do scans and completions to start the current set
 // find it in the hash table, then expand it if it's new
 std::shared_ptr<ItemSet>
-Parser::create_new_set(size_t position, const std::string& input)
+Parser::create_new_set(size_t position, const TerminalList& input)
 {
   auto symbol = input[position];
   auto token = create_token(symbol);
