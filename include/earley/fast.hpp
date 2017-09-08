@@ -391,7 +391,7 @@ namespace earley
       bool
       nullable(const grammar::Symbol& symbol)
       {
-        return m_grammar_new.nullable(symbol.terminal);
+        return m_grammar_new.nullable(symbol.index);
       }
 
       // TODO: fix these

@@ -274,6 +274,7 @@ Parser::add_non_start_items(ItemSet* items)
   }
 }
 
+#ifdef NEW_GRAMMAR
 void
 Parser::insert_transitions(ItemSetCore* core,
   const grammar::Symbol& symbol, size_t index)
@@ -282,6 +283,7 @@ Parser::insert_transitions(ItemSetCore* core,
   auto result = insert_transition(tuple);
   std::get<1>(result)->transitions.push_back(index);
 }
+#endif
 
 #ifndef NEW_GRAMMAR
 void
@@ -454,7 +456,13 @@ Parser::create_new_set(size_t position, const std::string& input)
         // find the symbol for the lhs of this rule in set that predicted this
         // i.e., this is a completion: find the items it completes
         auto transitions = m_set_symbols.find(SetSymbolRules{
-          from_core, {item->rule().nonterminal(), false}, {}
+          from_core,
+#ifdef NEW_GRAMMAR
+          {item->rule().nonterminal(), false},
+#else
+          item->rule().nonterminal(),
+#endif
+          {}
         });
 
         if (transitions == m_set_symbols.end())
