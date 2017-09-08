@@ -60,10 +60,51 @@ Items::get_item(const grammar::Rule* rule, int position)
   return ptr.get();
 }
 
-void
-Item::print(std::ostream&, const std::unordered_map<size_t, std::string>&)
-  const
+std::ostream&
+Item::print(
+  std::ostream& os,
+  const std::unordered_map<size_t, std::string>& names
+) const
 {
+  auto& item = *this;
+
+  os << print_nt(names, item.m_rule->nonterminal()) << " -> ";
+  auto iter = item.m_rule->begin();
+
+  while (iter != item.m_rule->end())
+  {
+    if (iter == item.m_position)
+    {
+      os << " ·";
+    }
+
+    auto& entry = *iter;
+
+    if (entry.terminal)
+    {
+      os << " '" << entry.index << "'";
+    }
+    else
+    {
+      os << " " << print_nt(names, entry.index) << " ";
+    }
+
+    ++iter;
+  }
+
+  if (iter == item.m_position)
+  {
+    os << " ·";
+  }
+
+  os << ": ( ";
+  for (auto symbol: m_lookahead)
+  {
+    os << symbol << " ";
+  }
+  os << ")";
+
+  return os;
 }
 
 }

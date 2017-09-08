@@ -275,9 +275,12 @@ Parser::add_non_start_items(ItemSet* items)
 }
 
 void
-Parser::insert_transitions(ItemSetCore*, const grammar::Symbol&, size_t)
+Parser::insert_transitions(ItemSetCore* core,
+  const grammar::Symbol& symbol, size_t index)
 {
-#warning Finish
+  SetSymbolRules tuple{core, symbol, {}};
+  auto result = insert_transition(tuple);
+  std::get<1>(result)->transitions.push_back(index);
 }
 
 #ifndef NEW_GRAMMAR

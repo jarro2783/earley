@@ -70,7 +70,7 @@ namespace earley::fast
       return m_lookahead.count(symbol) > 0;
     }
 
-    void
+    std::ostream&
     print(std::ostream&, const std::unordered_map<size_t, std::string>&)
       const;
 
