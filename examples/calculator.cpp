@@ -81,7 +81,7 @@ int main(int argc, char** argv)
     auto grammar = make_grammar();
 
     earley::fast::grammar::Grammar built("Expression", grammar);
-    earley::fast::Parser parser(built, earley::ParseGrammar(), {});
+    earley::fast::Parser parser(built);
     parser.parse(tokens);
   }
 }

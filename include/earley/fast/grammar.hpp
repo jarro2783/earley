@@ -143,6 +143,12 @@ namespace earley::fast::grammar
       return m_nonterminal_rules;
     }
 
+    auto&
+    names() const
+    {
+      return m_names;
+    }
+
     private:
     void
     insert_nonterminal(

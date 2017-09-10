@@ -393,13 +393,12 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
       std::chrono::time_point<std::chrono::system_clock> start_time, end;
       start_time = std::chrono::system_clock::now();
 
-      auto rule_names = invert_map(ids);
-      fast::Parser parser(grammar_new, parse_grammar, rule_names);
+      fast::Parser parser(grammar_new);
 
       if (debug)
       {
         std::cout << "-- Set 0 --" << std::endl;
-        parser.print_set(0, rule_names);
+        parser.print_set(0);
       }
 
       for (size_t i = 0; i < text.size(); ++i)
@@ -409,7 +408,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
         if (debug)
         {
           std::cout << "-- Set " << i+1 << " --" << std::endl;
-          parser.print_set(i+1, rule_names);
+          parser.print_set(i+1);
         }
       }
 

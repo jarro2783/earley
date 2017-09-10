@@ -6,20 +6,6 @@
 namespace earley::fast
 {
 
-namespace
-{
-
-ParseGrammar
-augment_start_rule(const ParseGrammar& grammar)
-{
-  auto rules = grammar.rules();
-  Rule rule(rules.size(), {grammar.start()});
-  rules.push_back(std::vector<Rule>{rule});
-
-  return ParseGrammar(rules.size()-1, rules);
-}
-}
-
 #ifdef NEW_GRAMMAR
 grammar::Symbol
 create_token(char c)
@@ -44,118 +30,13 @@ ItemSet::add_start_item(const PItem* item, size_t distance)
   m_distances.push_back(distance);
 }
 
-Parser::Parser(
-  const grammar::Grammar& grammar_new,
-  const ParseGrammar& grammar,
-  std::unordered_map<size_t, std::string> names
-)
-: m_grammar(augment_start_rule(grammar))
-, m_grammar_new(grammar_new)
+Parser::Parser(const grammar::Grammar& grammar_new)
+: m_grammar_new(grammar_new)
 , m_set_symbols(20000)
-, m_nullable(find_nullable(m_grammar.rules()))
-, m_names(std::move(names))
 , m_all_items(m_grammar_new.all_rules(),
     m_grammar_new.first_sets(),
     m_grammar_new.follow_sets())
 {
-  m_names.insert({m_grammar.rules().size()-1, "S^"});
-
-  std::cout << "First Sets" << std::endl;
-  m_first_sets = earley::first_sets(m_grammar);
-
-  for (auto& nt: m_first_sets)
-  {
-    std::cout << m_names[nt.first] << ":";
-    for (auto& item: nt.second)
-    {
-      if (item >= 0 && item < 128)
-      {
-        std::cout << " '" << static_cast<char>(item) << "'";
-      }
-      else
-      {
-        std::cout << " " << item;
-      }
-    }
-    std::cout << std::endl;
-  }
-
-  std::cout << "Follow Sets" << std::endl;
-  m_follow_sets = earley::follow_sets(m_grammar, m_first_sets);
-
-  for (auto& nt: m_follow_sets)
-  {
-    std::cout << m_names[nt.first] << ":";
-    for (auto& item: nt.second)
-    {
-      if (item >= 0 && item < 128)
-      {
-        std::cout << " '" << static_cast<char>(item) << "'";
-      }
-      else
-      {
-        std::cout << " " << item;
-      }
-    }
-    std::cout << std::endl;
-  }
-
-  create_all_items();
-  create_start_set();
-}
-
-void
-Parser::set_item_lookahead(earley::Item& item)
-{
-  auto first = first_set(item.position(), item.end(), m_first_sets);
-
-  if (first.count(EPSILON))
-  {
-    for (auto symbol: m_follow_sets[item.nonterminal()])
-    {
-      item.add_lookahead(symbol);
-    }
-  }
-
-  first.erase(EPSILON);
-
-  for (auto symbol: first)
-  {
-    item.add_lookahead(symbol);
-  }
-}
-
-void
-Parser::create_all_items()
-{
-  auto& nonterminals = m_grammar.rules();
-  for (size_t i = 0; i != nonterminals.size(); ++i)
-  {
-    for (auto& rule: nonterminals.at(i))
-    {
-      auto& item_list = m_items[&rule];
-      // create an item for every dot position in the rule
-      // we don't use distances here
-      earley::Item add(rule);
-      for (auto current = rule.begin(); current != rule.end(); ++current)
-      {
-        auto& entry = *add.position();
-        if (holds<size_t>(entry) && m_nullable[get<size_t>(entry)])
-        {
-          // TODO: fix this
-          const_cast<Entry&>(entry).set_empty();
-        }
-
-        set_item_lookahead(add);
-        item_list.push_back(add);
-        add = add.next();
-      }
-
-      //we always want the last item too
-      set_item_lookahead(add);
-      item_list.push_back(add);
-    }
-  }
 }
 
 void
@@ -467,8 +348,9 @@ Parser::create_new_set(size_t position, const TerminalList& input)
 
         if (transitions == m_set_symbols.end())
         {
-          if (static_cast<size_t>(item->rule().nonterminal()) != m_grammar.start())
+          if (static_cast<size_t>(item->rule().nonterminal()) != m_grammar_new.start())
           {
+#if 0
             std::cerr << "At position " << position << ", Completing item: ";
             item->print(std::cerr, m_names);
             std::cerr << ": " << current_set->distance(i) << std::endl;
@@ -479,6 +361,7 @@ Parser::create_new_set(size_t position, const TerminalList& input)
               std::cerr << "-- Set " << print_i << " -- " << std::endl;
               print_set(print_i, m_names);
             }
+#endif
             exit(1);
           }
 
@@ -507,10 +390,11 @@ Parser::create_new_set(size_t position, const TerminalList& input)
 }
 
 void
-Parser::print_set(size_t i, const std::unordered_map<size_t, std::string>& names)
+Parser::print_set(size_t i)
 {
   auto set = m_itemSets.at(i);
-  set->print(names);
+  auto& names = m_grammar_new.names();
+  set->print({names.begin(), names.end()});
 }
 
 void

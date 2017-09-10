@@ -322,8 +322,7 @@ namespace earley
     {
       public:
 
-      Parser(const grammar::Grammar&, const ParseGrammar& grammar,
-        std::unordered_map<size_t, std::string> names);
+      Parser(const grammar::Grammar&);
 
       void
       parse_input(const TerminalList& input);
@@ -332,7 +331,7 @@ namespace earley
       parse(const TerminalList& input, size_t position);
 
       void
-      print_set(size_t i, const std::unordered_map<size_t, std::string>&);
+      print_set(size_t i);
 
       private:
 
@@ -381,9 +380,6 @@ namespace earley
       std::shared_ptr<ItemSet>
       create_new_set(size_t position, const TerminalList& input);
 
-      void
-      set_item_lookahead(earley::Item& item);
-
       bool
       nullable(const Entry& symbol)
       {
@@ -396,8 +392,6 @@ namespace earley
         return m_grammar_new.nullable(symbol.index);
       }
 
-      // TODO: fix these
-      ParseGrammar m_grammar;
       grammar::Grammar m_grammar_new;
 
       std::vector<std::shared_ptr<ItemSet>> m_itemSets;
