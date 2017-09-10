@@ -45,7 +45,15 @@ get_tokens(const char* input, size_t length)
         results.str () << "': " << std::boolalpha << results.bol << "\n";
     }
 
-    tokens.push_back(results.id);
+    //TODO: this assumes ASCII
+    if (results.id == results.npos())
+    {
+      tokens.push_back(*results.first);
+    }
+    else
+    {
+      tokens.push_back(results.id);
+    }
     lexertl::lookup(sm, results);
   }
 
@@ -78,10 +86,11 @@ int main(int argc, char** argv)
   if (argc > 1)
   {
     auto tokens = get_tokens(argv[1], strlen(argv[1]));
+    earley::fast::TerminalList terminals(tokens.begin(), tokens.end());
     auto grammar = make_grammar();
 
     earley::fast::grammar::Grammar built("Expression", grammar);
     earley::fast::Parser parser(built);
-    parser.parse(tokens);
+    parser.parse_input(terminals);
   }
 }
