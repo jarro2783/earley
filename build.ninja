@@ -53,4 +53,12 @@ build .build/lexer.o: cxx lexer.cpp
 
 build lexer: cxx_link .build/lexer.o
 
-default earley test/fast test/grammar test/hash lexer
+# calculator
+build .build/examples/calculator.o: cxx examples/calculator.cpp
+  CFLAGS=-I../lexertl14
+
+build calculator: cxx_link .build/examples/calculator.o $
+  earley.o grammar.o .build/fast/fast.o .build/fast/grammar.o $
+  .build/fast/items.o .build/grammar_util.o
+
+default earley test/fast test/grammar test/hash lexer calculator
