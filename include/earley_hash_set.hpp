@@ -126,10 +126,14 @@ namespace earley
     : m_occupied(std::move(rhs.m_occupied))
     {
       m_memory = rhs.m_memory;
-      rhs.m_memory = nullptr;
       m_first = rhs.m_first;
       m_size = rhs.m_size;
       m_elements = rhs.m_elements;
+
+      rhs.m_memory = nullptr;
+      rhs.m_size = 0;
+      rhs.m_elements = 0;
+      rhs.m_first = 0;
     }
 
     ~HashSet()

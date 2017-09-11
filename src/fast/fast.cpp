@@ -8,7 +8,7 @@ namespace earley::fast
 
 #ifdef NEW_GRAMMAR
 grammar::Symbol
-create_token(char c)
+create_token(int c)
 {
   return grammar::Symbol{c, true};
 }
@@ -348,7 +348,7 @@ Parser::create_new_set(size_t position, const TerminalList& input)
 
         if (transitions == m_set_symbols.end())
         {
-          if (static_cast<size_t>(item->rule().nonterminal()) != m_grammar_new.start())
+          if (item->rule().nonterminal() != m_grammar_new.start())
           {
 #if 0
             std::cerr << "At position " << position << ", Completing item: ";
