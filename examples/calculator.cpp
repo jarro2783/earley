@@ -81,10 +81,16 @@ make_grammar()
       {{"IDENTIFIER"}}
     }},
     {"Expression", {
+      {{"Product"}},
+    }},
+    {"Product", {
+      {{"Product", '*', "Sum"}},
+      {{"Product", '/', "Sum"}},
       {{"Sum"}},
     }},
     {"Sum", {
       {{"Sum", '+', "Facter"}},
+      {{"Sum", '-', "Facter"}},
       {{"Facter"}},
     }},
   };
