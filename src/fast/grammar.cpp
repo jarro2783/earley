@@ -4,7 +4,12 @@
 namespace earley::fast::grammar
 {
 
-Grammar::Grammar(const std::string& start, const ::earley::Grammar& grammar)
+Grammar::Grammar(
+  const std::string& start,
+  const ::earley::Grammar& grammar,
+  TerminalIndices terminals
+)
+: m_terminals(std::move(terminals))
 {
   for (auto& [name, rules]: grammar)
   {

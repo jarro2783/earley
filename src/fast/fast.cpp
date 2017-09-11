@@ -37,6 +37,7 @@ Parser::Parser(const grammar::Grammar& grammar_new)
     m_grammar_new.first_sets(),
     m_grammar_new.follow_sets())
 {
+  create_start_set();
 }
 
 void
@@ -210,7 +211,6 @@ Parser::item_transition(ItemSet* items, const PItem* item, size_t index)
 
     if (is_terminal(symbol))
     {
-      //enumerate the scanner and insert the transitions
       insert_transitions(items->core(), symbol, index);
     }
     else
@@ -383,6 +383,10 @@ Parser::create_new_set(size_t position, const TerminalList& input)
         }
       }
     }
+  }
+  else
+  {
+    std::cerr << "Couldn't find token " << symbol << " in set " << position << std::endl;
   }
 
   core.release();

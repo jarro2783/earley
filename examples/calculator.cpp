@@ -11,6 +11,14 @@ enum Tokens
   NEW_LINE,
 };
 
+namespace
+{
+  earley::fast::grammar::TerminalIndices terminal_names{
+    {"IDENTIFIER", IDENTIFIER},
+    {"NUMBER", NUMBER},
+  };
+}
+
 std::vector<int>
 get_tokens(const char* input, size_t length)
 {
@@ -43,17 +51,18 @@ get_tokens(const char* input, size_t length)
     {
       std::cout << "Id: " << static_cast<int>(results.id) << ", Token: '" <<
         results.str () << "': " << std::boolalpha << results.bol << "\n";
+
+      //TODO: this assumes ASCII
+      if (results.id == results.npos())
+      {
+        tokens.push_back(*results.first);
+      }
+      else
+      {
+        tokens.push_back(results.id);
+      }
     }
 
-    //TODO: this assumes ASCII
-    if (results.id == results.npos())
-    {
-      tokens.push_back(*results.first);
-    }
-    else
-    {
-      tokens.push_back(results.id);
-    }
     lexertl::lookup(sm, results);
   }
 
@@ -89,8 +98,16 @@ int main(int argc, char** argv)
     earley::fast::TerminalList terminals(tokens.begin(), tokens.end());
     auto grammar = make_grammar();
 
-    earley::fast::grammar::Grammar built("Expression", grammar);
+    earley::fast::grammar::Grammar built("Expression", grammar, terminal_names);
     earley::fast::Parser parser(built);
-    parser.parse_input(terminals);
+
+    std::cout << "-- Set " << 0 << " --" << std::endl;
+    parser.print_set(0);
+    for (size_t i = 0; i != terminals.size(); ++i)
+    {
+      parser.parse(terminals, i);
+      std::cout << "-- Set " << i+1 << " --" << std::endl;
+      parser.print_set(i+1);
+    }
   }
 }

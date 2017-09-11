@@ -102,7 +102,11 @@ namespace earley::fast::grammar
   {
     public:
 
-    Grammar(const std::string& start, const ::earley::Grammar& bnf);
+    Grammar(
+      const std::string& start,
+      const ::earley::Grammar& bnf,
+      TerminalIndices terminals = {}
+    );
 
     const RuleList&
     rules(const std::string& name);
