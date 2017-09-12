@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include <earley/fast.hpp>
 #include <lexertl/generator.hpp>
 #include <lexertl/lookup.hpp>
@@ -20,7 +22,7 @@ namespace
 }
 
 std::vector<int>
-get_tokens(const char* input, size_t length)
+get_tokens(const char* input)
 {
   lexertl::rules rules;
   lexertl::state_machine sm;
@@ -33,8 +35,17 @@ get_tokens(const char* input, size_t length)
   rules.push("[ \t]+", sm.skip());
   rules.push("\n", NEW_LINE);
 
+  lexertl::memory_file file(input);
+
+  if (file.data() == nullptr)
+  {
+    throw std::string("Unable to open ") + input;
+  }
+
   lexertl::generator::build(rules, sm);
-  lexertl::match_results<const char*> results(input, input + length);
+  lexertl::match_results<const char*> results(
+    file.data(),
+    file.data() + file.size());
 
   lexertl::lookup(sm, results);
 
@@ -80,6 +91,14 @@ make_grammar()
       {{"NUMBER"}},
       {{"IDENTIFIER"}}
     }},
+    {"StatementList", {
+      {{"Statement"}},
+      {{"Statement", "StatementList"}},
+    }},
+    {"Statement", {
+      {{"Expression"}},
+      {{"IDENTIFIER", '=', "Expression"}},
+    }},
     {"Expression", {
       {{"Product"}},
     }},
@@ -96,24 +115,44 @@ make_grammar()
   };
 }
 
+void
+run_calculator(char* file)
+{
+  auto tokens = get_tokens(file);
+  earley::fast::TerminalList terminals(tokens.begin(), tokens.end());
+  auto grammar = make_grammar();
+
+  earley::fast::grammar::Grammar built("StatementList", grammar, terminal_names);
+
+  std::chrono::time_point<std::chrono::system_clock> start_time, end;
+  start_time = std::chrono::system_clock::now();
+
+  earley::fast::Parser parser(built);
+
+  parser.parse_input(terminals);
+
+  end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end-start_time;
+
+  std::cout << "Fast parser took "
+    << std::chrono::duration_cast<std::chrono::microseconds>(
+      elapsed_seconds).count()
+    << " microseconds" << std::endl;
+}
+
 int main(int argc, char** argv)
 {
   if (argc > 1)
   {
-    auto tokens = get_tokens(argv[1], strlen(argv[1]));
-    earley::fast::TerminalList terminals(tokens.begin(), tokens.end());
-    auto grammar = make_grammar();
-
-    earley::fast::grammar::Grammar built("Expression", grammar, terminal_names);
-    earley::fast::Parser parser(built);
-
-    std::cout << "-- Set " << 0 << " --" << std::endl;
-    parser.print_set(0);
-    for (size_t i = 0; i != terminals.size(); ++i)
+    try
     {
-      parser.parse(terminals, i);
-      std::cout << "-- Set " << i+1 << " --" << std::endl;
-      parser.print_set(i+1);
+      run_calculator(argv[1]);
+    } catch (const std::string& e)
+    {
+      std::cerr << "Error parsing: " << e << std::endl;
+      return 1;
     }
   }
+
+  return 0;
 }
