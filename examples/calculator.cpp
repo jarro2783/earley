@@ -60,9 +60,6 @@ get_tokens(const char* input)
     }
     else
     {
-      std::cout << "Id: " << static_cast<int>(results.id) << ", Token: '" <<
-        results.str () << "': " << std::boolalpha << results.bol << "\n";
-
       //TODO: this assumes ASCII
       if (results.id == results.npos())
       {
