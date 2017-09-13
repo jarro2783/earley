@@ -323,6 +323,7 @@ namespace earley
     class Parser
     {
       public:
+      typedef HashSet<SetSymbolRules> SetSymbolHash;
 
       Parser(const grammar::Grammar&);
 
@@ -373,7 +374,7 @@ namespace earley
       void
       insert_transitions(ItemSetCore*, const grammar::Symbol&, size_t);
 
-      HashSet<SetSymbolRules>::iterator
+      SetSymbolHash::iterator
       new_symbol_index(const SetSymbolRules& item)
       {
         return m_set_symbols.insert(item).first;
@@ -404,7 +405,7 @@ namespace earley
       // TODO: this is going away
       std::unordered_map<const earley::Rule*, std::vector<earley::Item>> m_items;
 
-      HashSet<SetSymbolRules> m_set_symbols;
+      SetSymbolHash m_set_symbols;
       std::vector<bool> m_nullable;
 
       std::unordered_map<size_t, std::string> m_names;
