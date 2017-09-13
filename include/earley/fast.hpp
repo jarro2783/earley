@@ -24,15 +24,8 @@ namespace earley
   {
 #define NEW_GRAMMAR
 
-#ifndef NEW_GRAMMAR
-    typedef earley::Item PItem;
-    typedef earley::Rule PRule;
-#define fast_namespace
-#else
     typedef Item PItem;
     typedef grammar::Rule PRule;
-#define fast_namespace grammar::
-#endif
 
     typedef std::vector<size_t> TerminalList;
 
@@ -300,7 +293,7 @@ namespace earley
     struct SetSymbolRules
     {
       ItemSetCore* set;
-      fast_namespace Symbol symbol;
+      grammar::Symbol symbol;
       std::vector<uint16_t> transitions;
     };
 
