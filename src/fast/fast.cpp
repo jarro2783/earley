@@ -161,7 +161,7 @@ void
 Parser::insert_transitions(ItemSetCore* core,
   const grammar::Symbol& symbol, size_t index)
 {
-  SetSymbolRules tuple{core, symbol, {}};
+  SetSymbolRules tuple(core, symbol);
   auto result = insert_transition(tuple);
   std::get<1>(result)->transitions.push_back(index);
 }
@@ -175,7 +175,7 @@ Parser::insert_transitions(ItemSetCore* core, const Entry& symbol, size_t index)
 
   if (scanner.right == -1)
   {
-    SetSymbolRules tuple{core, scanner.left, {}};
+    SetSymbolRules tuple(core, scanner.left);
     auto [inserted, iter] = insert_transition(tuple);
     iter->transitions.push_back(index);
 
@@ -215,7 +215,7 @@ Parser::item_transition(ItemSet* items, const PItem* item, size_t index)
     }
     else
     {
-      SetSymbolRules tuple{core, get_symbol(symbol), {}};
+      SetSymbolRules tuple(core, get_symbol(symbol));
       auto [inserted, iter] = insert_transition(tuple);
       if (inserted)
       {
@@ -299,8 +299,8 @@ Parser::create_new_set(size_t position, const TerminalList& input)
   auto& previous_core = *previous_set->core();
 
   // look up the symbol index for the previous set
-  auto scans = m_set_symbols.find(SetSymbolRules{
-    &previous_core, token, {}});
+  auto scans = m_set_symbols.find(SetSymbolRules(
+    &previous_core, token));
 
   if (scans != m_set_symbols.end())
   {
@@ -336,15 +336,10 @@ Parser::create_new_set(size_t position, const TerminalList& input)
 
         // find the symbol for the lhs of this rule in set that predicted this
         // i.e., this is a completion: find the items it completes
-        auto transitions = m_set_symbols.find(SetSymbolRules{
+        auto transitions = m_set_symbols.find(SetSymbolRules(
           from_core,
-#ifdef NEW_GRAMMAR
-          {item->rule().nonterminal(), false},
-#else
-          item->rule().nonterminal(),
-#endif
-          {}
-        });
+          {item->rule().nonterminal(), false}
+        ));
 
         if (transitions == m_set_symbols.end())
         {

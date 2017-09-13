@@ -292,6 +292,15 @@ namespace earley
 
     struct SetSymbolRules
     {
+      SetSymbolRules(
+        ItemSetCore* _set,
+        grammar::Symbol _symbol
+      )
+      : set(_set)
+      , symbol(_symbol)
+      {
+      }
+
       ItemSetCore* set;
       grammar::Symbol symbol;
       std::vector<uint16_t> transitions;
