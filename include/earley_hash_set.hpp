@@ -7,10 +7,10 @@
 
 namespace earley
 {
-  template <typename T>
+  template <typename T, typename Hash, typename Equal>
   class HashSet;
 
-  template <typename T>
+  template <typename T, typename H, typename E>
   class HashSetIterator
   {
     public:
@@ -21,7 +21,7 @@ namespace earley
     typedef T* pointer;
     typedef std::forward_iterator_tag iterator_category;
 
-    HashSetIterator(const HashSet<T>* hs, size_t pos)
+    HashSetIterator(const HashSet<T, H, E>* hs, size_t pos)
     : m_set(hs)
     , m_pos(pos)
     {
@@ -52,20 +52,20 @@ namespace earley
       return m_set->m_memory + m_pos;
     }
 
-    const HashSet<T>* m_set;
+    const HashSet<T, H, E>* m_set;
     size_t m_pos;
   };
 
-  template <typename T>
+  template <typename T, typename H, typename E>
   bool
-  operator==(const HashSetIterator<T>& lhs, const HashSetIterator<T>& rhs)
+  operator==(const HashSetIterator<T, H, E>& lhs, const HashSetIterator<T, H, E>& rhs)
   {
     return lhs.m_set == rhs.m_set && lhs.m_pos == rhs.m_pos;
   }
 
-  template <typename T>
+  template <typename T, typename H, typename E>
   bool
-  operator!=(const HashSetIterator<T>& lhs, const HashSetIterator<T>& rhs)
+  operator!=(const HashSetIterator<T, H, E>& lhs, const HashSetIterator<T, H, E>& rhs)
   {
     return !operator==(lhs, rhs);
   }
@@ -96,12 +96,14 @@ namespace earley
     }
   }
 
-  template <typename T>
+  template <typename T,
+    typename Hash = std::hash<T>,
+    typename Equality = std::equal_to<T>>
   class HashSet
   {
     public:
 
-    typedef HashSetIterator<T> const_iterator;
+    typedef HashSetIterator<T, Hash, Equality> const_iterator;
     typedef const_iterator iterator;
 
     mutable size_t collisions = 0;
@@ -197,7 +199,7 @@ namespace earley
         }
       }
 
-      return std::make_pair(HashSetIterator<T>(this, pos), inserted);
+      return std::make_pair(HashSetIterator<T, Hash, Equality>(this, pos), inserted);
     }
 
     size_t
@@ -218,14 +220,14 @@ namespace earley
     find_position(const T& t) const
     {
       // TODO: work out a better increment
-      size_t key = std::hash<T>()(t);
+      size_t key = Hash()(t);
       size_t secondary = 1 + key % (m_size - 2);
       //size_t secondary = 2;
       key %= m_size;
 
       while (true)
       {
-        if (!m_occupied[key] || t == m_memory[key])
+        if (!m_occupied[key] || Equality()(t, m_memory[key]))
         {
           return key;
         }
@@ -250,11 +252,11 @@ namespace earley
 
       if (m_occupied[pos])
       {
-        return HashSetIterator<T>(this, pos);
+        return HashSetIterator<T, Hash, Equality>(this, pos);
       }
       else
       {
-        return HashSetIterator<T>(this, m_size);
+        return HashSetIterator<T, Hash, Equality>(this, m_size);
       }
     }
 
@@ -269,7 +271,7 @@ namespace earley
     void
     resize()
     {
-      HashSet<T> moved(m_size * 2 + 1);
+      HashSet<T, Hash, Equality> moved(m_size * 2 + 1);
 
       for (size_t i = 0; i != m_size; ++i)
       {
@@ -283,7 +285,7 @@ namespace earley
     }
 
     void
-    swap(HashSet<T>& other)
+    swap(HashSet<T, Hash, Equality>& other)
     {
       std::swap(other.m_memory, m_memory);
       std::swap(other.m_elements, m_elements);
@@ -292,7 +294,7 @@ namespace earley
       std::swap(other.m_size, m_size);
     }
 
-    friend class HashSetIterator<T>;
+    friend class HashSetIterator<T, Hash, Equality>;
 
     size_t m_elements;
     size_t m_size;
