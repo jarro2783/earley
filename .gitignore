@@ -5,3 +5,4 @@ lexer
 .ninja_*
 *.o.d
 !include/earley/
+__pycache__/
