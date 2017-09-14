@@ -6,6 +6,26 @@
 namespace earley::fast
 {
 
+namespace
+{
+  bool
+  compare_lookahead_sets(ItemSet* a, ItemSet* b)
+  {
+    auto& da = a->distances();
+    auto& db = b->distances();
+
+    for (size_t i = 0; i != da.size(); ++i)
+    {
+      if (da[i] != db[i])
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+}
+
 #ifdef NEW_GRAMMAR
 grammar::Symbol
 create_token(int c)
@@ -49,11 +69,42 @@ Parser::parse_input(const TerminalList& input)
     parse(input, position);
     ++position;
   }
+
+  std::cout << "reused " << m_reuse << std::endl;
+  std::cout << input.size() << " tokens" << std::endl;
 }
 
 void
 Parser::parse(const TerminalList& input, size_t position)
 {
+  auto token = input[position];
+  auto lookahead = position < input.size()
+    ? input[position+1]
+    : -1;
+
+  auto lookahead_hash = m_set_term_lookahead.insert(
+    SetTermLookahead(
+      m_itemSets[position].get(),
+      token,
+      lookahead));
+
+  if (!lookahead_hash.second)
+  {
+    if (lookahead_hash.first->goto_set != nullptr)
+    {
+      auto place = lookahead_hash.first->place;
+      if (compare_lookahead_sets(lookahead_hash.first->goto_set,
+        m_itemSets[place].get()))
+      {
+        //std::cout << "Would reuse set" << std::endl;
+        ++m_reuse;
+        m_itemSets.push_back(m_itemSets[place]);
+        return;
+      }
+    }
+    ++m_lookahead_collisions;
+  }
+
   auto set = create_new_set(position, input);
 
   // if this is a new set, then expand it
@@ -67,6 +118,12 @@ Parser::parse(const TerminalList& input, size_t position)
   {
     //std::cout << "Reused a set at position " << position << std::endl;
     //result.first->get()->print(m_names);
+  }
+
+  if (lookahead_hash.first->goto_set == nullptr)
+  {
+    lookahead_hash.first->goto_set = result.first->get().get();
+    lookahead_hash.first->place = position+1;
   }
 
   m_itemSets.push_back(result.first->get());

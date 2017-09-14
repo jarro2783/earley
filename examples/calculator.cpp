@@ -135,6 +135,12 @@ run_calculator(char* file)
     << std::chrono::duration_cast<std::chrono::microseconds>(
       elapsed_seconds).count()
     << " microseconds" << std::endl;
+
+  //for (size_t i = 0; i <= terminals.size(); ++i)
+  //{
+  //  std::cout << "-- Set " << i << " --" << std::endl;
+  //  parser.print_set(i);
+  //}
 }
 
 int main(int argc, char** argv)

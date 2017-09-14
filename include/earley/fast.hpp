@@ -306,6 +306,36 @@ namespace earley
       std::vector<uint16_t> transitions;
     };
 
+    struct SetTermLookahead
+    {
+      SetTermLookahead(
+        ItemSet* _set,
+        int _symbol,
+        int _lookahead
+      )
+      : set(_set)
+      , symbol(_symbol)
+      , lookahead(_lookahead)
+      {
+      }
+
+      ItemSet* set;
+      int symbol;
+      int lookahead;
+
+      ItemSet* goto_set = nullptr;
+      int place = 0;
+      //std::vector<ItemSet*> gotos;
+    };
+
+    inline
+    bool
+    operator==(const SetTermLookahead& lhs, const SetTermLookahead& rhs)
+    {
+      return lhs.set == rhs.set && lhs.symbol == rhs.symbol &&
+        lhs.lookahead == rhs.lookahead;
+    }
+
     inline
     bool
     operator==(const SetSymbolRules& lhs, const SetSymbolRules& rhs)
@@ -324,6 +354,7 @@ namespace earley
     {
       public:
       typedef HashSet<SetSymbolRules> SetSymbolHash;
+      typedef HashSet<SetTermLookahead> SetTermLookaheadHash;
 
       Parser(const grammar::Grammar&);
 
@@ -406,6 +437,7 @@ namespace earley
       std::unordered_map<const earley::Rule*, std::vector<earley::Item>> m_items;
 
       SetSymbolHash m_set_symbols;
+      SetTermLookaheadHash m_set_term_lookahead;
       std::vector<bool> m_nullable;
 
       std::unordered_map<size_t, std::string> m_names;
@@ -415,6 +447,9 @@ namespace earley
       FollowSet m_follow_sets;
 
       Items m_all_items;
+
+      int m_lookahead_collisions = 0;
+      int m_reuse = 0;
 
       auto
       insert_transition(const SetSymbolRules& tuple)
@@ -447,6 +482,23 @@ namespace std
       size_t result = std::hash<decltype(s.set)>()(s.set);
       size_t entry_hash = std::hash<decltype(s.symbol)>()(s.symbol);
       hash_combine(result, entry_hash);
+
+      return result;
+    }
+  };
+
+  template <>
+  struct hash<earley::fast::SetTermLookahead>
+  {
+    size_t
+    operator()(const earley::fast::SetTermLookahead& s)
+    {
+      size_t result = std::hash<decltype(s.set)>()(s.set);
+      size_t entry_hash = std::hash<decltype(s.symbol)>()(s.symbol);
+      size_t lookahead_hash = std::hash<decltype(s.lookahead)>()(s.lookahead);
+
+      hash_combine(result, entry_hash);
+      hash_combine(result, lookahead_hash);
 
       return result;
     }
