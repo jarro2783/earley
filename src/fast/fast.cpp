@@ -3,21 +3,25 @@
 #include "earley/fast.hpp"
 #include "earley/grammar_util.hpp"
 
+#define HASH_REUSE
+
 namespace earley::fast
 {
 
 namespace
 {
   bool
-  compare_lookahead_sets(ItemSet* a, ItemSet* b)
+  compare_lookahead_sets(std::vector<std::shared_ptr<ItemSet>>& item_sets,
+    ItemSet* a, int place, int position)
   {
+    //std::cout << "Looking at set " << place << ", at position " << position << std::endl;
     auto& da = a->distances();
-    auto& db = b->distances();
 
     for (size_t i = 0; i != da.size(); ++i)
     {
-      if (da[i] != db[i])
+      if (item_sets[place - da[i]] != item_sets[position + 1 - da[i]])
       {
+        //std::cout << "Set " << place - da[i] << " != set " << position + 1 - da[i] << std::endl;
         return false;
       }
     }
@@ -93,13 +97,16 @@ Parser::parse(const TerminalList& input, size_t position)
     if (lookahead_hash.first->goto_set != nullptr)
     {
       auto place = lookahead_hash.first->place;
-      if (compare_lookahead_sets(lookahead_hash.first->goto_set,
-        m_itemSets[place].get()))
+      //std::cout << "Checking reuse at " << position << " from " << place << std::endl;
+      if (compare_lookahead_sets(m_itemSets, lookahead_hash.first->goto_set,
+        place, position))
       {
-        //std::cout << "Would reuse set" << std::endl;
+        //std::cout << "Would reuse at " << position << " from " << place << std::endl;
         ++m_reuse;
+#ifdef HASH_REUSE
         m_itemSets.push_back(m_itemSets[place]);
         return;
+#endif
       }
     }
     ++m_lookahead_collisions;
@@ -314,6 +321,7 @@ auto
 Parser::insert_transition(const SetSymbolRules& tuple)
 -> std::tuple<bool, decltype(m_set_symbols.find(tuple))>
 {
+  //std::cout << "Inserting (" << tuple.set << ", (" << tuple.symbol.index << ", " << tuple.symbol.terminal << "))" << std::endl;
   auto iter = m_set_symbols.insert(tuple);
   bool inserted = false;
 
@@ -402,18 +410,19 @@ Parser::create_new_set(size_t position, const TerminalList& input)
         {
           if (item->rule().nonterminal() != m_grammar_new.start())
           {
-#if 0
+            //TODO: clean this up
+            auto& names = m_grammar_new.names();
             std::cerr << "At position " << position << ", Completing item: ";
-            item->print(std::cerr, m_names);
+            item->print(std::cerr, {names.begin(), names.end()});
             std::cerr << ": " << current_set->distance(i) << std::endl;
-            std::cerr << "Can't find " << m_names[item->rule().nonterminal()]
+            auto iter = names.find(item->rule().nonterminal());
+            std::cerr << "Can't find " << (iter != names.end() ? iter->second : "")
               << " in set " << from << std::endl;
             for (size_t print_i = 0; print_i <= position; ++print_i)
             {
               std::cerr << "-- Set " << print_i << " -- " << std::endl;
-              print_set(print_i, m_names);
+              print_set(print_i);
             }
-#endif
             exit(1);
           }
 
@@ -457,6 +466,8 @@ void
 ItemSet::print(const std::unordered_map<size_t, std::string>& names) const
 {
   size_t i = 0;
+
+  std::cout << "  core: " << m_core << std::endl;
 
   for (; i != m_core->start_items(); ++i)
   {

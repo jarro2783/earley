@@ -136,11 +136,13 @@ run_calculator(char* file)
       elapsed_seconds).count()
     << " microseconds" << std::endl;
 
-  //for (size_t i = 0; i <= terminals.size(); ++i)
-  //{
-  //  std::cout << "-- Set " << i << " --" << std::endl;
-  //  parser.print_set(i);
-  //}
+#if 0
+  for (size_t i = 0; i <= terminals.size(); ++i)
+  {
+    std::cout << "-- Set " << i << " --" << std::endl;
+    parser.print_set(i);
+  }
+#endif
 }
 
 int main(int argc, char** argv)
