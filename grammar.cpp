@@ -244,7 +244,16 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
       {{'\t'}},
     }},
     {"Nonterminal", {
-      {{"Name", "Space", '-', '>', "Rules"}, {"create_nonterminal", {0, 4}}}
+      {{"Name", "Space", "RuleSeparator", "Rules", "OptSemi"},
+        {"create_nonterminal", {0, 3}}}
+    }},
+    {"RuleSeparator", {
+      {{'-', '>'}},
+      {{':'}},
+    }},
+    {"OptSemi", {
+      {{}},
+      {{"Space", ';'}},
     }},
     {"Rules", {
       {{"Rule"}, {"create_list", {0}}},
