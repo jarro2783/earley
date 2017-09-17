@@ -22,8 +22,6 @@ namespace earley
 {
   namespace fast
   {
-#define NEW_GRAMMAR
-
     typedef Item PItem;
     typedef grammar::Rule PRule;
 
