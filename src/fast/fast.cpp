@@ -30,19 +30,11 @@ namespace
   }
 }
 
-#ifdef NEW_GRAMMAR
 grammar::Symbol
 create_token(int c)
 {
   return grammar::Symbol{c, true};
 }
-#else
-Symbol
-create_token(char c)
-{
-  return Symbol{c};
-}
-#endif
 
 void
 ItemSet::add_start_item(const PItem* item, size_t distance)
@@ -142,11 +134,7 @@ Parser::create_start_set()
   auto core = std::make_unique<ItemSetCore>();
   auto items = std::make_shared<ItemSet>(core.get());
 
-#ifdef NEW_GRAMMAR
   for (auto& rule: m_grammar_new.rules(m_grammar_new.start()))
-#else
-  for (auto& rule: m_grammar.rules()[m_grammar.start()])
-#endif
   {
     auto item = get_item(&rule, 0);
     items->add_start_item(item, 0);
@@ -220,7 +208,6 @@ Parser::add_non_start_items(ItemSet* items)
   }
 }
 
-#ifdef NEW_GRAMMAR
 void
 Parser::insert_transitions(ItemSetCore* core,
   const grammar::Symbol& symbol, size_t index)
@@ -229,37 +216,6 @@ Parser::insert_transitions(ItemSetCore* core,
   auto result = insert_transition(tuple);
   std::get<1>(result)->transitions.push_back(index);
 }
-#endif
-
-#ifndef NEW_GRAMMAR
-void
-Parser::insert_transitions(ItemSetCore* core, const Entry& symbol, size_t index)
-{
-  const auto& scanner = get<Scanner>(symbol);
-
-  if (scanner.right == -1)
-  {
-    SetSymbolRules tuple(core, scanner.left);
-    auto [inserted, iter] = insert_transition(tuple);
-    iter->transitions.push_back(index);
-
-    (void)inserted;
-  }
-  else
-  {
-    auto current = scanner.left;
-    while (current <= scanner.right)
-    {
-      SetSymbolRules tuple{core, current, {}};
-      auto [inserted, iter] = insert_transition(tuple);
-      iter->transitions.push_back(index);
-      ++current;
-
-      (void)inserted;
-    }
-  }
-}
-#endif
 
 // If this item has a symbol after the dot, add an index for
 // (current item set, item->symbol) -> item
@@ -285,11 +241,7 @@ Parser::item_transition(ItemSet* items, const PItem* item, size_t index)
       {
         // prediction
         // insert initial items for this symbol
-#ifdef NEW_GRAMMAR
         for (auto& prediction: m_grammar_new.rules(get_terminal(symbol)))
-#else
-        for (auto& prediction: m_grammar.get(get_terminal(symbol)))
-#endif
         {
           add_initial_item(core, get_item(&prediction, 0));
         }
