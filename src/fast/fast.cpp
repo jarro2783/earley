@@ -336,6 +336,9 @@ Parser::create_new_set(size_t position, const TerminalList& input)
       current_set->add_start_item(
         next,
         previous_set->actual_distance(transition) + 1);
+
+      auto pointers = m_item_tree.insert({next});
+      pointers.first->predecessor.insert(item);
     }
 
     // now do all the completed items
@@ -383,8 +386,9 @@ Parser::create_new_set(size_t position, const TerminalList& input)
 
         for (auto transition: transitions->transitions)
         {
-          auto* item = from_core->item(transition);
-          auto* next = get_item(&item->rule(), item->dot() - item->rule().begin() + 1);
+          auto* titem = from_core->item(transition);
+          auto* next = get_item(&titem->rule(),
+            titem->dot() - titem->rule().begin() + 1);
 
           if (position < input.size()-1 &&
               !next->in_lookahead(input[position+1]))
@@ -393,6 +397,10 @@ Parser::create_new_set(size_t position, const TerminalList& input)
           }
           current_set->add_start_item(next, 
             from_set->actual_distance(transition) + distance);
+
+          auto pointers = m_item_tree.insert({next});
+          pointers.first->reduction.insert(item);
+          pointers.first->predecessor.insert(item);
         }
       }
     }

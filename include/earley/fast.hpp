@@ -348,11 +348,25 @@ namespace earley
       return !operator==(lhs, rhs);
     }
 
+    struct ItemTreePointers
+    {
+      ItemTreePointers(const Item* _source)
+      : source(_source)
+      {
+      }
+
+      const Item* source;
+
+      std::unordered_set<const Item*> reduction;
+      std::unordered_set<const Item*> predecessor;
+    };
+
     class Parser
     {
       public:
       typedef HashSet<SetSymbolRules> SetSymbolHash;
       typedef HashSet<SetTermLookahead> SetTermLookaheadHash;
+      typedef HashSet<ItemTreePointers> ItemTreeHash;
 
       Parser(const grammar::Grammar&);
 
@@ -436,6 +450,8 @@ namespace earley
 
       SetSymbolHash m_set_symbols;
       SetTermLookaheadHash m_set_term_lookahead;
+      ItemTreeHash m_item_tree;
+
       std::vector<bool> m_nullable;
 
       std::unordered_map<size_t, std::string> m_names;
@@ -453,6 +469,13 @@ namespace earley
       insert_transition(const SetSymbolRules& tuple)
       -> std::tuple<bool, decltype(m_set_symbols.find(tuple))>;
     };
+
+    inline
+    bool
+    operator==(const ItemTreePointers& lhs, const ItemTreePointers& rhs)
+    {
+      return lhs.source == rhs.source;
+    }
   }
 }
 
@@ -509,6 +532,17 @@ namespace std
     operator()(const earley::fast::ItemSetOwner& s) const
     {
       return s.get()->hash();
+    }
+  };
+
+  template <>
+  struct hash<earley::fast::ItemTreePointers>
+  {
+    size_t
+    operator()(const earley::fast::ItemTreePointers& s) const
+    {
+      std::hash<decltype(s.source)> h;
+      return h(s.source);
     }
   };
 }
