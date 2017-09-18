@@ -43,8 +43,13 @@ TEST_CASE("Next prime", "[prime]")
 TEST_CASE("Insert", "[insert]")
 {
   earley::HashSet<int> h;
+  CHECK(h.size() == 0);
+  CHECK(h.capacity() == 0);
+
   h.insert(150);
   REQUIRE(h.count(150) == 1);
+  CHECK(h.size() == 1);
+  CHECK(h.capacity() > 1);
 }
 
 TEST_CASE("Custom hash and equals", "[hash]")

@@ -115,9 +115,8 @@ namespace earley
 
     HashSet(size_t size)
     : m_elements(0)
-    , m_size(detail::next_prime(size))
+    , m_size(size == 0 ? 0 : detail::next_prime(size))
     , m_first(m_size)
-    , m_occupied(m_size, false)
     , m_memory(nullptr)
     {
       if (m_size > 0)
@@ -182,29 +181,13 @@ namespace earley
     std::pair<const_iterator, bool>
     insert(const T& t)
     {
-      bool inserted = false;
+      return insert_internal(t);
+    }
 
-      if (m_elements/3 > m_size/4)
-      {
-        resize();
-      }
-
-      auto pos = find_position(t);
-
-      if (!m_occupied[pos])
-      {
-        new(m_memory + pos) T (t);
-        m_occupied[pos] = true;
-        inserted = true;
-        ++m_elements;
-
-        if (pos < m_first)
-        {
-          m_first = pos;
-        }
-      }
-
-      return std::make_pair(HashSetIterator<T, Hash, Equality>(this, pos), inserted);
+    std::pair<const_iterator, bool>
+    insert(T&& t)
+    {
+      return insert_internal(std::move(t));
     }
 
     size_t
@@ -273,6 +256,35 @@ namespace earley
 
     private:
 
+    template <typename Value>
+    std::pair<const_iterator, bool>
+    insert_internal(Value&& t)
+    {
+      bool inserted = false;
+
+      if (m_elements/3 >= m_size/4)
+      {
+        resize();
+      }
+
+      auto pos = find_position(t);
+
+      if (!m_occupied[pos])
+      {
+        new(m_memory + pos) T (std::forward<Value>(t));
+        m_occupied[pos] = true;
+        inserted = true;
+        ++m_elements;
+
+        if (pos < m_first)
+        {
+          m_first = pos;
+        }
+      }
+
+      return std::make_pair(HashSetIterator<T, Hash, Equality>(this, pos), inserted);
+    }
+
     void
     resize()
     {
@@ -282,7 +294,7 @@ namespace earley
       {
         if (m_occupied[i])
         {
-          moved.insert(m_memory[i]);
+          moved.insert(std::move(m_memory[i]));
         }
       }
 
