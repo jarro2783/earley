@@ -28,6 +28,18 @@ struct CountedOp
 template <typename T>
 int CountedOp<T>::m_counter = 0;
 
+TEST_CASE("Next prime", "[prime]")
+{
+  using earley::detail::next_prime;
+
+  // The algorithm doesn't work for 1, but I'm not too fussed
+  CHECK(next_prime(1) == 3);
+  CHECK(next_prime(2) == 5);
+  CHECK(next_prime(3) == 5);
+  CHECK(next_prime(5) == 7);
+  CHECK(next_prime(101) == 103);
+}
+
 TEST_CASE("Insert", "[insert]")
 {
   earley::HashSet<int> h;

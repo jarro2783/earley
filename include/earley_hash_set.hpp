@@ -109,7 +109,7 @@ namespace earley
     mutable size_t collisions = 0;
 
     HashSet()
-    : HashSet(101)
+    : HashSet(0)
     {
     }
 
@@ -118,8 +118,13 @@ namespace earley
     , m_size(detail::next_prime(size))
     , m_first(m_size)
     , m_occupied(m_size, false)
+    , m_memory(nullptr)
     {
-      m_memory = static_cast<T*>(malloc(m_size * sizeof(T)));
+      if (m_size > 0)
+      {
+        m_occupied.insert(m_occupied.end(), m_size, false);
+        m_memory = static_cast<T*>(malloc(m_size * sizeof(T)));
+      }
     }
 
     HashSet(const HashSet&) = delete;
