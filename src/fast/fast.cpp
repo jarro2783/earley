@@ -10,6 +10,25 @@ namespace earley::fast
 
 namespace
 {
+  template <typename T>
+  void
+  insert_unique(std::vector<T>& c, const T& v)
+  {
+    auto iter = std::find(c.begin(), c.end(), v);
+
+    if (iter == c.end())
+    {
+      c.push_back(v);
+    }
+  }
+
+  template <typename T>
+  auto
+  insert_unique(HashSet<T>& c, const T& v)
+  {
+    return c.insert(v);
+  }
+
   bool
   compare_lookahead_sets(std::vector<std::shared_ptr<ItemSet>>& item_sets,
     ItemSet* a, int place, int position)
@@ -337,8 +356,11 @@ Parser::create_new_set(size_t position, const TerminalList& input)
         next,
         previous_set->actual_distance(transition) + 1);
 
-      auto pointers = m_item_tree.insert({next});
-      pointers.first->predecessor.insert(item);
+      auto pointers = m_item_tree.insert({next,
+        current_set.get(),
+        previous_set->actual_distance(transition) + 1,
+      });
+      insert_unique(pointers.first->predecessor, item);
     }
 
     // now do all the completed items
@@ -398,9 +420,10 @@ Parser::create_new_set(size_t position, const TerminalList& input)
           current_set->add_start_item(next, 
             from_set->actual_distance(transition) + distance);
 
-          auto pointers = m_item_tree.insert({next});
-          pointers.first->reduction.insert(item);
-          pointers.first->predecessor.insert(item);
+          auto pointers = m_item_tree.insert({next, current_set.get(),
+            from_set->actual_distance(transition) + distance});
+          insert_unique(pointers.first->reduction, item);
+          insert_unique(pointers.first->predecessor, item);
         }
       }
     }

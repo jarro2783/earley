@@ -350,15 +350,26 @@ namespace earley
 
     struct ItemTreePointers
     {
-      ItemTreePointers(const Item* _source)
+      ItemTreePointers(
+        const Item* _source,
+        const ItemSet* _from,
+        size_t _label
+      )
       : source(_source)
+      , from(_from)
+      , label(_label)
       {
       }
 
       const Item* source;
+      const ItemSet* from;
+      size_t label;
 
-      std::unordered_set<const Item*> reduction;
-      std::unordered_set<const Item*> predecessor;
+      template <typename T>
+      using Container = std::vector<T>;
+
+      Container<const Item*> reduction;
+      Container<const Item*> predecessor;
     };
 
     class Parser
