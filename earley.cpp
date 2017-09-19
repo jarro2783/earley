@@ -445,7 +445,7 @@ complete(
   TreePointers& pointers,
   const Item& item,
   std::vector<ItemSet>& item_sets,
-  TransitiveItemSetList& transitive_items,
+  TransitiveItemSetList&, // transitive_items,
   size_t which
 )
 {
@@ -454,8 +454,9 @@ complete(
   // we need to advance anything with our non-terminal to the right
   // of the current from where it was predicted into our current set
   auto ours = item.nonterminal();
-  const TransitiveItem* ti = nullptr;
 
+  //const TransitiveItem* ti = nullptr;
+  //
   //if ((ti = find_transitive_item(transitive_items[item.where()], ours)) != nullptr)
   //{
   //  transitive_items[which].insert(*ti);
@@ -610,6 +611,32 @@ process_input(
       }
 
       std::cout << std::endl;
+
+      // print the actual input
+      size_t start = i;
+      while (start != 0 && input[start] != '\n')
+      {
+        --start;
+      }
+
+      if (input[start] == '\n')
+      {
+        ++start;
+      }
+
+      for (auto pos = start; pos != input.size() && input[pos] != '\n'; ++pos)
+      {
+        std::cout << input[pos];
+      }
+
+      std::cout << std::endl;
+
+      for (auto pos = start + 1; pos != i; ++pos)
+      {
+        std::cout << ' ';
+      }
+
+      std::cout << '^' << std::endl;
 
       break;
     }
