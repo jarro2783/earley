@@ -218,9 +218,8 @@ parse(const earley::Grammar& grammar, const std::string& start,
 
 }
 
-void
-parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
-  const std::string& text)
+std::tuple<earley::Grammar, std::string>
+parse_grammar(const std::string& text)
 {
   Grammar ebnf = {
     {"Grammar", {
@@ -362,17 +361,8 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
 
   auto [ebnf_rules, ebnf_ids] = generate_rules(ebnf);
 
-  if (debug)
-  {
-    std::cout << "Generated grammar rules:" << std::endl;
-    for (auto& id : ebnf_ids)
-    {
-      std::cout << id.first << " = " << id.second << std::endl;
-    }
-  }
-
   auto [ebnf_parsed, ebnf_time, ebnf_items, ebnf_pointers] =
-    process_input(debug, ebnf_ids["Grammar"], input, ebnf_rules, ebnf_ids);
+    process_input(false, ebnf_ids["Grammar"], text, ebnf_rules, ebnf_ids);
   (void)ebnf_items;
   (void)ebnf_pointers;
 
@@ -383,11 +373,6 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
   }
   else
   {
-    if (timing)
-    {
-      std::cout << "ebnf: " << ebnf_time << std::endl;
-    }
-
     std::unordered_map<std::string, ast::GrammarNode(*)(
       std::vector<ast::GrammarNode>&
     )> actions;
@@ -404,61 +389,68 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
     add_action("create_nonterminal", actions, &ast::action_create_nonterminal);
 
     auto value = earley::run_actions(
-        ebnf_pointers, ebnf_ids["Grammar"], input, actions, ebnf_items, ebnf_ids);
+        ebnf_pointers, ebnf_ids["Grammar"], text, actions, ebnf_items, ebnf_ids);
 
     print_grammar(value);
-    auto [built, start] = compile_grammar(value);
+    return compile_grammar(value);
+  }
+}
 
-    if (text.size())
+void
+parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
+  const std::string& text)
+{
+  auto [built, start] = parse_grammar(input);
+
+  if (text.size())
+  {
+    if (debug)
     {
+      std::cout << "Parsing:" << std::endl;
+      std::cout << text << std::endl;
+    }
+
+    if (slow)
+    {
+      earley::ast::parse(built, start, text, debug, timing);
+    }
+
+    //test the fast parser
+    auto [rules, ids] = generate_rules(built);
+    ParseGrammar parse_grammar(ids[start], rules);
+    earley::fast::grammar::Grammar grammar_new(start, built);
+
+    std::chrono::time_point<std::chrono::system_clock> start_time, end;
+    start_time = std::chrono::system_clock::now();
+
+    fast::Parser parser(grammar_new);
+
+    if (debug)
+    {
+      std::cout << "-- Set 0 --" << std::endl;
+      parser.print_set(0);
+    }
+
+    for (size_t i = 0; i < text.size(); ++i)
+    {
+      parser.parse(fast::TerminalList(text.begin(), text.end()), i);
+
       if (debug)
       {
-        std::cout << "Parsing:" << std::endl;
-        std::cout << text << std::endl;
+        std::cout << "-- Set " << i+1 << " --" << std::endl;
+        parser.print_set(i+1);
       }
+    }
 
-      if (slow)
-      {
-        parse(built, start, text, debug, timing);
-      }
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start_time;
 
-      //test the fast parser
-      auto [rules, ids] = generate_rules(built);
-      ParseGrammar parse_grammar(ids[start], rules);
-      earley::fast::grammar::Grammar grammar_new(start, built);
-
-      std::chrono::time_point<std::chrono::system_clock> start_time, end;
-      start_time = std::chrono::system_clock::now();
-
-      fast::Parser parser(grammar_new);
-
-      if (debug)
-      {
-        std::cout << "-- Set 0 --" << std::endl;
-        parser.print_set(0);
-      }
-
-      for (size_t i = 0; i < text.size(); ++i)
-      {
-        parser.parse(fast::TerminalList(text.begin(), text.end()), i);
-
-        if (debug)
-        {
-          std::cout << "-- Set " << i+1 << " --" << std::endl;
-          parser.print_set(i+1);
-        }
-      }
-
-      end = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsed_seconds = end-start_time;
-
-      if (timing)
-      {
-        std::cout << "Fast parser took "
-          << std::chrono::duration_cast<std::chrono::microseconds>(
-            elapsed_seconds).count()
-          << " microseconds" << std::endl;
-      }
+    if (timing)
+    {
+      std::cout << "Fast parser took "
+        << std::chrono::duration_cast<std::chrono::microseconds>(
+          elapsed_seconds).count()
+        << " microseconds" << std::endl;
     }
   }
 }
