@@ -388,6 +388,10 @@ namespace earley
   void
   parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
     const std::string& text = std::string());
+
+  std::tuple<earley::Grammar, std::string>
+  parse_grammar(const std::string& text);
+
 }
 
 #endif

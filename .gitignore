@@ -6,3 +6,4 @@ lexer
 *.o.d
 !include/earley/
 __pycache__/
+yc

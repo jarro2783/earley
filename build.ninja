@@ -61,4 +61,12 @@ build calculator: cxx_link .build/examples/calculator.o $
   earley.o grammar.o .build/fast/fast.o .build/fast/grammar.o $
   .build/fast/items.o .build/grammar_util.o
 
-default earley test/fast test/grammar test/hash lexer calculator
+# c grammar
+build .build/examples/c.o: cxx examples/c.cpp
+  CFLAGS=-I../lexertl14
+
+build yc: cxx_link .build/examples/c.o $
+  earley.o grammar.o .build/fast/fast.o .build/fast/grammar.o $
+  .build/fast/items.o .build/grammar_util.o
+
+default earley test/fast test/grammar test/hash lexer calculator yc
