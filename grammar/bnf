@@ -1,47 +1,85 @@
-// Some ideas, not quite a valid grammar
+Grammar ->
+  | Nonterminal
+  | Grammar HardSpace Nonterminal
 
-GRAMMAR ->
-  | GRAMMAR NONTERMINAL
-Name -> Space NameStart NameRest
-NameStart -> [a-zA-Z]
-NameRest ->
-  | NameRest NameStart
-  | NameRest [0-9]
-NONTERMINAL -> Name "->" Rules
-Rules ->
-    Rule # pass 0
-  | '|'
-  | Rules Space '|' Rule # rl 0 3
-Rule -> Productions Action # rule 0 1
-Action ->
-  | Space '#' Space Name NumberList # action 3 4
-NumberList -> Number # pass 0
-  | NumberList Number # nl 0 1
-Number -> Space NumberRest # number 1
-NumberRest -> [0-9] # digit 0
-  | NumberRest [0-9] # number 1 2
-Productions ->
-  | Productions Production # pl 0 1
-PRODUCTION -> | NAME | Space LITERAL
-LITERAL ->
-    "'" CHAR "'"
-  | '[' RANGES ']'
-  | '"' CHARS '"'
-RANGES ->
-    RANGE
-  | RANGE RANGES
-RANGE -> CHAR '-' CHAR
-CHAR -> [0-9a-zA-Z] | '\' | '/' | '(' | ')'
-CHARS -> CHAR | CHARS CHAR
-Space -> | SpaceRest
-SpaceRest -> 
-    SpaceRest ' '
-  | SpaceRest '\n'
-  | SpaceRest '\t'
+HardSpace : SpaceRest
 
-A -> A '|' B
-A -> B
-A -> '|' B
-A -> '|'
+Space :
+      | SpaceRest
 
-if B is optional
+SpaceRest
+  : SpaceChar
+  | SpaceRest SpaceChar
+
+SpaceChar
+  : ' '
+  | '\n'
+  | '\t'
+
+Nonterminal -> Name Space RuleSeparator Rules OptSemi
+
+RuleSeparator : '-' '>' | ':'
+
+OptSemi :
+        | ';'
+
+Rules : Rule
+      | Rules Space '|' Rule
+
+Rule
+  :
+  | Productions
+  | Productions Action
+
+Productions
+  : Production
+  | Productions HardSpace Production
+
+Action -> Space '#' Name HardSpace Numbers
+
+Literal
+  : "'" Char "'"
+  | '[' Range ']'
+  | '"' Chars '"'
+
+Name -> Space NameStart | Space NameStart NameRest
+
+NameStart
+  : '_'
+  | [a-z]
+  | [A-Z]
+
+NameRest
+  : NameChar
+  | NameRest NameChar
+
+NameChar
+  : NameStart
+  | [0-9]
+
+Ranges ->
+    Range
+  | Ranges Range
+
+Range : [a-z] '-' [a-z]
+      | [A-Z] '-' [A-Z]
+      | [0-9] '-' [0-9]
+
+Chars -> Char | Chars Char
+
+Char
+  : [a-z]
+  | [A-Z]
+  | [0-9]
+  | '\' 't'
+  | '\' 'n'
+  | ' '
+  | '['
+  | ']'
+  | '"'
+
+Numbers -> Space Number | Numbers HardSpace Number
+
+Number -> Digit | Number Digit
+
+Digit -> [0-9]
