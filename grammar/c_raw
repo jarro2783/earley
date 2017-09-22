@@ -521,4 +521,3 @@ declaration_list : declaration
 
 enumeration_constant : identifier
                      ;
-
