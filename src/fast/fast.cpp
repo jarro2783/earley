@@ -431,6 +431,8 @@ Parser::create_new_set(size_t position, const TerminalList& input)
   else
   {
     std::cerr << "Couldn't find token " << symbol << " in set " << position << std::endl;
+    parse_error(position);
+    throw "Parse error";
   }
 
   core.release();
@@ -463,8 +465,51 @@ ItemSet::print(const std::unordered_map<size_t, std::string>& names) const
   for (; i != m_core->all_items(); ++i)
   {
     m_core->item(i)->print(std::cout, names);
+
+    if (i < m_core->all_distances())
+    {
+      std::cout << ": " << m_core->parent_distance(i);
+    }
+
     std::cout << std::endl;
   }
+}
+
+void
+Parser::parse_error(size_t i)
+{
+  //failed here
+  std::cout << "Parse error at " << i << ", expecting: ";
+
+  auto& names = m_grammar_new.names();
+  std::unordered_map<size_t, std::string> item_names(names.begin(), names.end());
+
+  //look for all the scans and print out what we were expecting
+  auto set = m_itemSets[i];
+  auto core = set->core();
+  for (auto item: core->items())
+  {
+    auto symbol = item->position();
+    if (symbol != item->end() && symbol->terminal)
+    {
+      auto token = symbol->index;
+
+      if (token <= 127 && token >= ' ')
+      {
+        std::cout << "'" << static_cast<char>(token) << "'";
+      }
+      else
+      {
+        std::cout << token;
+      }
+      std::cout << ", ";
+    }
+
+    item->print(std::cout, item_names);
+    std::cout << std::endl;
+  }
+
+  std::cout << std::endl;
 }
 
 }

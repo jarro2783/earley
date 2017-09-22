@@ -219,12 +219,15 @@ parse(const earley::Grammar& grammar, const std::string& start,
 }
 
 std::tuple<earley::Grammar, std::string>
-parse_grammar(const std::string& text)
+parse_grammar(const std::string& text, bool debug)
 {
   Grammar ebnf = {
     {"Grammar", {
+      {{"Nonterminals", "Space"}, {"pass", {0}}},
+    }},
+    {"Nonterminals", {
       {{"Nonterminal"}, {"create_list", {0}}},
-      {{"Grammar", "HardSpace", "Nonterminal"}, {"append_list", {0, 2}}},
+      {{"Nonterminals", "HardSpace", "Nonterminal"}, {"append_list", {0, 2}}},
     }},
     {"Space", {
       {{}},
@@ -362,9 +365,10 @@ parse_grammar(const std::string& text)
   auto [ebnf_rules, ebnf_ids] = generate_rules(ebnf);
 
   auto [ebnf_parsed, ebnf_time, ebnf_items, ebnf_pointers] =
-    process_input(false, ebnf_ids["Grammar"], text, ebnf_rules, ebnf_ids);
+    process_input(debug, ebnf_ids["Grammar"], text, ebnf_rules, ebnf_ids);
   (void)ebnf_items;
   (void)ebnf_pointers;
+  (void)ebnf_time;
 
   if (!ebnf_parsed)
   {
@@ -400,7 +404,7 @@ void
 parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
   const std::string& text)
 {
-  auto [built, start] = parse_grammar(input);
+  auto [built, start] = parse_grammar(input, debug);
 
   if (text.size())
   {

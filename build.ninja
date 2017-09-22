@@ -34,7 +34,7 @@ build test/hash: cxx_link test/.build/main.o test/.build/hash.o
 build test/grammar: cxx_link test/.build/main.o test/.build/grammar_util.o $
   .build/grammar_util.o
 build test/fast: cxx_link test/.build/main.o test/.build/fast.o $
-  .build/fast/grammar.o .build/fast/items.o
+  .build/fast/grammar.o .build/fast/items.o .build/fast/fast.o
 
 build test_fast: TEST_COMMAND test/fast
   COMMAND = test/fast

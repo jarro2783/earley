@@ -449,6 +449,9 @@ namespace earley
         return !symbol.terminal && m_grammar_new.nullable(symbol.index);
       }
 
+      void
+      parse_error(size_t);
+
       grammar::Grammar m_grammar_new;
 
       std::vector<std::shared_ptr<ItemSet>> m_itemSets;

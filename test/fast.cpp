@@ -1,4 +1,5 @@
 #include "catch.hpp"
+#include "earley/fast.hpp"
 #include "earley/fast/grammar.hpp"
 #include "earley/fast/items.hpp"
 
@@ -345,4 +346,35 @@ TEST_CASE("Sequence lookahead", "[lookahead]")
   CHECK(lookahead.size() == 2);
   CHECK(lookahead.count('a') != 0);
   CHECK(lookahead.count('b') != 0);
+}
+
+TEST_CASE("ItemSet distances", "[itemset]")
+{
+  using earley::fast::ItemSetCore;
+  using earley::fast::ItemSet;
+
+  std::vector<RuleList> rules
+  {
+    {
+      {0, {{}}},
+      {0, {{1, false}}},
+    },
+    {
+      {1, {{'a', true}, {'b', true}}},
+    },
+  };
+
+  Rule& r1 = rules[1][0];
+
+  Item first(&r1, r1.begin(), earley::HashSet<int>());
+  Item second(&r1, r1.begin()+1, earley::HashSet<int>());
+
+  ItemSetCore core;
+  ItemSet set(&core);
+
+  set.add_start_item(&first, 2);
+  set.add_derived_item(&second, 0);
+
+  CHECK(set.actual_distance(0) == 2);
+  CHECK(set.actual_distance(1) == 2);
 }

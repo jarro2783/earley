@@ -390,7 +390,7 @@ namespace earley
     const std::string& text = std::string());
 
   std::tuple<earley::Grammar, std::string>
-  parse_grammar(const std::string& text);
+  parse_grammar(const std::string& text, bool debug=false);
 
 }
 
