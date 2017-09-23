@@ -147,7 +147,7 @@ TEST_CASE("Items generation", "[items]")
   auto firsts = first_sets(rules);
   auto follows = follow_sets(0, rules, firsts);
 
-  Items items(rules, firsts, follows);
+  Items items(rules, firsts, follows, {false});
 
   const Rule* r00 = &rules[0][0];
   const Rule* r01 = &rules[0][1];
@@ -337,7 +337,7 @@ TEST_CASE("Sequence lookahead", "[lookahead]")
   auto firsts = first_sets(rules);
   auto follows = follow_sets(0, rules, firsts);
 
-  Items items(rules, firsts, follows);
+  Items items(rules, firsts, follows, {false, false});
 
   auto& r00 = rules[0][0];
 

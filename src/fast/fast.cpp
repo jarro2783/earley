@@ -70,7 +70,8 @@ Parser::Parser(const grammar::Grammar& grammar_new)
 , m_set_symbols(20000)
 , m_all_items(m_grammar_new.all_rules(),
     m_grammar_new.first_sets(),
-    m_grammar_new.follow_sets())
+    m_grammar_new.follow_sets(),
+    m_grammar_new.nullable_set())
 {
   create_start_set();
 }
@@ -369,7 +370,7 @@ Parser::create_new_set(size_t position, const TerminalList& input)
       auto item = core->item(i);
       auto& rule = item->rule();
       // TODO: change this to empty tail
-      if (item->dot() == rule.end())
+      if (item->empty_rhs())
       {
         auto distance = current_set->distance(i);
         auto from = position - distance + 1;

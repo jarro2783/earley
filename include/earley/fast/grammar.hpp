@@ -153,6 +153,12 @@ namespace earley::fast::grammar
       return m_names;
     }
 
+    const std::vector<bool>&
+    nullable_set() const
+    {
+      return m_nullable;
+    }
+
     private:
     void
     insert_nonterminal(

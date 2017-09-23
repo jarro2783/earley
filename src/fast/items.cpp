@@ -3,6 +3,36 @@
 namespace earley::fast
 {
 
+namespace
+{
+
+template <typename Iterator>
+bool
+empty_sequence(const std::vector<bool>& nullable,
+  Iterator begin,
+  Iterator end
+)
+{
+  Iterator current = begin;
+  while (current != end)
+  {
+    if (current->terminal)
+    {
+      return false;
+    }
+
+    if (!nullable[current->index])
+    {
+      return false;
+    }
+    ++current;
+
+    return true;
+  }
+}
+
+}
+
 // TODO: move this to utils and test it
 template <typename T>
 void
@@ -16,9 +46,11 @@ ensure_size(T& t, size_t size)
 
 Items::Items(const std::vector<grammar::RuleList>& nonterminals,
   const grammar::FirstSets& firsts,
-  const grammar::FollowSets& follows)
+  const grammar::FollowSets& follows,
+  const std::vector<bool>& nullable)
 : m_firsts(firsts)
 , m_follows(follows)
+, m_nullable(nullable)
 {
   for (auto& rules: nonterminals)
   {
@@ -54,7 +86,8 @@ Items::get_item(const grammar::Rule* rule, int position)
   {
     auto lookahead = sequence_lookahead(*rule, rule->begin() + position,
       m_firsts, m_follows);
-    ptr = std::make_shared<Item>(rule, rule->begin()+position, std::move(lookahead));
+    ptr = std::make_shared<Item>(rule, rule->begin()+position, std::move(lookahead),
+      empty_sequence(m_nullable, rule->begin()+position, rule->end()));
   }
 
   return ptr.get();
