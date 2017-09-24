@@ -23,17 +23,33 @@ namespace
     ELSE,
     ENUM,
     EXTERN,
+    FLOAT,
     FOR,
+    IF,
+    INT, // 270
+    LONG,
+    RESTRICT,
+    RETURN,
     SHORT,
+    SIGNED,
+    SIZEOF,
+    STRUCT,
     TYPEDEF,
-    VOID, // 270
+    UNION,
+    UNSIGNED, // 280
+    VOID,
+    VOLATILE,
     WHILE,
+
+    _BOOL,
+    _COMPLEX,
+    _IMAGINARY,
 
     // Symbols
     EQ_OP,
     RIGHT_OP,
     LEFT_OP,
-    INC_OP,
+    INC_OP, // 290
     DEC_OP,
     PTR_OP,
 
@@ -45,6 +61,9 @@ namespace
 
   earley::fast::grammar::TerminalIndices terminals
   {
+    {"_BOOL", Token::_BOOL},
+    {"_COMPLEX", Token::_COMPLEX},
+    {"_IMAGINARY", Token::_IMAGINARY},
     {"AUTO", Token::AUTO},
     {"BREAK", Token::BREAK},
     {"CASE", Token::CASE},
@@ -52,11 +71,31 @@ namespace
     {"CONST", Token::CONST},
     {"CONSTANT", Token::CONSTANT},
     {"CONTINUE", Token::CONTINUE},
+    {"DEC_OP", Token::DEC_OP},
     {"DEFAULT", Token::DEFAULT},
+    {"DOUBLE", Token::DOUBLE},
+    {"ENUM", Token::ENUM},
+    {"EXTERN", Token::EXTERN},
+    {"FLOAT", Token::FLOAT},
     {"IDENTIFIER", Token::IDENTIFIER},
+    {"IF", Token::IF},
+    {"INC_OP", Token::INC_OP},
+    {"INT", Token::INT},
+    {"LEFT_OP", Token::LEFT_OP},
+    {"LONG", Token::LONG},
+    {"PTR_OP", Token::PTR_OP},
+    {"RESTRICT", Token::RESTRICT},
+    {"RETURN", Token::RETURN},
+    {"RIGHT_OP", Token::RIGHT_OP},
     {"SHORT", Token::SHORT},
+    {"SIGNED", Token::SIGNED},
+    {"SIZEOF", Token::SIZEOF},
+    {"STRUCT", Token::STRUCT},
     {"TYPEDEF", Token::TYPEDEF},
+    {"UNION", Token::UNION},
+    {"UNSIGNED", Token::UNSIGNED},
     {"VOID", Token::VOID},
+    {"VOLATILE", Token::VOLATILE},
     {"WHILE", Token::WHILE},
 
     {"EQ_OP", Token::EQ_OP},
@@ -73,6 +112,9 @@ get_tokens(const char* file)
   lexertl::state_machine sm;
 
   std::initializer_list<std::pair<const char*, Token>> symbols = {
+    {"_Bool", Token::_BOOL},
+    {"_Complex", Token::_COMPLEX},
+    {"_Imaginary", Token::_IMAGINARY},
     {"auto", Token::AUTO},
     {"break", Token::BREAK},
     {"case", Token::CASE},
@@ -85,9 +127,21 @@ get_tokens(const char* file)
     {"else", Token::ELSE},
     {"enum", Token::ENUM},
     {"extern", Token::EXTERN},
+    {"float", Token::FLOAT},
     {"for", Token::FOR},
+    {"if", Token::IF},
+    {"int", Token::INT},
+    {"long", Token::LONG},
+    {"restrict", Token::RESTRICT},
+    {"return", Token::RETURN},
+    {"signed", Token::SIGNED},
+    {"sizeof", Token::SIZEOF},
+    {"struct", Token::STRUCT},
+    {"union", Token::UNION},
+    {"unsigned", Token::UNSIGNED},
     {"typedef", Token::TYPEDEF},
     {"void", Token::VOID},
+    {"volatile", Token::VOLATILE},
 
     // symbols
     {"<<", Token::LEFT_OP},
@@ -158,7 +212,7 @@ get_tokens(const char* file)
 
   // integers
   rules.push("{NZ}{D}*", Token::CONSTANT);
-  rules.push("{HP}{H}+", Token::CONSTANT);
+  rules.push("{HP}{H}+{IS}?", Token::CONSTANT);
   rules.push("0{O}*{IS}?", Token::CONSTANT);
 
   // character
@@ -212,6 +266,15 @@ get_tokens(const char* file)
     }
     else
     {
+#if 0
+      std::cerr << tokens.size() << ": ";
+      for (auto c = results.first; c != results.second; ++c)
+      {
+        std::cerr << *c;
+      }
+      std::cerr << std::endl;
+#endif
+
       tokens.push_back(results.id);
     }
 
@@ -251,6 +314,7 @@ parse_c(const char* file)
     for (size_t j = 0; j <= i; ++j)
     {
       std::cout << "-- Set " << j << " --" << std::endl;
+      std::cout << "Symbol: " << tokens[j] << std::endl;
       parser.print_set(j);
     }
     throw;
