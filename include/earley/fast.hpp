@@ -112,7 +112,7 @@ namespace earley
       }
 
       const PItem*
-      item(size_t i)
+      item(size_t i) const
       {
         return m_items[i];
       }

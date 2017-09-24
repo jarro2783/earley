@@ -47,6 +47,25 @@ namespace
 
     return true;
   }
+
+  bool
+  item_in_set(std::shared_ptr<const ItemSet> set, const Item* item, int distance)
+  {
+    // TODO: make this a bit more efficient
+    auto core = set->core();
+    size_t i = 0;
+
+    while (i < core->start_items())
+    {
+      if (core->item(i) == item && set->distance(i) == distance)
+      {
+        return true;
+      }
+      ++i;
+    }
+
+    return false;
+  }
 }
 
 grammar::Symbol
@@ -369,7 +388,7 @@ Parser::create_new_set(size_t position, const TerminalList& input)
     {
       auto item = core->item(i);
       auto& rule = item->rule();
-      // TODO: change this to empty tail
+
       if (item->empty_rhs())
       {
         auto distance = current_set->distance(i);
@@ -418,8 +437,12 @@ Parser::create_new_set(size_t position, const TerminalList& input)
           {
             continue;
           }
-          current_set->add_start_item(next, 
-            from_set->actual_distance(transition) + distance);
+
+          auto transition_distance = from_set->actual_distance(transition) + distance;
+          if (!item_in_set(current_set, next, transition_distance))
+          {
+            current_set->add_start_item(next, transition_distance);
+          }
 
           auto pointers = m_item_tree.insert({next, current_set.get(),
             from_set->actual_distance(transition) + distance});
