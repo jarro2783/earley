@@ -236,16 +236,17 @@ namespace earley
     const_iterator
     find(const T& t) const
     {
-      auto pos = find_position(t);
+      if (m_size > 0)
+      {
+        auto pos = find_position(t);
 
-      if (m_occupied[pos])
-      {
-        return HashSetIterator<T, Hash, Equality>(this, pos);
+        if (m_occupied[pos])
+        {
+          return HashSetIterator<T, Hash, Equality>(this, pos);
+        }
       }
-      else
-      {
-        return HashSetIterator<T, Hash, Equality>(this, m_size);
-      }
+
+      return HashSetIterator<T, Hash, Equality>(this, m_size);
     }
 
     int
