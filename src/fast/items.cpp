@@ -26,9 +26,8 @@ empty_sequence(const std::vector<bool>& nullable,
       return false;
     }
     ++current;
-
-    return true;
   }
+  return true;
 }
 
 }
