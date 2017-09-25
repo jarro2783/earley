@@ -444,7 +444,7 @@ parse_c(const char* file, bool dump)
     throw Terminate();
   }
 
-  std::cout << "Parsing input" << std::endl;
+  std::cout << "Parsing " << symbols.size() << " tokens" << std::endl;
   earley::fast::Parser parser(built, symbols);
 
   size_t i;

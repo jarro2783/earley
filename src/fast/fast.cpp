@@ -87,12 +87,15 @@ ItemSet::add_start_item(const PItem* item, size_t distance)
 Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
 : m_grammar_new(grammar_new)
 , m_tokens(tokens)
+, m_item_set_hash(tokens.size() < 20000 ? 20000 : tokens.size() / 20)
 , m_set_symbols(tokens.size() < 20000 ? 20000 : tokens.size())
+, m_set_term_lookahead(tokens.size() < 30000 ? 30000 : tokens.size())
 , m_all_items(m_grammar_new.all_rules(),
     m_grammar_new.first_sets(),
     m_grammar_new.follow_sets(),
     m_grammar_new.nullable_set())
 {
+  m_itemSets.reserve(tokens.size());
   create_start_set();
 }
 
