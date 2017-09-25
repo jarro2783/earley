@@ -445,7 +445,7 @@ parse_c(const char* file, bool dump)
   }
 
   std::cout << "Parsing input" << std::endl;
-  earley::fast::Parser parser(built);
+  earley::fast::Parser parser(built, symbols);
 
   size_t i;
   size_t progress = symbols.size() / 100;
@@ -459,7 +459,7 @@ parse_c(const char* file, bool dump)
       {
         std::cout << '.' << std::flush;
       }
-      parser.parse(symbols, i);
+      parser.parse(i);
     }
     auto memend = sbrk(0);
 

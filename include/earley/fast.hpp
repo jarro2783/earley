@@ -379,13 +379,13 @@ namespace earley
       typedef HashSet<SetTermLookahead> SetTermLookaheadHash;
       typedef HashSet<ItemTreePointers> ItemTreeHash;
 
-      Parser(const grammar::Grammar&);
+      Parser(const grammar::Grammar&, const TerminalList&);
 
       void
-      parse_input(const TerminalList& input);
+      parse_input();
 
       void
-      parse(const TerminalList& input, size_t position);
+      parse(size_t position);
 
       void
       print_set(size_t i);
@@ -453,6 +453,7 @@ namespace earley
       parse_error(size_t);
 
       grammar::Grammar m_grammar_new;
+      const TerminalList& m_tokens;
 
       std::vector<std::shared_ptr<ItemSet>> m_itemSets;
       HashSet<ItemSetOwner> m_item_set_hash;

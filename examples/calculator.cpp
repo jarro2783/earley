@@ -124,9 +124,9 @@ run_calculator(char* file)
   std::chrono::time_point<std::chrono::system_clock> start_time, end;
   start_time = std::chrono::system_clock::now();
 
-  earley::fast::Parser parser(built);
+  earley::fast::Parser parser(built, terminals);
 
-  parser.parse_input(terminals);
+  parser.parse_input();
 
   end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end-start_time;

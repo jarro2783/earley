@@ -430,7 +430,8 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
     std::chrono::time_point<std::chrono::system_clock> start_time, end;
     start_time = std::chrono::system_clock::now();
 
-    fast::Parser parser(grammar_new);
+    fast::TerminalList tokens(text.begin(), text.end());
+    fast::Parser parser(grammar_new, tokens);
 
     if (debug)
     {
@@ -440,7 +441,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
 
     for (size_t i = 0; i < text.size(); ++i)
     {
-      parser.parse(fast::TerminalList(text.begin(), text.end()), i);
+      parser.parse(i);
 
       if (debug)
       {

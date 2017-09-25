@@ -84,9 +84,10 @@ ItemSet::add_start_item(const PItem* item, size_t distance)
   m_distances.push_back(distance);
 }
 
-Parser::Parser(const grammar::Grammar& grammar_new)
+Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
 : m_grammar_new(grammar_new)
-, m_set_symbols(20000)
+, m_tokens(tokens)
+, m_set_symbols(tokens.size() < 20000 ? 20000 : tokens.size())
 , m_all_items(m_grammar_new.all_rules(),
     m_grammar_new.first_sets(),
     m_grammar_new.follow_sets(),
@@ -96,25 +97,25 @@ Parser::Parser(const grammar::Grammar& grammar_new)
 }
 
 void
-Parser::parse_input(const TerminalList& input)
+Parser::parse_input()
 {
   size_t position = 0;
-  while (position < input.size())
+  while (position < m_tokens.size())
   {
-    parse(input, position);
+    parse(position);
     ++position;
   }
 
   std::cout << "reused " << m_reuse << std::endl;
-  std::cout << input.size() << " tokens" << std::endl;
+  std::cout << m_tokens.size() << " tokens" << std::endl;
 }
 
 void
-Parser::parse(const TerminalList& input, size_t position)
+Parser::parse(size_t position)
 {
-  auto token = input[position];
-  auto lookahead = position < input.size()
-    ? input[position+1]
+  auto token = m_tokens[position];
+  auto lookahead = position < m_tokens.size()
+    ? m_tokens[position+1]
     : -1;
 
   auto lookahead_hash = m_set_term_lookahead.insert(
@@ -143,7 +144,7 @@ Parser::parse(const TerminalList& input, size_t position)
     ++m_lookahead_collisions;
   }
 
-  auto set = create_new_set(position, input);
+  auto set = create_new_set(position, m_tokens);
 
   // if this is a new set, then expand it
   auto result = m_item_set_hash.insert(set);
