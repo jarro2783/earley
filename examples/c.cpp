@@ -449,6 +449,8 @@ parse_c(const char* file, bool dump)
 
   size_t i;
   size_t progress = symbols.size() / 100;
+  std::cout << "Progress dot indicates " << progress << " tokens" << std::endl;
+  auto memstart = sbrk(0);
   try {
     Timer timer;
     for (i = 0; i != symbols.size(); ++i)
@@ -459,8 +461,14 @@ parse_c(const char* file, bool dump)
       }
       parser.parse(symbols, i);
     }
+    auto memend = sbrk(0);
+
     std::cout << "Parsing took " << timer.count<std::chrono::microseconds>()
       << " microseconds" << std::endl;
+
+    std::cout << "Used " 
+      << (static_cast<char*>(memend) - static_cast<char*>(memstart)) / 1000
+      << "kb of memory" << std::endl;
   } catch(...)
   {
     if (dump)

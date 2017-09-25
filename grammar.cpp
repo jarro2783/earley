@@ -395,7 +395,10 @@ parse_grammar(const std::string& text, bool debug)
     auto value = earley::run_actions(
         ebnf_pointers, ebnf_ids["Grammar"], text, actions, ebnf_items, ebnf_ids);
 
-    print_grammar(value);
+    if (debug)
+    {
+      print_grammar(value);
+    }
     return compile_grammar(value);
   }
 }

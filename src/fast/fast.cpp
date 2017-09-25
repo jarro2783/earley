@@ -319,7 +319,6 @@ Parser::insert_transition(const SetSymbolRules& tuple)
   if (iter.second)
   {
     //insert a new set
-    iter.first->transitions.reserve(64);
     inserted = true;
   }
 
