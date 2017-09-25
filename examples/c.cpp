@@ -8,6 +8,16 @@
 
 namespace
 {
+  class Terminate {};
+
+  struct Position
+  {
+    int line;
+    int column;
+  };
+
+  std::vector<Position> positions;
+
   enum Token
   {
     // Words
@@ -25,38 +35,61 @@ namespace
     EXTERN,
     FLOAT,
     FOR,
+    GOTO, // 270
     IF,
-    INT, // 270
+    INT,
     LONG,
+    REGISTER,
     RESTRICT,
     RETURN,
     SHORT,
     SIGNED,
     SIZEOF,
+    STATIC, // 280
     STRUCT,
+    SWITCH,
     TYPEDEF,
     UNION,
-    UNSIGNED, // 280
+    UNSIGNED,
     VOID,
     VOLATILE,
     WHILE,
 
     _BOOL,
-    _COMPLEX,
+    _COMPLEX, // 290
     _IMAGINARY,
 
     // Symbols
-    EQ_OP,
-    RIGHT_OP,
-    LEFT_OP,
-    INC_OP, // 290
+    ADD_ASSIGN,
+    AND_ASSIGN,
+    AND_OP,
     DEC_OP,
-    PTR_OP,
+    DIV_ASSIGN,
+    EQ_OP,
+    ELIPSIS,
+    GE_OP,
+    INC_OP, // 300
+    INLINE,
+    LE_OP,
+    LEFT_ASSIGN,
+    LEFT_OP,
+    MOD_ASSIGN,
+    MUL_ASSIGN,
+    NE_OP,
+    OR_ASSIGN,
+    OR_OP,
+    PTR_OP, // 310
+    RIGHT_ASSIGN,
+    RIGHT_OP,
+    SUB_ASSIGN,
+    XOR_ASSIGN,
 
     // Others
     IDENTIFIER,
     CONSTANT,
     STRING_LITERAL,
+
+    SPACE,
   };
 
   earley::fast::grammar::TerminalIndices terminals
@@ -64,6 +97,8 @@ namespace
     {"_BOOL", Token::_BOOL},
     {"_COMPLEX", Token::_COMPLEX},
     {"_IMAGINARY", Token::_IMAGINARY},
+    {"ADD_ASSIGN", Token::ADD_ASSIGN},
+    {"AND_ASSIGN", Token::AND_ASSIGN},
     {"AUTO", Token::AUTO},
     {"BREAK", Token::BREAK},
     {"CASE", Token::CASE},
@@ -71,26 +106,30 @@ namespace
     {"CONST", Token::CONST},
     {"CONSTANT", Token::CONSTANT},
     {"CONTINUE", Token::CONTINUE},
-    {"DEC_OP", Token::DEC_OP},
     {"DEFAULT", Token::DEFAULT},
+    {"DO", Token::DO},
     {"DOUBLE", Token::DOUBLE},
+    {"ELIPSIS", Token::ELIPSIS},
+    {"ELSE", Token::ELSE},
     {"ENUM", Token::ENUM},
     {"EXTERN", Token::EXTERN},
     {"FLOAT", Token::FLOAT},
+    {"FOR", Token::FOR},
+    {"GOTO", Token::GOTO},
     {"IDENTIFIER", Token::IDENTIFIER},
     {"IF", Token::IF},
-    {"INC_OP", Token::INC_OP},
+    {"INLINE", Token::INLINE},
     {"INT", Token::INT},
-    {"LEFT_OP", Token::LEFT_OP},
     {"LONG", Token::LONG},
-    {"PTR_OP", Token::PTR_OP},
+    {"REGISTER", Token::REGISTER},
     {"RESTRICT", Token::RESTRICT},
     {"RETURN", Token::RETURN},
-    {"RIGHT_OP", Token::RIGHT_OP},
     {"SHORT", Token::SHORT},
     {"SIGNED", Token::SIGNED},
     {"SIZEOF", Token::SIZEOF},
+    {"STATIC", Token::STATIC},
     {"STRUCT", Token::STRUCT},
+    {"SWITCH", Token::SWITCH},
     {"TYPEDEF", Token::TYPEDEF},
     {"UNION", Token::UNION},
     {"UNSIGNED", Token::UNSIGNED},
@@ -98,8 +137,25 @@ namespace
     {"VOLATILE", Token::VOLATILE},
     {"WHILE", Token::WHILE},
 
+    {"AND_OP", Token::AND_OP},
+    {"DEC_OP", Token::DEC_OP},
+    {"DIV_ASSIGN", Token::DIV_ASSIGN},
     {"EQ_OP", Token::EQ_OP},
+    {"GE_OP", Token::GE_OP},
+    {"INC_OP", Token::INC_OP},
+    {"LE_OP", Token::LE_OP},
+    {"LEFT_ASSIGN", Token::LEFT_ASSIGN},
+    {"LEFT_OP", Token::LEFT_OP},
+    {"NE_OP", Token::NE_OP},
+    {"OR_OP", Token::OR_OP},
+    {"PTR_OP", Token::PTR_OP},
+    {"MOD_ASSIGN", Token::MOD_ASSIGN},
+    {"MUL_ASSIGN", Token::MUL_ASSIGN},
+    {"OR_ASSIGN", Token::OR_ASSIGN},
+    {"RIGHT_ASSIGN", Token::RIGHT_ASSIGN},
     {"RIGHT_OP", Token::RIGHT_OP},
+    {"SUB_ASSIGN", Token::SUB_ASSIGN},
+    {"XOR_ASSIGN", Token::XOR_ASSIGN},
 
     {"STRING_LITERAL", Token::STRING_LITERAL},
   };
@@ -130,26 +186,48 @@ get_tokens(const char* file)
     {"float", Token::FLOAT},
     {"for", Token::FOR},
     {"if", Token::IF},
+    {"goto", Token::GOTO},
+    {"inline", Token::INLINE},
     {"int", Token::INT},
     {"long", Token::LONG},
+    {"register", Token::REGISTER},
     {"restrict", Token::RESTRICT},
     {"return", Token::RETURN},
     {"signed", Token::SIGNED},
     {"sizeof", Token::SIZEOF},
+    {"static", Token::STATIC},
     {"struct", Token::STRUCT},
+    {"switch", Token::SWITCH},
     {"union", Token::UNION},
     {"unsigned", Token::UNSIGNED},
     {"typedef", Token::TYPEDEF},
     {"void", Token::VOID},
     {"volatile", Token::VOLATILE},
+    {"while", Token::WHILE},
 
     // symbols
-    {"<<", Token::LEFT_OP},
-    {">>", Token::RIGHT_OP},
-    {"==", Token::EQ_OP},
-    {"\\+\\+", Token::INC_OP},
+    {R"("+=")", Token::ADD_ASSIGN},
+    {"&=", Token::AND_ASSIGN},
+    {"&&", Token::AND_OP},
     {"--", Token::DEC_OP},
+    {R"("/=")", Token::DIV_ASSIGN},
+    {R"("...")", Token::ELIPSIS},
+    {"==", Token::EQ_OP},
+    {">=", Token::GE_OP},
+    {R"("++")", Token::INC_OP},
+    {"<=", Token::LE_OP},
+    {"<<=", Token::LEFT_ASSIGN},
+    {"<<", Token::LEFT_OP},
+    {"%=", Token::MOD_ASSIGN},
+    {R"("*=")", Token::MUL_ASSIGN},
+    {"!=", Token::NE_OP},
+    {R"("|=")", Token::OR_ASSIGN},
+    {R"("||")", Token::OR_OP},
     {"->", Token::PTR_OP},
+    {">>=", Token::RIGHT_ASSIGN},
+    {">>", Token::RIGHT_OP},
+    {"-=", Token::SUB_ASSIGN},
+    {R"("^=")", Token::XOR_ASSIGN},
   };
 
   std::vector<int> characters{
@@ -211,7 +289,7 @@ get_tokens(const char* file)
   rules.push("{L}{A}*", Token::IDENTIFIER);
 
   // integers
-  rules.push("{NZ}{D}*", Token::CONSTANT);
+  rules.push("{NZ}{D}*{IS}?", Token::CONSTANT);
   rules.push("{HP}{H}+{IS}?", Token::CONSTANT);
   rules.push("0{O}*{IS}?", Token::CONSTANT);
 
@@ -220,12 +298,12 @@ get_tokens(const char* file)
 
   // floats
   rules.push("{D}+{E}{FS}?", Token::CONSTANT);
-  rules.push("D*\\.{D}+{E}?{FS}?", Token::CONSTANT);
+  rules.push("{D}*\\.{D}+{E}?{FS}?", Token::CONSTANT);
 
   // string
   rules.push(R"**(({SP}?["]([^\\"\n\r]|{ES})*\"{WS}*)+)**", Token::STRING_LITERAL);
 
-  rules.push("{WS}", sm.skip());
+  rules.push("{WS}", Token::SPACE);
 
   lexertl::memory_file mf(file);
 
@@ -234,7 +312,10 @@ get_tokens(const char* file)
     throw std::string("Unable to open ") + file;
   }
 
+  std::cout << "Building lexer" << std::endl;
   lexertl::generator::build(rules, sm);
+
+  std::cout << "Reading tokens" << std::endl;
   lexertl::match_results<const char*> results(
     mf.data(),
     mf.data() + mf.size()
@@ -243,6 +324,9 @@ get_tokens(const char* file)
   lexertl::lookup(sm, results);
 
   std::vector<int> tokens;
+
+  int line = 1;
+  int column = 1;
 
   while (results.id != 0)
   {
@@ -275,7 +359,21 @@ get_tokens(const char* file)
       std::cerr << std::endl;
 #endif
 
-      tokens.push_back(results.id);
+      if (results.id != Token::SPACE)
+      {
+        positions.push_back({line, column});
+        tokens.push_back(results.id);
+      }
+
+      for (auto pos = results.first; pos != results.second; ++pos)
+      {
+        if (*pos == '\n')
+        {
+          ++line;
+          column = 0;
+        }
+        ++column;
+      }
     }
 
     lexertl::lookup(sm, results);
@@ -285,7 +383,7 @@ get_tokens(const char* file)
 }
 
 void
-parse_c(const char* file)
+parse_c(const char* file, bool dump)
 {
   lexertl::memory_file c_bnf("grammar/c_raw");
 
@@ -296,27 +394,56 @@ parse_c(const char* file)
 
   std::string c_definition(c_bnf.data(), c_bnf.data() + c_bnf.size());
 
+  std::cout << "Building grammar" << std::endl;
   auto [grammar, start] = earley::parse_grammar(c_definition);
+
   auto tokens = get_tokens(file);
   earley::fast::TerminalList symbols(tokens.begin(), tokens.end());
   earley::fast::grammar::Grammar built(start, grammar, terminals);
 
+  auto valid = built.validate();
+
+  if (!valid.is_valid())
+  {
+    std::cerr << "Error: grammar is not valid\n"
+      << "-- Undefined rules --\n";
+
+    for (auto& rule: valid.undefined())
+    {
+      std::cerr << rule << "\n";
+    }
+
+    std::cerr << std::endl;
+    throw Terminate();
+  }
+
+  std::cout << "Parsing input" << std::endl;
   earley::fast::Parser parser(built);
 
   size_t i;
+  size_t progress = symbols.size() / 100;
   try {
     for (i = 0; i != symbols.size(); ++i)
     {
+      if (i % progress == 0)
+      {
+        std::cout << '.' << std::flush;
+      }
       parser.parse(symbols, i);
     }
   } catch(...)
   {
-    for (size_t j = 0; j <= i; ++j)
+    if (dump)
     {
-      std::cout << "-- Set " << j << " --" << std::endl;
-      std::cout << "Symbol: " << tokens[j] << std::endl;
-      parser.print_set(j);
+      for (size_t j = 0; j <= i; ++j)
+      {
+        std::cout << "-- Set " << j << " --" << std::endl;
+        std::cout << "Symbol: " << tokens[j] << std::endl;
+        parser.print_set(j);
+      }
     }
+    auto& position = positions[i];
+    std::cout << "Error at: " << position.line << ":" << position.column << std::endl;
     throw;
   }
 }
@@ -331,7 +458,7 @@ int main(int argc, char** argv)
 
   try
   {
-    parse_c(argv[1]);
+    parse_c(argv[1], false);
   }
   catch (const char* c)
   {
@@ -341,6 +468,11 @@ int main(int argc, char** argv)
   catch (const std::string& s)
   {
     std::cerr << "Error parsing: " << s << std::endl;
+    return 1;
+  }
+  catch (const Terminate&)
+  {
+    std::cerr << "exiting" << std::endl;
     return 1;
   }
 

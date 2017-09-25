@@ -30,6 +30,38 @@ namespace earley::fast::grammar
   typedef std::unordered_map<size_t, std::unordered_set<int>> FirstSets;
   typedef std::unordered_map<size_t, std::unordered_set<int>> FollowSets;
 
+  class Validation
+  {
+    public:
+
+    Validation(
+      std::vector<std::string> undefined
+    )
+    : m_undefined(std::move(undefined))
+    {
+      m_valid = 
+        (m_undefined.size() == 0)
+      ;
+    }
+
+    bool
+    is_valid() const
+    {
+      return m_valid;
+    }
+
+    const std::vector<std::string>&
+    undefined() const
+    {
+      return m_undefined;
+    }
+
+    private:
+    bool m_valid;
+    std::vector<std::string> m_undefined;
+  };
+
+
   class Rule
   {
     public:
@@ -85,6 +117,14 @@ namespace earley::fast::grammar
 
     int
     index(const std::string& name);
+
+    const std::unordered_map<std::string, int>&
+    names() const
+    {
+      return m_names;
+    }
+
+    private:
 
     int m_next = 0;
     std::unordered_map<std::string, int> m_names;
@@ -158,6 +198,9 @@ namespace earley::fast::grammar
     {
       return m_nullable;
     }
+
+    Validation
+    validate() const;
 
     private:
     void

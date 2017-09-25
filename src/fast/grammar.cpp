@@ -295,4 +295,20 @@ sequence_lookahead(
   return result;
 }
 
+Validation
+Grammar::validate() const
+{
+  std::vector<std::string> undefined;
+
+  for (auto& [name, index] : m_nonterminal_indices.names())
+  {
+    if (m_nonterminal_rules.size() <= index || m_nonterminal_rules[index].size() == 0)
+    {
+      undefined.push_back(name);
+    }
+  }
+
+  return Validation(std::move(undefined));
+}
+
 }
