@@ -28,6 +28,17 @@ struct CountedOp
 template <typename T>
 int CountedOp<T>::m_counter = 0;
 
+struct DestructCounter
+{
+  ~DestructCounter() {
+    ++destructs;
+  }
+
+  static int destructs;
+};
+
+int DestructCounter::destructs = 0;
+
 TEST_CASE("Next prime", "[prime]")
 {
   using earley::detail::next_prime;
@@ -71,4 +82,24 @@ TEST_CASE("Custom hash and equals", "[hash]")
   h.find(5);
   CHECK(Hash::counter() == 2);
   CHECK(Equal::counter() == 1);
+}
+
+TEST_CASE("Resize", "[resize]")
+{
+  constexpr int initial = 5;
+  constexpr int inserts = 15;
+  {
+    earley::HashSet<std::unique_ptr<DestructCounter>> h(3);
+    CHECK(h.capacity() == initial);
+
+    for (size_t i = 0; i != inserts; ++i)
+    {
+      h.insert(std::make_unique<DestructCounter>());
+    }
+
+    CHECK(h.capacity() > initial);
+    CHECK(DestructCounter::destructs == 0);
+  }
+
+  CHECK(DestructCounter::destructs == inserts);
 }
