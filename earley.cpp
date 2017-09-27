@@ -543,7 +543,7 @@ process_set(
     }
   }
 
-  add_transitive_items(item_sets, transitive_items, which);
+  //add_transitive_items(item_sets, transitive_items, which);
 }
 
 std::tuple<
