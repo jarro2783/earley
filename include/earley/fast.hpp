@@ -123,7 +123,7 @@ namespace earley
         return m_hash;
       }
 
-      const std::vector<const PItem*>
+      const std::vector<const PItem*>&
       items() const
       {
         return m_items;
@@ -163,8 +163,8 @@ namespace earley
       void
       add_derived_item(const PItem* item, size_t parent)
       {
-        hash_combine(m_hash, std::hash<const PItem*>()(item));
-        hash_combine(m_hash, parent + 123456789);
+        //hash_combine(m_hash, std::hash<const PItem*>()(item));
+        //hash_combine(m_hash, parent + 123456789);
 
         m_distances.push_back(parent);
         m_core->add_derived_item(item, parent);
@@ -233,27 +233,30 @@ namespace earley
     class ItemSetOwner
     {
       public:
-      ItemSetOwner(const std::shared_ptr<ItemSet>& set)
-      : m_set(set)
+      ItemSetOwner(std::unique_ptr<ItemSet>&& set)
+      : m_set(std::move(set))
       {
       }
 
-      auto
+      ItemSetOwner(ItemSetOwner&&) = default;
+      ItemSetOwner(const ItemSetOwner&) = delete;
+
+      auto&
       get() const
       {
         return m_set;
       }
 
       private:
-      std::shared_ptr<ItemSet> m_set;
+      std::unique_ptr<ItemSet> m_set;
     };
 
     inline
     bool
     operator==(const ItemSetOwner& lhs, const ItemSetOwner& rhs)
     {
-      auto slhs = lhs.get();
-      auto srhs = rhs.get();
+      auto& slhs = lhs.get();
+      auto& srhs = rhs.get();
 
       if (slhs == srhs)
       {
@@ -280,7 +283,12 @@ namespace earley
       }
 
       // we also have to compare the distances
-      if (pl->distances() != pr->distances())
+      auto& dl = pl->distances();
+      auto& dr = pr->distances();
+
+      // they have the same number of start items here,
+      // so their distances must have at least start_items elements
+      if (std::equal(dl.begin(), dl.begin() + pl->core()->start_items(), dr.begin()))
       {
         return false;
       }
@@ -434,7 +442,7 @@ namespace earley
         return m_set_symbols.insert(item).first;
       }
 
-      std::shared_ptr<ItemSet>
+      std::unique_ptr<ItemSet>
       create_new_set(size_t position, const TerminalList& input);
 
       bool
@@ -455,7 +463,7 @@ namespace earley
       grammar::Grammar m_grammar_new;
       const TerminalList& m_tokens;
 
-      std::vector<std::shared_ptr<ItemSet>> m_itemSets;
+      std::vector<ItemSet*> m_itemSets;
       HashSet<ItemSetOwner> m_item_set_hash;
 
       // The addresses of these might change after adding another one, so only

@@ -30,7 +30,7 @@ namespace
   }
 
   bool
-  compare_lookahead_sets(std::vector<std::shared_ptr<ItemSet>>& item_sets,
+  compare_lookahead_sets(std::vector<ItemSet*>& item_sets,
     ItemSet* a, int place, int position)
   {
     //std::cout << "Looking at set " << place << ", at position " << position << std::endl;
@@ -49,7 +49,7 @@ namespace
   }
 
   bool
-  item_in_set(std::shared_ptr<const ItemSet> set, const Item* item, int distance)
+  item_in_set(const ItemSet* set, const Item* item, int distance)
   {
     // TODO: make this a bit more efficient
     auto core = set->core();
@@ -87,7 +87,7 @@ ItemSet::add_start_item(const PItem* item, size_t distance)
 Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
 : m_grammar_new(grammar_new)
 , m_tokens(tokens)
-, m_item_set_hash(tokens.size() < 20000 ? 20000 : tokens.size() / 20)
+, m_item_set_hash(tokens.size() < 20000 ? 20000 : 5)
 , m_set_symbols(tokens.size() < 20000 ? 20000 : tokens.size())
 , m_set_term_lookahead(tokens.size() < 30000 ? 30000 : tokens.size())
 , m_all_items(m_grammar_new.all_rules(),
@@ -123,7 +123,7 @@ Parser::parse(size_t position)
 
   auto lookahead_hash = m_set_term_lookahead.insert(
     SetTermLookahead(
-      m_itemSets[position].get(),
+      m_itemSets[position],
       token,
       lookahead));
 
@@ -150,11 +150,11 @@ Parser::parse(size_t position)
   auto set = create_new_set(position, m_tokens);
 
   // if this is a new set, then expand it
-  auto result = m_item_set_hash.insert(set);
+  auto result = m_item_set_hash.insert(std::move(set));
 
   if (result.second)
   {
-    expand_set(set.get());
+    expand_set(result.first->get().get());
   }
   else
   {
@@ -168,14 +168,15 @@ Parser::parse(size_t position)
     lookahead_hash.first->place = position+1;
   }
 
-  m_itemSets.push_back(result.first->get());
+  m_itemSets.push_back(result.first->get().get());
 }
 
 void
 Parser::create_start_set()
 {
   auto core = std::make_unique<ItemSetCore>();
-  auto items = std::make_shared<ItemSet>(core.get());
+  auto items = std::make_unique<ItemSet>(core.get());
+  core.release();
 
   for (auto& rule: m_grammar_new.rules(m_grammar_new.start()))
   {
@@ -185,8 +186,8 @@ Parser::create_start_set()
 
   expand_set(items.get());
 
-  core.release();
-  m_itemSets.push_back(items);
+  m_itemSets.push_back(items.get());
+  m_item_set_hash.insert(std::move(items));
 }
 
 void
@@ -346,13 +347,13 @@ Parser::add_initial_item(ItemSetCore* core, const PItem* item)
 
 // Do scans and completions to start the current set
 // find it in the hash table, then expand it if it's new
-std::shared_ptr<ItemSet>
+std::unique_ptr<ItemSet>
 Parser::create_new_set(size_t position, const TerminalList& input)
 {
   auto symbol = input[position];
   auto token = create_token(symbol);
   auto core = std::make_unique<ItemSetCore>();
-  auto current_set = std::make_shared<ItemSet>(core.get());
+  auto current_set = std::make_unique<ItemSet>(core.get());
 
   auto previous_set = m_itemSets[position];
   auto& previous_core = *previous_set->core();
@@ -442,7 +443,7 @@ Parser::create_new_set(size_t position, const TerminalList& input)
           }
 
           auto transition_distance = from_set->actual_distance(transition) + distance;
-          if (!item_in_set(current_set, next, transition_distance))
+          if (!item_in_set(current_set.get(), next, transition_distance))
           {
             current_set->add_start_item(next, transition_distance);
           }
