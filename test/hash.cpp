@@ -61,6 +61,10 @@ TEST_CASE("Insert", "[insert]")
   REQUIRE(h.count(150) == 1);
   CHECK(h.size() == 1);
   CHECK(h.capacity() > 1);
+
+  auto result = h.insert(150);
+  CHECK(result.second == false);
+  CHECK(h.size() == 1);
 }
 
 TEST_CASE("Custom hash and equals", "[hash]")
@@ -99,6 +103,7 @@ TEST_CASE("Resize", "[resize]")
 
     CHECK(h.capacity() > initial);
     CHECK(DestructCounter::destructs == 0);
+    CHECK(h.size() == inserts);
   }
 
   CHECK(DestructCounter::destructs == inserts);
