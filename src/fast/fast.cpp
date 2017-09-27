@@ -4,6 +4,7 @@
 #include "earley/grammar_util.hpp"
 
 #define HASH_REUSE
+#define ITEM_SET_HASH
 
 namespace earley::fast
 {
@@ -150,6 +151,8 @@ Parser::parse(size_t position)
   auto set = create_new_set(position, m_tokens);
 
   // if this is a new set, then expand it
+#ifdef ITEM_SET_HASH
+  auto copy = *set;
   auto result = m_item_set_hash.insert(std::move(set));
 
   if (result.second)
@@ -158,8 +161,13 @@ Parser::parse(size_t position)
   }
   else
   {
-    //std::cout << "Reused a set at position " << position << std::endl;
-    //result.first->get()->print(m_names);
+#if 0
+    std::cout << "Reused a set at position " << position << std::endl;
+    auto& names = m_grammar_new.names();
+    result.first->get()->print({names.begin(), names.end()});
+    std::cout << "=== Copy ===" << std::endl;
+    copy.print({names.begin(), names.end()});
+#endif
   }
 
   if (lookahead_hash.first->goto_set == nullptr)
@@ -169,6 +177,11 @@ Parser::parse(size_t position)
   }
 
   m_itemSets.push_back(result.first->get().get());
+#else
+  m_item_set_vector.push_back(std::move(set));
+  expand_set(m_item_set_vector.back().get());
+  m_itemSets.push_back(m_item_set_vector.back().get());
+#endif
 }
 
 void

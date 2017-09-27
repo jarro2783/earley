@@ -288,7 +288,7 @@ namespace earley
 
       // they have the same number of start items here,
       // so their distances must have at least start_items elements
-      if (std::equal(dl.begin(), dl.begin() + pl->core()->start_items(), dr.begin()))
+      if (!std::equal(dl.begin(), dl.begin() + pl->core()->start_items(), dr.begin()))
       {
         return false;
       }
@@ -465,6 +465,7 @@ namespace earley
 
       std::vector<ItemSet*> m_itemSets;
       HashSet<ItemSetOwner> m_item_set_hash;
+      std::vector<std::unique_ptr<ItemSet>> m_item_set_vector;
 
       // The addresses of these might change after adding another one, so only
       // keep a pointer to them after adding all the items
