@@ -34,14 +34,12 @@ namespace
   compare_lookahead_sets(std::vector<ItemSet*>& item_sets,
     ItemSet* a, int place, int position)
   {
-    //std::cout << "Looking at set " << place << ", at position " << position << std::endl;
     auto& da = a->distances();
 
-    for (size_t i = 0; i != da.size(); ++i)
+    for (size_t i = 0; i != a->core()->start_items(); ++i)
     {
       if (item_sets[place - da[i]] != item_sets[position + 1 - da[i]])
       {
-        //std::cout << "Set " << place - da[i] << " != set " << position + 1 - da[i] << std::endl;
         return false;
       }
     }
@@ -118,7 +116,7 @@ void
 Parser::parse(size_t position)
 {
   auto token = m_tokens[position];
-  auto lookahead = position < m_tokens.size()
+  auto lookahead = position < m_tokens.size()-1
     ? m_tokens[position+1]
     : -1;
 
