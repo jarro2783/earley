@@ -163,10 +163,6 @@ namespace earley
       void
       add_derived_item(const PItem* item, size_t parent)
       {
-        //hash_combine(m_hash, std::hash<const PItem*>()(item));
-        //hash_combine(m_hash, parent + 123456789);
-
-        m_distances.push_back(parent);
         m_core->add_derived_item(item, parent);
       }
 
@@ -211,9 +207,9 @@ namespace earley
         {
           return m_distances[item];
         }
-        else if (item < m_distances.size())
+        else if (item < m_core->all_distances())
         {
-          return m_distances[m_distances[item]];
+          return m_distances[m_core->parent_distance(item)];
         }
         else
         {
@@ -391,10 +387,10 @@ namespace earley
       }
 
       void
-      set_entry(int position, int value);
+      set_entry(size_t position, int value);
 
       int
-      get_entry(int position);
+      get_entry(size_t position);
     };
 
     class Parser
@@ -542,7 +538,7 @@ namespace earley
 
     inline
     void
-    ItemMembership::set_entry(int position, int value)
+    ItemMembership::set_entry(size_t position, int value)
     {
       if (dot_is_member.size() <= position)
       {
@@ -554,7 +550,7 @@ namespace earley
 
     inline
     int
-    ItemMembership::get_entry(int position)
+    ItemMembership::get_entry(size_t position)
     {
       if (dot_is_member.size() <= position)
       {
