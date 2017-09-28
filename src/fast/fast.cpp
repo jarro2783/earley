@@ -51,6 +51,14 @@ namespace
   item_in_set(const ItemSet* set, const Item* item, int distance)
   {
     // TODO: make this a bit more efficient
+
+    // We are only ever looking at the latest set, so a neat optimisation
+    // here is to keep a single structure of item -> array of position
+    // When we insert an item with dot position `dot`, and parsing token
+    // `position`, then we set
+    //   membership[item][dot] = position
+    // Then if `membership[item][dot] == position` we know that we have
+    // already added that item
     auto core = set->core();
     size_t i = 0;
 
