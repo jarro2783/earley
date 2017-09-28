@@ -46,6 +46,8 @@ namespace earley
       return *(m_set->m_memory + m_pos);
     }
 
+    // TODO: fix this so that it can be constant
+    // whilst allowing non-key items to be changed
     T*
     operator->() const
     {

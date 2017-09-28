@@ -46,33 +46,37 @@ namespace
 
     return true;
   }
+}
 
-  bool
-  item_in_set(const ItemSet* set, const Item* item, int distance)
+void
+Parser::unique_insert_start_item(
+  ItemSet* set,
+  const Item* item,
+  int distance,
+  int position
+)
+{
+  // We are only ever looking at the latest set, so a neat optimisation
+  // here is to keep a single structure called `membership`
+  // of item -> array of position.
+  // When we insert an item with dot position `dot`, when parsing token
+  // `position`, then we set
+  //   membership[item][dot] = position
+  // Then if `membership[item][dot] == position` we know that we have
+  // already added that item
+  auto result = m_item_membership.insert(item);
+  auto& membership = result.first;
+
+  if (!result.second)
   {
-    // TODO: make this a bit more efficient
-
-    // We are only ever looking at the latest set, so a neat optimisation
-    // here is to keep a single structure of item -> array of position
-    // When we insert an item with dot position `dot`, and parsing token
-    // `position`, then we set
-    //   membership[item][dot] = position
-    // Then if `membership[item][dot] == position` we know that we have
-    // already added that item
-    auto core = set->core();
-    size_t i = 0;
-
-    while (i < core->start_items())
+    if (membership->get_entry(distance) == position)
     {
-      if (core->item(i) == item && set->distance(i) == distance)
-      {
-        return true;
-      }
-      ++i;
+      return;
     }
-
-    return false;
   }
+
+  membership->set_entry(distance, position);
+  set->add_start_item(item, distance);
 }
 
 grammar::Symbol
@@ -94,7 +98,7 @@ ItemSet::add_start_item(const PItem* item, size_t distance)
 Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
 : m_grammar_new(grammar_new)
 , m_tokens(tokens)
-, m_item_set_hash(tokens.size() < 20000 ? 20000 : 5)
+, m_item_set_hash(tokens.size() < 20000 ? 20000 : tokens.size() / 5)
 , m_set_symbols(tokens.size() < 20000 ? 20000 : tokens.size())
 , m_set_term_lookahead(tokens.size() < 30000 ? 30000 : tokens.size())
 , m_all_items(m_grammar_new.all_rules(),
@@ -462,10 +466,8 @@ Parser::create_new_set(size_t position, const TerminalList& input)
           }
 
           auto transition_distance = from_set->actual_distance(transition) + distance;
-          if (!item_in_set(current_set.get(), next, transition_distance))
-          {
-            current_set->add_start_item(next, transition_distance);
-          }
+          unique_insert_start_item(current_set.get(), next,
+            transition_distance, position);
 
           auto pointers = m_item_tree.insert({next, current_set.get(),
             from_set->actual_distance(transition) + distance});

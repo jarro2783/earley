@@ -380,12 +380,30 @@ namespace earley
       Container<const Item*> predecessor;
     };
 
+    struct ItemMembership
+    {
+      const Item* item;
+      std::vector<int> dot_is_member;
+
+      ItemMembership(const Item* _item)
+      : item(_item)
+      {
+      }
+
+      void
+      set_entry(int position, int value);
+
+      int
+      get_entry(int position);
+    };
+
     class Parser
     {
       public:
       typedef HashSet<SetSymbolRules> SetSymbolHash;
       typedef HashSet<SetTermLookahead> SetTermLookaheadHash;
       typedef HashSet<ItemTreePointers> ItemTreeHash;
+      typedef HashSet<ItemMembership> ItemMembershipHash;
 
       Parser(const grammar::Grammar&, const TerminalList&);
 
@@ -460,6 +478,18 @@ namespace earley
       void
       parse_error(size_t);
 
+      bool
+      item_in_set(const ItemSet* set, const Item* item, int distance,
+        int position);
+
+      void
+      unique_insert_start_item(
+        ItemSet* set,
+        const Item* item,
+        int distance,
+        int position
+      );
+
       grammar::Grammar m_grammar_new;
       const TerminalList& m_tokens;
 
@@ -486,6 +516,8 @@ namespace earley
 
       Items m_all_items;
 
+      ItemMembershipHash m_item_membership;
+
       int m_lookahead_collisions = 0;
       int m_reuse = 0;
 
@@ -499,6 +531,39 @@ namespace earley
     operator==(const ItemTreePointers& lhs, const ItemTreePointers& rhs)
     {
       return lhs.source == rhs.source;
+    }
+
+    inline
+    bool
+    operator==(const ItemMembership& lhs, const ItemMembership& rhs)
+    {
+      return lhs.item == rhs.item;
+    }
+
+    inline
+    void
+    ItemMembership::set_entry(int position, int value)
+    {
+      if (dot_is_member.size() <= position)
+      {
+        dot_is_member.resize(position + 1);
+      }
+
+      dot_is_member[position] = value;
+    }
+
+    inline
+    int
+    ItemMembership::get_entry(int position)
+    {
+      if (dot_is_member.size() <= position)
+      {
+        return -1;
+      }
+      else
+      {
+        return dot_is_member[position];
+      }
     }
   }
 }
@@ -567,6 +632,16 @@ namespace std
     {
       std::hash<decltype(s.source)> h;
       return h(s.source);
+    }
+  };
+
+  template <>
+  struct hash<earley::fast::ItemMembership>
+  {
+    size_t
+    operator()(const earley::fast::ItemMembership& i) const
+    {
+      return std::hash<decltype(i.item)>()(i.item);
     }
   };
 }
