@@ -261,12 +261,19 @@ namespace earley
     std::pair<const_iterator, bool>
     insert_internal(Value&& t)
     {
-      bool inserted = false;
-
       if (m_elements/3 >= m_size/4)
       {
         resize();
       }
+
+      return insert_unchecked(std::forward<Value>(t));
+    }
+
+    template <typename Value>
+    std::pair<const_iterator, bool>
+    insert_unchecked(Value&& t)
+    {
+      bool inserted = false;
 
       auto pos = find_position(t);
 
@@ -295,7 +302,7 @@ namespace earley
       {
         if (m_occupied[i])
         {
-          moved.insert(std::move(m_memory[i]));
+          moved.insert_unchecked(std::move(m_memory[i]));
         }
       }
 
