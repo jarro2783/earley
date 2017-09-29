@@ -495,6 +495,7 @@ namespace earley
       std::vector<ItemSet*> m_itemSets;
       HashSet<ItemSetOwner> m_item_set_hash;
       std::deque<ItemSet> m_setOwner;
+      std::deque<ItemSetCore> m_coreOwner;
 
       // The addresses of these might change after adding another one, so only
       // keep a pointer to them after adding all the items

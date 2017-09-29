@@ -179,6 +179,7 @@ Parser::parse(size_t position)
 #endif
     // we reused a set so we can throw away the one we just started
     m_setOwner.pop_back();
+    m_coreOwner.pop_back();
   }
 
   if (lookahead_hash.first->goto_set == nullptr)
@@ -193,9 +194,8 @@ Parser::parse(size_t position)
 void
 Parser::create_start_set()
 {
-  auto core = std::make_unique<ItemSetCore>();
-  auto items = &m_setOwner.emplace_back(core.get());
-  core.release();
+  auto& core = m_coreOwner.emplace_back();
+  auto items = &m_setOwner.emplace_back(&core);
 
   for (auto& rule: m_grammar_new.rules(m_grammar_new.start()))
   {
@@ -371,8 +371,8 @@ Parser::create_new_set(size_t position, const TerminalList& input)
 {
   auto symbol = input[position];
   auto token = create_token(symbol);
-  auto core = std::make_unique<ItemSetCore>();
-  auto current_set = &m_setOwner.emplace_back(core.get());
+  auto& core = m_coreOwner.emplace_back();
+  auto current_set = &m_setOwner.emplace_back(&core);
 
   auto previous_set = m_itemSets[position];
   auto& previous_core = *previous_set->core();
@@ -407,9 +407,9 @@ Parser::create_new_set(size_t position, const TerminalList& input)
     }
 
     // now do all the completed items
-    for (size_t i = 0; i < core->start_items(); ++i)
+    for (size_t i = 0; i < core.start_items(); ++i)
     {
-      auto item = core->item(i);
+      auto item = core.item(i);
       //auto& rule = item->rule();
 
       if (item->empty_rhs())
@@ -480,7 +480,6 @@ Parser::create_new_set(size_t position, const TerminalList& input)
     throw "Parse error";
   }
 
-  core.release();
   return current_set;
 }
 
