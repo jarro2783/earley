@@ -1,6 +1,7 @@
 #ifndef EARLEY_FAST_HPP_INCLUDED
 #define EARLEY_FAST_HPP_INCLUDED
 
+#include <deque>
 #include <memory>
 #include <vector>
 
@@ -157,6 +158,8 @@ namespace earley
       {
       }
 
+      ItemSet(const ItemSet&) = delete;
+
       void
       add_start_item(const PItem* item, size_t distance);
 
@@ -229,8 +232,8 @@ namespace earley
     class ItemSetOwner
     {
       public:
-      ItemSetOwner(std::unique_ptr<ItemSet>&& set)
-      : m_set(std::move(set))
+      ItemSetOwner(ItemSet* set)
+      : m_set(set)
       {
       }
 
@@ -240,27 +243,27 @@ namespace earley
       auto&
       get() const
       {
-        return m_set;
+        return *m_set;
       }
 
       private:
-      std::unique_ptr<ItemSet> m_set;
+      ItemSet* m_set;
     };
 
     inline
     bool
     operator==(const ItemSetOwner& lhs, const ItemSetOwner& rhs)
     {
-      auto& slhs = lhs.get();
-      auto& srhs = rhs.get();
+      auto slhs = &lhs.get();
+      auto srhs = &rhs.get();
 
       if (slhs == srhs)
       {
         return true;
       }
 
-      auto pl = slhs.get();
-      auto pr = srhs.get();
+      auto pl = slhs;
+      auto pr = srhs;
 
       // since sets are ordered the same we can just compare the
       // vectors
@@ -456,7 +459,7 @@ namespace earley
         return m_set_symbols.insert(item).first;
       }
 
-      std::unique_ptr<ItemSet>
+      ItemSet*
       create_new_set(size_t position, const TerminalList& input);
 
       bool
@@ -491,7 +494,7 @@ namespace earley
 
       std::vector<ItemSet*> m_itemSets;
       HashSet<ItemSetOwner> m_item_set_hash;
-      std::vector<std::unique_ptr<ItemSet>> m_item_set_vector;
+      std::deque<ItemSet> m_setOwner;
 
       // The addresses of these might change after adding another one, so only
       // keep a pointer to them after adding all the items
@@ -616,7 +619,7 @@ namespace std
     size_t
     operator()(const earley::fast::ItemSetOwner& s) const
     {
-      return s.get()->hash();
+      return s.get().hash();
     }
   };
 

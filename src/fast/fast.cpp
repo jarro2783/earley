@@ -161,13 +161,12 @@ Parser::parse(size_t position)
   auto set = create_new_set(position, m_tokens);
 
   // if this is a new set, then expand it
-#ifdef ITEM_SET_HASH
-  auto copy = *set;
+  //auto copy = *set;
   auto result = m_item_set_hash.insert(std::move(set));
 
   if (result.second)
   {
-    expand_set(result.first->get().get());
+    expand_set(&result.first->get());
   }
   else
   {
@@ -178,27 +177,24 @@ Parser::parse(size_t position)
     std::cout << "=== Copy ===" << std::endl;
     copy.print({names.begin(), names.end()});
 #endif
+    // we reused a set so we can throw away the one we just started
+    m_setOwner.pop_back();
   }
 
   if (lookahead_hash.first->goto_set == nullptr)
   {
-    lookahead_hash.first->goto_set = result.first->get().get();
+    lookahead_hash.first->goto_set = &result.first->get();
     lookahead_hash.first->place = position+1;
   }
 
-  m_itemSets.push_back(result.first->get().get());
-#else
-  m_item_set_vector.push_back(std::move(set));
-  expand_set(m_item_set_vector.back().get());
-  m_itemSets.push_back(m_item_set_vector.back().get());
-#endif
+  m_itemSets.push_back(&result.first->get());
 }
 
 void
 Parser::create_start_set()
 {
   auto core = std::make_unique<ItemSetCore>();
-  auto items = std::make_unique<ItemSet>(core.get());
+  auto items = &m_setOwner.emplace_back(core.get());
   core.release();
 
   for (auto& rule: m_grammar_new.rules(m_grammar_new.start()))
@@ -207,10 +203,10 @@ Parser::create_start_set()
     items->add_start_item(item, 0);
   }
 
-  expand_set(items.get());
+  expand_set(items);
 
-  m_itemSets.push_back(items.get());
-  m_item_set_hash.insert(std::move(items));
+  m_itemSets.push_back(items);
+  m_item_set_hash.insert(items);
 }
 
 void
@@ -370,13 +366,13 @@ Parser::add_initial_item(ItemSetCore* core, const PItem* item)
 
 // Do scans and completions to start the current set
 // find it in the hash table, then expand it if it's new
-std::unique_ptr<ItemSet>
+ItemSet*
 Parser::create_new_set(size_t position, const TerminalList& input)
 {
   auto symbol = input[position];
   auto token = create_token(symbol);
   auto core = std::make_unique<ItemSetCore>();
-  auto current_set = std::make_unique<ItemSet>(core.get());
+  auto current_set = &m_setOwner.emplace_back(core.get());
 
   auto previous_set = m_itemSets[position];
   auto& previous_core = *previous_set->core();
@@ -404,7 +400,7 @@ Parser::create_new_set(size_t position, const TerminalList& input)
         previous_set->actual_distance(transition) + 1);
 
       auto pointers = m_item_tree.insert({next,
-        current_set.get(),
+        current_set,
         previous_set->actual_distance(transition) + 1,
       });
       insert_unique(pointers.first->predecessor, item);
@@ -414,7 +410,7 @@ Parser::create_new_set(size_t position, const TerminalList& input)
     for (size_t i = 0; i < core->start_items(); ++i)
     {
       auto item = core->item(i);
-      auto& rule = item->rule();
+      //auto& rule = item->rule();
 
       if (item->empty_rhs())
       {
@@ -466,10 +462,10 @@ Parser::create_new_set(size_t position, const TerminalList& input)
           }
 
           auto transition_distance = from_set->actual_distance(transition) + distance;
-          unique_insert_start_item(current_set.get(), next,
+          unique_insert_start_item(current_set, next,
             transition_distance, position);
 
-          auto pointers = m_item_tree.insert({next, current_set.get(),
+          auto pointers = m_item_tree.insert({next, current_set,
             from_set->actual_distance(transition) + distance});
           insert_unique(pointers.first->reduction, item);
           insert_unique(pointers.first->predecessor, item);
