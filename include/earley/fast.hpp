@@ -77,6 +77,7 @@ namespace earley
       ItemSetCore()
       {
         m_items.reserve(100);
+        //m_parent_indexes.reserve(16);
       }
 
       void
@@ -142,6 +143,15 @@ namespace earley
         return m_parent_indexes.at(distance - m_start_items);
       }
 
+      void
+      reset()
+      {
+        m_items.resize(0);
+        m_parent_indexes.resize(0);
+        m_start_items = 0;
+        m_hash = 0;
+      }
+
       private:
       size_t m_start_items = 0;
       std::vector<const PItem*> m_items;
@@ -156,6 +166,7 @@ namespace earley
       ItemSet(ItemSetCore* core)
       : m_core(core)
       {
+        m_distances.reserve(64);
       }
 
       ItemSet(const ItemSet&) = delete;
@@ -489,6 +500,12 @@ namespace earley
         int position
       );
 
+      ItemSetCore&
+      next_core();
+
+      void
+      reset_core();
+
       grammar::Grammar m_grammar_new;
       const TerminalList& m_tokens;
 
@@ -496,6 +513,8 @@ namespace earley
       HashSet<ItemSetOwner> m_item_set_hash;
       std::deque<ItemSet> m_setOwner;
       std::deque<ItemSetCore> m_coreOwner;
+
+      bool m_core_reset = false;
 
       // The addresses of these might change after adding another one, so only
       // keep a pointer to them after adding all the items

@@ -179,7 +179,7 @@ Parser::parse(size_t position)
 #endif
     // we reused a set so we can throw away the one we just started
     m_setOwner.pop_back();
-    m_coreOwner.pop_back();
+    reset_core();
   }
 
   if (lookahead_hash.first->goto_set == nullptr)
@@ -371,7 +371,7 @@ Parser::create_new_set(size_t position, const TerminalList& input)
 {
   auto symbol = input[position];
   auto token = create_token(symbol);
-  auto& core = m_coreOwner.emplace_back();
+  auto& core = next_core();
   auto current_set = &m_setOwner.emplace_back(&core);
 
   auto previous_set = m_itemSets[position];
@@ -554,6 +554,25 @@ Parser::parse_error(size_t i)
   }
 
   std::cout << std::endl;
+}
+
+void
+Parser::reset_core()
+{
+  m_coreOwner.back().reset();
+  m_core_reset = true;
+}
+
+ItemSetCore&
+Parser::next_core()
+{
+  if (m_core_reset)
+  {
+    m_core_reset = false;
+    return m_coreOwner.back();
+  }
+
+  return m_coreOwner.emplace_back();
 }
 
 }
