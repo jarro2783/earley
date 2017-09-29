@@ -234,6 +234,14 @@ namespace earley
       void
       print(const std::unordered_map<size_t, std::string>& names) const;
 
+      void
+      reset(ItemSetCore* core)
+      {
+        m_core = core;
+        m_distances.resize(0);
+        m_hash = 0;
+      }
+
       private:
       ItemSetCore* m_core;
       std::vector<size_t> m_distances;
@@ -503,8 +511,11 @@ namespace earley
       ItemSetCore&
       next_core();
 
+      ItemSet&
+      next_set(ItemSetCore* core);
+
       void
-      reset_core();
+      reset_set();
 
       grammar::Grammar m_grammar_new;
       const TerminalList& m_tokens;
@@ -515,6 +526,7 @@ namespace earley
       std::deque<ItemSetCore> m_coreOwner;
 
       bool m_core_reset = false;
+      bool m_set_reset = false;
 
       // The addresses of these might change after adding another one, so only
       // keep a pointer to them after adding all the items

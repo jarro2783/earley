@@ -178,8 +178,7 @@ Parser::parse(size_t position)
     copy.print({names.begin(), names.end()});
 #endif
     // we reused a set so we can throw away the one we just started
-    m_setOwner.pop_back();
-    reset_core();
+    reset_set();
   }
 
   if (lookahead_hash.first->goto_set == nullptr)
@@ -372,7 +371,7 @@ Parser::create_new_set(size_t position, const TerminalList& input)
   auto symbol = input[position];
   auto token = create_token(symbol);
   auto& core = next_core();
-  auto current_set = &m_setOwner.emplace_back(&core);
+  auto current_set = &next_set(&core);
 
   auto previous_set = m_itemSets[position];
   auto& previous_core = *previous_set->core();
@@ -557,10 +556,11 @@ Parser::parse_error(size_t i)
 }
 
 void
-Parser::reset_core()
+Parser::reset_set()
 {
   m_coreOwner.back().reset();
   m_core_reset = true;
+  m_set_reset = true;
 }
 
 ItemSetCore&
@@ -573,6 +573,19 @@ Parser::next_core()
   }
 
   return m_coreOwner.emplace_back();
+}
+
+ItemSet&
+Parser::next_set(ItemSetCore* core)
+{
+  if (m_set_reset)
+  {
+    m_setOwner.back().reset(core);
+    m_set_reset = false;
+    return m_setOwner.back();
+  }
+
+  return m_setOwner.emplace_back(core);
 }
 
 }
