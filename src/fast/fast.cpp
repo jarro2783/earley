@@ -588,4 +588,12 @@ Parser::next_set(ItemSetCore* core)
   return m_setOwner.emplace_back(core);
 }
 
+void
+Parser::print_stats() const
+{
+  std::cout << "Unique cores: " << m_coreOwner.size() << std::endl;
+  std::cout << "Goto collisions: " << m_lookahead_collisions << std::endl;
+  std::cout << "Goto successes: " << m_reuse << std::endl;
+}
+
 }

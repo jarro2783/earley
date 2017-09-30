@@ -469,6 +469,8 @@ parse_c(const char* file, bool dump)
     std::cout << "Used " 
       << (static_cast<char*>(memend) - static_cast<char*>(memstart)) / 1000
       << "kb of memory" << std::endl;
+
+    parser.print_stats();
   } catch(...)
   {
     if (dump)

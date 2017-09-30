@@ -25,6 +25,8 @@ namespace earley
   {
     typedef Item PItem;
     typedef grammar::Rule PRule;
+    class CoreEqual;
+    class CoreHash;
 
     typedef std::vector<size_t> TerminalList;
 
@@ -434,6 +436,9 @@ namespace earley
       void
       print_set(size_t i);
 
+      void
+      print_stats() const;
+
       private:
 
       void
@@ -522,6 +527,7 @@ namespace earley
 
       std::vector<ItemSet*> m_itemSets;
       HashSet<ItemSetOwner> m_item_set_hash;
+      HashSet<ItemSetCore*, CoreHash, CoreEqual> m_set_core_hash;
       std::deque<ItemSet> m_setOwner;
       std::deque<ItemSetCore> m_coreOwner;
 
