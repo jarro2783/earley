@@ -145,6 +145,12 @@ namespace earley
         return m_parent_indexes.at(distance - m_start_items);
       }
 
+      const std::vector<size_t>&
+      parent_distances() const
+      {
+        return m_parent_indexes;
+      }
+
       void
       reset()
       {
@@ -172,6 +178,14 @@ namespace earley
       }
 
       ItemSet(const ItemSet&) = delete;
+
+      // This should only be used when the core is equivalent to the
+      // existing one
+      void
+      set_core(ItemSetCore* core)
+      {
+        m_core = core;
+      }
 
       void
       add_start_item(const PItem* item, size_t distance);
@@ -286,20 +300,9 @@ namespace earley
       auto pl = slhs;
       auto pr = srhs;
 
-      // since sets are ordered the same we can just compare the
-      // vectors
-      if (pl->core()->start_items() != pr->core()->start_items())
+      if (pl->core() != pr->core())
       {
         return false;
-      }
-
-      size_t items = pl->core()->start_items();
-      for (size_t i = 0; i != items; ++i)
-      {
-        if (pl->core()->item(i) != pr->core()->item(i))
-        {
-          return false;
-        }
       }
 
       // we also have to compare the distances
@@ -349,9 +352,9 @@ namespace earley
       int symbol;
       int lookahead;
 
-      ItemSet* goto_set = nullptr;
-      int place = 0;
-      //std::vector<ItemSet*> gotos;
+      ItemSet* goto_sets[3];
+      int place[3] = {0};
+      int goto_count = 0;
     };
 
     inline
@@ -602,6 +605,30 @@ namespace earley
         return dot_is_member[position];
       }
     }
+
+    struct CoreHash
+    {
+      size_t
+      operator()(const ItemSetCore* core)
+      {
+        return core->hash();
+      }
+    };
+
+    struct CoreEqual
+    {
+      bool
+      operator()(const ItemSetCore* lhs, const ItemSetCore* rhs)
+      {
+        return
+          lhs->start_items() == rhs->start_items() &&
+          std::equal(
+            lhs->items().begin(),
+            lhs->items().begin() + lhs->start_items(),
+            rhs->items().begin())
+        ;
+      }
+    };
   }
 }
 

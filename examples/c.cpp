@@ -498,7 +498,7 @@ int main(int argc, char** argv)
 
   try
   {
-    parse_c(argv[1], false);
+    parse_c(argv[1], true);
   }
   catch (const char* c)
   {

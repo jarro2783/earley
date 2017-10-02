@@ -140,19 +140,24 @@ Parser::parse(size_t position)
 
   if (!lookahead_hash.second)
   {
-    if (lookahead_hash.first->goto_set != nullptr)
+    if (lookahead_hash.first->goto_count > 0)
     {
-      auto place = lookahead_hash.first->place;
-      //std::cout << "Checking reuse at " << position << " from " << place << std::endl;
-      if (compare_lookahead_sets(m_itemSets, lookahead_hash.first->goto_set,
-        place, position))
+      int which = 0;
+      while (which < lookahead_hash.first->goto_count)
       {
-        //std::cout << "Would reuse at " << position << " from " << place << std::endl;
-        ++m_reuse;
+        auto place = lookahead_hash.first->place[which];
+        //std::cout << "Checking reuse at " << position << " from " << place << std::endl;
+        if (compare_lookahead_sets(m_itemSets, lookahead_hash.first->goto_sets[which],
+          place, position))
+        {
+          //std::cout << "Would reuse at " << position << " from " << place << std::endl;
+          ++m_reuse;
 #ifdef HASH_REUSE
-        m_itemSets.push_back(m_itemSets[place]);
-        return;
+          m_itemSets.push_back(m_itemSets[place]);
+          return;
 #endif
+        }
+        ++which;
       }
     }
     ++m_lookahead_collisions;
@@ -160,11 +165,24 @@ Parser::parse(size_t position)
 
   auto set = create_new_set(position, m_tokens);
 
+  auto core_hash = m_set_core_hash.insert(set->core());
+
+  if (!core_hash.second)
+  {
+    set->set_core(*core_hash.first);
+    m_core_reset = true;
+  }
+
   // if this is a new set, then expand it
   //auto copy = *set;
-  auto result = m_item_set_hash.insert(std::move(set));
+  auto result = m_item_set_hash.insert(set);
 
-  if (result.second)
+  if (!result.second)
+  {
+    reset_set();
+  }
+
+  if (core_hash.second)
   {
     expand_set(&result.first->get());
   }
@@ -178,13 +196,14 @@ Parser::parse(size_t position)
     copy.print({names.begin(), names.end()});
 #endif
     // we reused a set so we can throw away the one we just started
-    reset_set();
   }
 
-  if (lookahead_hash.first->goto_set == nullptr)
+  auto& goto_count = lookahead_hash.first->goto_count;
+  if (goto_count < 3)
   {
-    lookahead_hash.first->goto_set = &result.first->get();
-    lookahead_hash.first->place = position+1;
+    lookahead_hash.first->goto_sets[goto_count] = &result.first->get();
+    lookahead_hash.first->place[goto_count] = position+1;
+    ++goto_count;
   }
 
   m_itemSets.push_back(&result.first->get());
@@ -558,8 +577,6 @@ Parser::parse_error(size_t i)
 void
 Parser::reset_set()
 {
-  m_coreOwner.back().reset();
-  m_core_reset = true;
   m_set_reset = true;
 }
 
@@ -568,6 +585,7 @@ Parser::next_core()
 {
   if (m_core_reset)
   {
+    m_coreOwner.back().reset();
     m_core_reset = false;
     return m_coreOwner.back();
   }
@@ -591,9 +609,11 @@ Parser::next_set(ItemSetCore* core)
 void
 Parser::print_stats() const
 {
+  std::cout << "Hash set cores: " << m_set_core_hash.size() << std::endl;
   std::cout << "Unique cores: " << m_coreOwner.size() << std::endl;
   std::cout << "Goto collisions: " << m_lookahead_collisions << std::endl;
   std::cout << "Goto successes: " << m_reuse << std::endl;
+  std::cout << "Unique sets: " << m_setOwner.size() << std::endl;
 }
 
 }
