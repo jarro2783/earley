@@ -461,10 +461,10 @@ parse_c(const char* file, bool dump)
       }
       parser.parse(i);
     }
-    auto memend = sbrk(0);
-
     std::cout << "Parsing took " << timer.count<std::chrono::microseconds>()
       << " microseconds" << std::endl;
+
+    auto memend = sbrk(0);
 
     std::cout << "Used " 
       << (static_cast<char*>(memend) - static_cast<char*>(memstart)) / 1000

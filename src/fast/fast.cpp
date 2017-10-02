@@ -57,13 +57,14 @@ Parser::unique_insert_start_item(
 )
 {
   // We are only ever looking at the latest set, so a neat optimisation
-  // here is to keep a single structure called `membership`
+  // here is to keep a single structure called `membership`, which is a map
   // of item -> array of position.
   // When we insert an item with dot position `dot`, when parsing token
   // `position`, then we set
   //   membership[item][dot] = position
   // Then if `membership[item][dot] == position` we know that we have
-  // already added that item
+  // already added that item.
+  // Otherwise `membership[item][dot]` will always be less than position.
   auto result = m_item_membership.insert(item);
   auto& membership = result.first;
 
