@@ -302,7 +302,8 @@ Grammar::validate() const
 
   for (auto& [name, index] : m_nonterminal_indices.names())
   {
-    if (m_nonterminal_rules.size() <= index || m_nonterminal_rules[index].size() == 0)
+    if (m_nonterminal_rules.size() <= static_cast<size_t>(index) ||
+        m_nonterminal_rules[index].size() == 0)
     {
       undefined.push_back(name);
     }
