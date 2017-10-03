@@ -146,8 +146,9 @@ TEST_CASE("Items generation", "[items]")
 
   auto firsts = first_sets(rules);
   auto follows = follow_sets(0, rules, firsts);
+  std::vector<bool> nullable{false};
 
-  Items items(rules, firsts, follows, {false});
+  Items items(rules, firsts, follows, nullable);
 
   const Rule* r00 = &rules[0][0];
   const Rule* r01 = &rules[0][1];
