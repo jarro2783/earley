@@ -106,6 +106,7 @@ Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
     m_grammar_new.first_sets(),
     m_grammar_new.follow_sets(),
     m_grammar_new.nullable_set())
+, m_item_membership(2000)
 {
   m_itemSets.reserve(tokens.size());
   create_start_set();
