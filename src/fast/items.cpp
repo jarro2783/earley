@@ -43,6 +43,26 @@ ensure_size(T& t, size_t size)
   }
 }
 
+void
+Items::fill_to(const grammar::Rule* rule, ItemStore& items, size_t position)
+{
+  for (size_t i = items.size(); i <= position; ++i)
+  {
+    auto lookahead = sequence_lookahead(*rule, rule->begin() + i,
+      m_firsts, m_follows);
+
+    items.emplace_back(
+      rule,
+      rule->begin()+i,
+      std::move(lookahead),
+      empty_sequence(m_nullable,
+        rule->begin()+i,
+        rule->end()
+      )
+    );
+  }
+}
+
 Items::Items(const std::vector<grammar::RuleList>& nonterminals,
   const grammar::FirstSets& firsts,
   const grammar::FollowSets& follows,
@@ -55,7 +75,9 @@ Items::Items(const std::vector<grammar::RuleList>& nonterminals,
   {
     for (auto& rule: rules)
     {
-      m_item_map[&rule];
+      auto result = m_item_map.insert(&rule);
+
+      fill_to(&rule, result.first->items, rule.end() - rule.begin());
     }
   }
 }
@@ -77,19 +99,7 @@ Items::get_item(const grammar::Rule* rule, int position)
     throw NoSuchItem();
   }
 
-  ensure_size(iter->second, position);
-
-  auto& ptr = iter->second[position];
-
-  if (ptr == nullptr)
-  {
-    auto lookahead = sequence_lookahead(*rule, rule->begin() + position,
-      m_firsts, m_follows);
-    ptr = std::make_shared<Item>(rule, rule->begin()+position, std::move(lookahead),
-      empty_sequence(m_nullable, rule->begin()+position, rule->end()));
-  }
-
-  return ptr.get();
+  return &iter->items[position];
 }
 
 std::ostream&

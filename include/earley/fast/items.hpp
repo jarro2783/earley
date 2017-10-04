@@ -89,6 +89,37 @@ namespace earley::fast
     bool m_empty_rhs;
   };
 
+  typedef std::vector<Item> ItemStore;
+
+  struct RuleItems
+  {
+    RuleItems(const grammar::Rule* _rule)
+    : rule(_rule)
+    {
+    }
+
+    const grammar::Rule* rule;
+    ItemStore items;
+  };
+
+  struct RuleItemHash
+  {
+    size_t
+    operator()(const RuleItems& ri)
+    {
+      return std::hash<decltype(ri.rule)>()(ri.rule);
+    }
+  };
+
+  struct RuleItemEq
+  {
+    bool
+    operator()(const RuleItems& lhs, const RuleItems& rhs)
+    {
+      return lhs.rule == rhs.rule;
+    }
+  };
+
   class Items
   {
     public:
@@ -102,8 +133,11 @@ namespace earley::fast
 
     private:
 
-    std::unordered_map<const grammar::Rule*, std::vector<std::shared_ptr<Item>>>
-      m_item_map;
+    void
+    fill_to(const grammar::Rule* rule, ItemStore& items,
+      size_t position);
+
+    HashSet<RuleItems, RuleItemHash, RuleItemEq> m_item_map;
 
     const grammar::FirstSets& m_firsts;
     const grammar::FollowSets& m_follows;
