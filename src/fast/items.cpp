@@ -46,6 +46,7 @@ ensure_size(T& t, size_t size)
 void
 Items::fill_to(const grammar::Rule* rule, ItemStore& items, size_t position)
 {
+  items.reserve(position);
   for (size_t i = items.size(); i <= position; ++i)
   {
     auto lookahead = sequence_lookahead(*rule, rule->begin() + i,
