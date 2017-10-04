@@ -79,7 +79,7 @@ namespace earley
       ItemSetCore()
       {
         m_items.reserve(100);
-        //m_parent_indexes.reserve(16);
+        m_parent_indexes.reserve(4);
       }
 
       void
