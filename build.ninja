@@ -24,6 +24,12 @@ build .build/fast/items.o: cxx src/fast/items.cpp
 build earley: cxx_link earley.o .build/fast/fast.o grammar.o main.o numbers.o $
   .build/grammar_util.o .build/fast/items.o .build/fast/grammar.o
 
+# generator
+# build .build/generate.o: cxx src/generate.cpp
+#   CFLAGS=-I../lexertl14
+#
+# build generator: cxx_link .build/generate.o
+
 # tests
 build test/.build/fast.o: cxx test/fast.cpp
 build test/.build/grammar_util.o: cxx test/grammar_util.cpp
