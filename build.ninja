@@ -35,12 +35,14 @@ build test/.build/fast.o: cxx test/fast.cpp
 build test/.build/grammar_util.o: cxx test/grammar_util.cpp
 build test/.build/hash.o: cxx test/hash.cpp
 build test/.build/main.o: cxx test/main.cpp
+build test/.build/stack.o: cxx test/stack.cpp
 
 build test/hash: cxx_link test/.build/main.o test/.build/hash.o
 build test/grammar: cxx_link test/.build/main.o test/.build/grammar_util.o $
   .build/grammar_util.o
 build test/fast: cxx_link test/.build/main.o test/.build/fast.o $
   .build/fast/grammar.o .build/fast/items.o .build/fast/fast.o
+build test/stack: cxx_link test/.build/stack.o test/.build/main.o
 
 build test_fast: TEST_COMMAND test/fast
   COMMAND = test/fast
@@ -51,7 +53,10 @@ build test_grammar: TEST_COMMAND test/grammar
 build test_hash: TEST_COMMAND test/hash
   COMMAND = test/hash
 
-build test: phony test_fast test_grammar test_hash 
+build test_stack: TEST_COMMAND test/stack
+  COMMAND = test/stack
+
+build test: phony test_fast test_grammar test_hash test_stack
 
 # lexer
 build .build/lexer.o: cxx lexer.cpp
@@ -75,4 +80,4 @@ build yc: cxx_link .build/examples/c.o $
   earley.o grammar.o .build/fast/fast.o .build/fast/grammar.o $
   .build/fast/items.o .build/grammar_util.o
 
-default earley test/fast test/grammar test/hash lexer calculator yc
+default earley test/fast test/grammar test/hash test/stack lexer calculator yc
