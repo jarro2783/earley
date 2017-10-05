@@ -174,6 +174,10 @@ Parser::parse(size_t position)
     set->set_core(*core_hash.first);
     m_core_reset = true;
   }
+  else
+  {
+    (*core_hash.first)->finalise();
+  }
 
   // if this is a new set, then expand it
   //auto copy = *set;
@@ -227,6 +231,8 @@ Parser::create_start_set()
 
   m_itemSets.push_back(items);
   m_item_set_hash.insert(items);
+
+  core.finalise();
 }
 
 void
@@ -617,5 +623,7 @@ Parser::print_stats() const
   std::cout << "Goto successes: " << m_reuse << std::endl;
   std::cout << "Unique sets: " << m_setOwner.size() << std::endl;
 }
+
+Stack<Item*> ItemSetCore::item_stack;
 
 }

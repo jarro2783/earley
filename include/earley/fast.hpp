@@ -9,7 +9,7 @@
 #include "earley_hash_set.hpp"
 
 #include "earley/grammar_util.hpp"
-#include "earley/fast/grammar.hpp"
+#include "earley/stack.hpp"
 
 #include "earley/fast/grammar.hpp"
 #include "earley/fast/items.hpp"
@@ -80,6 +80,7 @@ namespace earley
       {
         m_items.reserve(100);
         m_parent_indexes.reserve(4);
+        m_item_list = item_stack.start();
       }
 
       void
@@ -158,6 +159,15 @@ namespace earley
         m_parent_indexes.resize(0);
         m_start_items = 0;
         m_hash = 0;
+
+        item_stack.destroy_top();
+      }
+
+      // There will be no more changes to this set.
+      void
+      finalise()
+      {
+        item_stack.finalise();
       }
 
       private:
@@ -165,6 +175,9 @@ namespace earley
       std::vector<const PItem*> m_items;
       size_t m_hash = 0;
       std::vector<size_t> m_parent_indexes;
+
+      Item** m_item_list = nullptr;
+      static Stack<Item*> item_stack;
     };
 
     class ItemSet

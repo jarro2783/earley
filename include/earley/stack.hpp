@@ -11,7 +11,7 @@ namespace earley
     ~Stack();
 
     // Start a new contiguous sequence.
-    void
+    T*
     start();
 
     // End the current contiguous sequence.
@@ -27,6 +27,9 @@ namespace earley
     // A pointer to the start of the current contiguous sequence.
     T*
     current();
+
+    void
+    destroy_top();
 
     private:
     detail::stack_segment<T>* m_top_segment;
@@ -48,7 +51,7 @@ namespace earley
   }
 
   template <typename T>
-  void
+  T*
   Stack<T>::start()
   {
     if (m_owned)
@@ -57,6 +60,8 @@ namespace earley
     }
 
     m_owned = true;
+
+    return m_top_segment->top();
   }
 
   template <typename T>
@@ -93,5 +98,12 @@ namespace earley
   {
     m_owned = false;
     m_top_segment->finalise();
+  }
+
+  template <typename T>
+  void
+  Stack<T>::destroy_top()
+  {
+    m_top_segment->destroy_top();
   }
 }
