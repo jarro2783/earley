@@ -174,10 +174,6 @@ Parser::parse(size_t position)
     set->set_core(*core_hash.first);
     m_core_reset = true;
   }
-  else
-  {
-    (*core_hash.first)->finalise();
-  }
 
   // if this is a new set, then expand it
   //auto copy = *set;
@@ -212,6 +208,10 @@ Parser::parse(size_t position)
     ++goto_count;
   }
 
+  if (core_hash.second)
+  {
+    (*core_hash.first)->finalise();
+  }
   m_itemSets.push_back(&result.first->get());
 }
 
@@ -557,6 +557,7 @@ Parser::parse_error(size_t i)
   //look for all the scans and print out what we were expecting
   auto set = m_itemSets[i];
   auto core = set->core();
+
   for (auto item: core->items())
   {
     auto symbol = item->position();
@@ -624,6 +625,6 @@ Parser::print_stats() const
   std::cout << "Unique sets: " << m_setOwner.size() << std::endl;
 }
 
-Stack<Item*> ItemSetCore::item_stack;
+Stack<const Item*> ItemSetCore::item_stack;
 
 }

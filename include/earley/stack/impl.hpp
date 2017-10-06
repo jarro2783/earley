@@ -1,3 +1,6 @@
+#ifndef EARLEY_STACK_IMP_HPP
+#define EARLEY_STACK_IMP_HPP
+
 namespace earley::detail
 {
   template <typename T>
@@ -82,6 +85,12 @@ namespace earley::detail
       m_top = m_current;
     }
 
+    size_t
+    top_size() const
+    {
+      return m_current - m_top;
+    }
+
     private:
 
     const stack_segment* m_previous;
@@ -91,3 +100,5 @@ namespace earley::detail
     size_t m_size;
   };
 }
+
+#endif

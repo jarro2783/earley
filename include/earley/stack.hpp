@@ -1,3 +1,6 @@
+#ifndef EARLEY_STACK_HPP
+#define EARLEY_STACK_HPP
+
 #include <earley/stack/impl.hpp>
 
 namespace earley
@@ -30,6 +33,9 @@ namespace earley
 
     void
     destroy_top();
+
+    size_t
+    top_size() const;
 
     private:
     detail::stack_segment<T>* m_top_segment;
@@ -79,6 +85,8 @@ namespace earley
         next->emplace_back(std::move(*iter));
       }
 
+      next->emplace_back(std::forward<Args>(args)...);
+
       top.destroy_top();
 
       m_top_segment = next;
@@ -106,4 +114,13 @@ namespace earley
   {
     m_top_segment->destroy_top();
   }
+
+  template <typename T>
+  size_t
+  Stack<T>::top_size() const
+  {
+    return m_top_segment->top_size();
+  }
 }
+
+#endif

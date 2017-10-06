@@ -455,7 +455,7 @@ parse_c(const char* file, bool dump)
     Timer timer;
     for (i = 0; i != symbols.size(); ++i)
     {
-      if (i % progress == 0)
+      if ((i+1) % progress == 0)
       {
         std::cout << '.' << std::flush;
       }

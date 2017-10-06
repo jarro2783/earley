@@ -30,6 +30,41 @@ namespace earley
 
     typedef std::vector<size_t> TerminalList;
 
+    // TODO: move this to a utility class
+    template <typename T>
+    class Range
+    {
+      public:
+      Range(T b, T e)
+      : m_begin(b)
+      , m_end(e)
+      {
+      }
+
+      T
+      begin() const
+      {
+        return m_begin;
+      }
+
+      T
+      end() const
+      {
+        return m_end;
+      }
+
+      private:
+      T m_begin;
+      T m_end;
+    };
+
+    template <typename T>
+    Range<T>
+    make_range(T begin, T end)
+    {
+      return Range(begin, end);
+    }
+
     inline
     auto
     is_terminal(const earley::Entry& s)
@@ -78,16 +113,15 @@ namespace earley
 
       ItemSetCore()
       {
-        m_items.reserve(100);
         m_parent_indexes.reserve(4);
-        m_item_list = item_stack.start();
+        m_item_list_end = m_item_list = item_stack.start();
       }
 
       void
       add_start_item(const PItem* item)
       {
         ++m_start_items;
-        m_items.push_back(item);
+        insert_item(item);
         hash_combine(m_hash, reinterpret_cast<size_t>(item));
       }
 
@@ -100,26 +134,27 @@ namespace earley
       size_t
       all_items() const
       {
-        return m_items.size();
+        auto size = m_item_list_end - m_item_list;
+        return size;
       }
 
       void
       add_derived_item(const PItem* item, size_t parent)
       {
-        m_items.push_back(item);
+        insert_item(item);
         m_parent_indexes.push_back(parent);
       }
 
       void
       add_initial_item(const PItem* item)
       {
-        m_items.push_back(item);
+        insert_item(item);
       }
 
       const PItem*
       item(size_t i) const
       {
-        return m_items[i];
+        return m_item_list[i];
       }
 
       size_t
@@ -128,10 +163,16 @@ namespace earley
         return m_hash;
       }
 
-      const std::vector<const PItem*>&
+      auto
       items() const
       {
-        return m_items;
+        return make_range(m_item_list, m_item_list_end);
+      }
+
+      const Item**
+      first_item() const
+      {
+        return m_item_list;
       }
 
       size_t
@@ -155,12 +196,12 @@ namespace earley
       void
       reset()
       {
-        m_items.resize(0);
         m_parent_indexes.resize(0);
         m_start_items = 0;
         m_hash = 0;
 
         item_stack.destroy_top();
+        m_item_list_end = m_item_list;
       }
 
       // There will be no more changes to this set.
@@ -171,13 +212,20 @@ namespace earley
       }
 
       private:
+      void
+      insert_item(const Item* item)
+      {
+        m_item_list = item_stack.emplace_back(item);
+        m_item_list_end = m_item_list + item_stack.top_size();
+      }
+
       size_t m_start_items = 0;
-      std::vector<const PItem*> m_items;
       size_t m_hash = 0;
       std::vector<size_t> m_parent_indexes;
 
-      Item** m_item_list = nullptr;
-      static Stack<Item*> item_stack;
+      const Item** m_item_list = nullptr;
+      const Item** m_item_list_end = nullptr;
+      static Stack<const Item*> item_stack;
     };
 
     class ItemSet
@@ -636,9 +684,9 @@ namespace earley
         return
           lhs->start_items() == rhs->start_items() &&
           std::equal(
-            lhs->items().begin(),
-            lhs->items().begin() + lhs->start_items(),
-            rhs->items().begin())
+            lhs->first_item(),
+            lhs->first_item() + lhs->start_items(),
+            rhs->first_item())
         ;
       }
     };
