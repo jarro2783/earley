@@ -113,7 +113,8 @@ namespace earley
 
       ItemSetCore()
       {
-        m_parent_indexes.reserve(4);
+        //m_parent_indexes.reserve(4);
+        m_parent_list_end = m_parent_list = parent_stack.start();
         m_item_list_end = m_item_list = item_stack.start();
       }
 
@@ -142,7 +143,9 @@ namespace earley
       add_derived_item(const PItem* item, size_t parent)
       {
         insert_item(item);
-        m_parent_indexes.push_back(parent);
+        //m_parent_indexes.push_back(parent);
+        m_parent_list = parent_stack.emplace_back(parent);
+        m_parent_list_end = m_parent_list + parent_stack.top_size();
       }
 
       void
@@ -178,30 +181,36 @@ namespace earley
       size_t
       all_distances() const
       {
-        return m_start_items + m_parent_indexes.size();
+        //return m_start_items + m_parent_indexes.size();
+        return m_start_items + (m_parent_list_end - m_parent_list);
       }
 
       size_t
       parent_distance(size_t distance)
       {
-        return m_parent_indexes.at(distance - m_start_items);
+        //return m_parent_indexes.at(distance - m_start_items);
+        return m_parent_list[distance - m_start_items];
       }
 
-      const std::vector<size_t>&
+      auto
       parent_distances() const
       {
-        return m_parent_indexes;
+        //return m_parent_indexes;
+        return m_parent_list;
       }
 
       void
       reset()
       {
-        m_parent_indexes.resize(0);
+        //m_parent_indexes.resize(0);
         m_start_items = 0;
         m_hash = 0;
 
         item_stack.destroy_top();
         m_item_list_end = m_item_list;
+
+        parent_stack.destroy_top();
+        m_parent_list_end = m_parent_list;
       }
 
       // There will be no more changes to this set.
@@ -209,6 +218,7 @@ namespace earley
       finalise()
       {
         item_stack.finalise();
+        parent_stack.finalise();
       }
 
       private:
@@ -221,7 +231,11 @@ namespace earley
 
       size_t m_start_items = 0;
       size_t m_hash = 0;
-      std::vector<size_t> m_parent_indexes;
+      //std::vector<size_t> m_parent_indexes;
+
+      int* m_parent_list = nullptr;
+      int *m_parent_list_end = nullptr;
+      static Stack<int> parent_stack;
 
       const Item** m_item_list = nullptr;
       const Item** m_item_list_end = nullptr;

@@ -626,5 +626,6 @@ Parser::print_stats() const
 }
 
 Stack<const Item*> ItemSetCore::item_stack;
+Stack<int> ItemSetCore::parent_stack;
 
 }
