@@ -253,6 +253,7 @@ namespace earley
       }
 
       ItemSet(const ItemSet&) = delete;
+      ItemSet(ItemSet&&) = default;
 
       // This should only be used when the core is equivalent to the
       // existing one
@@ -606,8 +607,11 @@ namespace earley
       std::vector<ItemSet*> m_itemSets;
       HashSet<ItemSetOwner> m_item_set_hash;
       HashSet<ItemSetCore*, CoreHash, CoreEqual> m_set_core_hash;
-      std::deque<ItemSet> m_setOwner;
-      std::deque<ItemSetCore> m_coreOwner;
+      //std::deque<ItemSet> m_setOwner;
+      //std::deque<ItemSetCore> m_coreOwner;
+
+      std::vector<ItemSet> m_setOwner;
+      std::vector<ItemSetCore> m_coreOwner;
 
       bool m_core_reset = false;
       bool m_set_reset = false;

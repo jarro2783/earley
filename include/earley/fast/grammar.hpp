@@ -384,6 +384,12 @@ namespace earley::fast::grammar
     {
       result.insert(EPSILON);
     }
+    else
+    {
+      // epsilon could have been added earlier, and we only want it if we
+      // actually got to the end of the sequence
+      result.erase(EPSILON);
+    }
 
     return result;
   }

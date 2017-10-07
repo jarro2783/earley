@@ -212,6 +212,20 @@ SCENARIO("First set of symbol sequence", "[firsts]")
 
     auto first = first_set(sequence.begin(), sequence.end(), firsts);
 
+    CHECK(first.size() == 2);
+    CHECK(first.count('a'));
+    CHECK(first.count('b'));
+  }
+
+  GIVEN("A sequence that ends in an epsilon") {
+    std::vector<Symbol> sequence{{0, false}, {1, false}};
+    FirstSets firsts{
+      {0, {EPSILON, 'a'}},
+      {1, {EPSILON, 'b'}},
+    };
+
+    auto first = first_set(sequence.begin(), sequence.end(), firsts);
+
     CHECK(first.size() == 3);
     CHECK(first.count(EPSILON));
     CHECK(first.count('a'));
@@ -269,17 +283,26 @@ TEST_CASE("Complex first set", "[firsts]")
     {
       {2, {{0, false}, {1, false}}},
     },
+    {
+      {3, {{4, false}, {'e', true}}},
+    },
+    {
+      {4, {}},
+    },
   };
 
   auto firsts = first_sets(rules);
 
-  REQUIRE(firsts.count(0));
-  REQUIRE(firsts.count(1));
-  REQUIRE(firsts.count(2));
+  for (size_t i = 0; i != 5; ++i)
+  {
+    REQUIRE(firsts.count(i));
+  }
 
   auto& first0 = firsts[0];
   auto& first1 = firsts[1];
   auto& first2 = firsts[2];
+  auto& first3 = firsts[3];
+  auto& first4 = firsts[4];
 
   CHECK(first0.count(-1));
   CHECK(first0.count('a'));
@@ -294,6 +317,12 @@ TEST_CASE("Complex first set", "[firsts]")
   CHECK(first2.count('b'));
   CHECK(first2.count('c'));
   CHECK(first2.count('d'));
+
+  CHECK(first3.size() == 1);
+  CHECK(first3.count('e'));
+
+  CHECK(first4.size() == 1);
+  CHECK(first4.count(-1));
 }
 
 SCENARIO("Follow set", "[follow]")
@@ -333,10 +362,22 @@ TEST_CASE("Sequence lookahead", "[lookahead]")
       {1, {{'a', true}}},
       {1, {{'b', true}}},
     },
+    {
+      {2, {}},
+    },
+    {
+      {3, {{2, false}, {';', true}}},
+    },
+    {
+      {4, {{3, false}, {1, false}}},
+    },
   };
 
   auto firsts = first_sets(rules);
   auto follows = follow_sets(0, rules, firsts);
+
+  CHECK(firsts[3].count(';') != 0);
+  CHECK(firsts[3].size() == 1);
 
   Items items(rules, firsts, follows, {false, false});
 
@@ -347,6 +388,11 @@ TEST_CASE("Sequence lookahead", "[lookahead]")
   CHECK(lookahead.size() == 2);
   CHECK(lookahead.count('a') != 0);
   CHECK(lookahead.count('b') != 0);
+
+  auto& r30 = rules[3][0];
+  auto lookahead2 = sequence_lookahead(r30, r30.begin(), firsts, follows);
+  CHECK(lookahead2.size() == 1);
+  CHECK(lookahead2.count(';') != 0);
 }
 
 TEST_CASE("ItemSet distances", "[itemset]")

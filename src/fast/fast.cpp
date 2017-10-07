@@ -108,6 +108,12 @@ Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
     m_grammar_new.nullable_set())
 , m_item_membership(2000)
 {
+  m_setOwner.reserve(tokens.size());
+  m_coreOwner.reserve(tokens.size());
+
+  assert(m_setOwner.capacity() == tokens.size());
+  assert(m_coreOwner.capacity() == tokens.size());
+
   m_itemSets.reserve(tokens.size());
   create_start_set();
 }
