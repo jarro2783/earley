@@ -93,7 +93,9 @@ ItemSet::add_start_item(const PItem* item, size_t distance)
   hash_combine(m_hash, distance);
 
   m_core->add_start_item(item);
-  m_distances.push_back(distance);
+  //m_distances.push_back(distance);
+  m_distances = distance_stack.emplace_back(distance);
+  //m_distances_end = m_distances + item_stack.top_size();
 }
 
 Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
@@ -189,6 +191,10 @@ Parser::parse(size_t position)
   {
     reset_set();
   }
+  else
+  {
+    set->finalise();
+  }
 
   if (core_hash.second)
   {
@@ -237,6 +243,7 @@ Parser::create_start_set()
   m_item_set_hash.insert(items);
 
   core.finalise();
+  items->finalise();
 }
 
 void
@@ -633,5 +640,6 @@ Parser::print_stats() const
 
 Stack<const Item*> ItemSetCore::item_stack;
 Stack<int> ItemSetCore::parent_stack;
+Stack<int> ItemSet::distance_stack;
 
 }

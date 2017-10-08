@@ -55,6 +55,12 @@ namespace earley
         return m_end;
       }
 
+      auto
+      operator[](int i) const
+      {
+        return *(m_begin + i);
+      }
+
       private:
       T m_begin;
       T m_end;
@@ -264,8 +270,10 @@ namespace earley
 
       ItemSet(ItemSetCore* core)
       : m_core(core)
+      , m_distances_end(nullptr)
       {
-        m_distances.reserve(10);
+        //m_distances.reserve(10);
+        m_distances = distance_stack.start();
       }
 
       ItemSet(const ItemSet&) = delete;
@@ -310,10 +318,12 @@ namespace earley
         return m_distances[i];
       }
 
-      const auto&
+      const auto
       distances() const
       {
-        return m_distances;
+        return make_range(m_distances, 
+          m_distances_end == 0 ? m_distances + distance_stack.top_size() :
+          m_distances_end);
       }
 
       size_t
@@ -340,20 +350,33 @@ namespace earley
       }
 
       void
+      finalise()
+      {
+        m_distances_end = m_distances + distance_stack.top_size();
+        distance_stack.finalise();
+      }
+
+      void
       print(const std::unordered_map<size_t, std::string>& names) const;
 
       void
       reset(ItemSetCore* core)
       {
         m_core = core;
-        m_distances.resize(0);
+        //m_distances.resize(0);
         m_hash = 0;
+        distance_stack.destroy_top();
       }
 
       private:
       ItemSetCore* m_core;
-      std::vector<size_t> m_distances;
+      //std::vector<size_t> m_distances;
       size_t m_hash = 0;
+
+      int* m_distances;
+      int* m_distances_end;
+
+      static Stack<int> distance_stack;
     };
 
     class ItemSetOwner
