@@ -427,9 +427,8 @@ Parser::create_new_set(size_t position, const TerminalList& input)
         continue;
       }
 
-      current_set->add_start_item(
-        next,
-        previous_set->actual_distance(transition) + 1);
+      unique_insert_start_item(current_set, next,
+        previous_set->actual_distance(transition)+1, position);
 
       //auto pointers = m_item_tree.insert({next,
       //  current_set,
