@@ -119,6 +119,18 @@ namespace earley
       }
 
       void
+      number(int n)
+      {
+        m_number = n;
+      }
+
+      int
+      number() const
+      {
+        return m_number;
+      }
+
+      void
       add_start_item(const PItem* item)
       {
         ++m_start_items;
@@ -240,6 +252,8 @@ namespace earley
       const Item** m_item_list = nullptr;
       const Item** m_item_list_end = nullptr;
       static Stack<const Item*> item_stack;
+
+      int m_number;
     };
 
     class ItemSet
@@ -249,7 +263,7 @@ namespace earley
       ItemSet(ItemSetCore* core)
       : m_core(core)
       {
-        m_distances.reserve(64);
+        m_distances.reserve(10);
       }
 
       ItemSet(const ItemSet&) = delete;

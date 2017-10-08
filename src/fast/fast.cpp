@@ -431,11 +431,11 @@ Parser::create_new_set(size_t position, const TerminalList& input)
         next,
         previous_set->actual_distance(transition) + 1);
 
-      auto pointers = m_item_tree.insert({next,
-        current_set,
-        previous_set->actual_distance(transition) + 1,
-      });
-      insert_unique(pointers.first->predecessor, item);
+      //auto pointers = m_item_tree.insert({next,
+      //  current_set,
+      //  previous_set->actual_distance(transition) + 1,
+      //});
+      //insert_unique(pointers.first->predecessor, item);
     }
 
     // now do all the completed items
@@ -497,10 +497,10 @@ Parser::create_new_set(size_t position, const TerminalList& input)
           unique_insert_start_item(current_set, next,
             transition_distance, position);
 
-          auto pointers = m_item_tree.insert({next, current_set,
-            from_set->actual_distance(transition) + distance});
-          insert_unique(pointers.first->reduction, item);
-          insert_unique(pointers.first->predecessor, item);
+          //auto pointers = m_item_tree.insert({next, current_set,
+          //  from_set->actual_distance(transition) + distance});
+          //insert_unique(pointers.first->reduction, item);
+          //insert_unique(pointers.first->predecessor, item);
         }
       }
     }
@@ -529,6 +529,7 @@ ItemSet::print(const std::unordered_map<size_t, std::string>& names) const
   size_t i = 0;
 
   std::cout << "  core: " << m_core << std::endl;
+  std::cout << "  Set core = " << m_core->number() << std::endl;
 
   for (; i != m_core->start_items(); ++i)
   {
@@ -605,7 +606,9 @@ Parser::next_core()
     return m_coreOwner.back();
   }
 
-  return m_coreOwner.emplace_back();
+  auto& core = m_coreOwner.emplace_back();
+  core.number(m_coreOwner.size() - 1);
+  return core;
 }
 
 ItemSet&
