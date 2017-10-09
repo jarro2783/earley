@@ -1,6 +1,7 @@
 #include <chrono>
 
 #include <earley/fast.hpp>
+#include "earley/timer.hpp"
 #include "grammar.hpp"
 #include <lexertl/generator.hpp>
 #include <lexertl/lookup.hpp>
@@ -9,33 +10,6 @@
 namespace
 {
   class Terminate {};
-
-  class Timer
-  {
-    public:
-
-    Timer()
-    : m_start(std::chrono::system_clock::now())
-    {
-    }
-
-    auto
-    now() const
-    {
-      return std::chrono::system_clock::now();
-    }
-
-    template <typename T>
-    double
-    count() const
-    {
-      return std::chrono::duration_cast<T>(
-        (now() - m_start)).count();
-    }
-
-    private:
-    std::chrono::time_point<std::chrono::system_clock> m_start;
-  };
 
   struct Position
   {
@@ -452,7 +426,7 @@ parse_c(const char* file, bool dump)
   size_t progress = symbols.size() / 100;
   std::cout << "Progress dot indicates " << progress << " tokens" << std::endl;
   try {
-    Timer timer;
+    earley::Timer timer;
     for (i = 0; i != symbols.size(); ++i)
     {
       parser.parse(i);
