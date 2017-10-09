@@ -223,7 +223,15 @@ parse_grammar(const std::string& text, bool debug)
 {
   Grammar ebnf = {
     {"Grammar", {
-      {{"Nonterminals", "Space"}, {"pass", {0}}},
+      {{"TerminalList", "Nonterminals", "Space"}, {"pass", {1}}},
+    }},
+    {"TerminalList", {
+      {{}},
+      {{"Space", 'T', 'E', 'R', 'M', "NameList"}, {"construct_terminals", {5}}},
+    }},
+    {"NameList", {
+      {{"Name"}, {"create_list", {0}}},
+      {{"NameList", "HardSpace", "Name"}, {"append_list", {0, 2}}},
     }},
     {"Nonterminals", {
       {{"Nonterminal"}, {"create_list", {0}}},
@@ -391,6 +399,7 @@ parse_grammar(const std::string& text, bool debug)
     add_action("rule", actions, &ast::action_rule);
     add_action("create_range", actions, &ast::action_create_range);
     add_action("create_nonterminal", actions, &ast::action_create_nonterminal);
+    add_action("construct_terminals", actions, &ast::action_construct_terminals);
 
     auto value = earley::run_actions(
         ebnf_pointers, ebnf_ids["Grammar"], text, actions, ebnf_items, ebnf_ids);

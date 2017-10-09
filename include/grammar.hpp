@@ -132,6 +132,12 @@ namespace earley
       std::vector<GrammarPtr> m_rules;
     };
 
+    class GrammarTerminals : public Grammar
+    {
+      public:
+      GrammarTerminals(const std::vector<std::string>& names);
+    };
+
     class Rule : public Grammar
     {
       public:
@@ -382,6 +388,16 @@ namespace earley
       }
 
       return std::make_shared<GrammarNonterminal>(name->string(), rules_ptrs);
+    }
+
+    inline
+    GrammarNode
+    action_construct_terminals(std::vector<GrammarNode>& nodes)
+    {
+      if (nodes.size() != 1)
+      {
+        return values::Failed();
+      }
     }
   }
 
