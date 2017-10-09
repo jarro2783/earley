@@ -206,13 +206,11 @@ Parser::parse(size_t position)
     // we reused a set so we can throw away the one we just started
   }
 
+  // keeping the most recent set here seems to increase reuse a bit
   auto& goto_count = lookahead_hash.first->goto_count;
-  if (goto_count < 3)
-  {
-    lookahead_hash.first->goto_sets[goto_count] = &result.first->get();
-    lookahead_hash.first->place[goto_count] = position+1;
-    ++goto_count;
-  }
+  lookahead_hash.first->goto_sets[goto_count] = &result.first->get();
+  lookahead_hash.first->place[goto_count] = position+1;
+  goto_count = (goto_count+1) % MAX_LOOKAHEAD_SETS;
 
   if (core_hash.second)
   {

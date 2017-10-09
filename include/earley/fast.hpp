@@ -14,6 +14,8 @@
 #include "earley/fast/grammar.hpp"
 #include "earley/fast/items.hpp"
 
+#define MAX_LOOKAHEAD_SETS 4
+
 namespace earley::fast
 {
   struct ItemSetOwner;
@@ -442,8 +444,9 @@ namespace earley
       int symbol;
       int lookahead;
 
-      ItemSet* goto_sets[3];
-      int place[3] = {0};
+      ItemSet* goto_sets[MAX_LOOKAHEAD_SETS];
+      int place[MAX_LOOKAHEAD_SETS] = {0};
+      int goto_position = 0;
       int goto_count = 0;
     };
 
