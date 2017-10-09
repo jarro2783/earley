@@ -140,6 +140,12 @@ namespace earley::fast
     const Item*
     get_item(const grammar::Rule*, int position);
 
+    size_t
+    items() const
+    {
+      return m_item_index;
+    }
+
     private:
 
     void
