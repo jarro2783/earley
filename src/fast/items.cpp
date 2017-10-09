@@ -59,8 +59,10 @@ Items::fill_to(const grammar::Rule* rule, ItemStore& items, size_t position)
       empty_sequence(m_nullable,
         rule->begin()+i,
         rule->end()
-      )
+      ),
+      m_item_index
     );
+    ++m_item_index;
   }
 }
 

@@ -675,7 +675,7 @@ namespace earley
 
       Items m_all_items;
 
-      ItemMembershipHash m_item_membership;
+      std::vector<std::vector<size_t>> m_item_membership;
 
       int m_lookahead_collisions = 0;
       int m_reuse = 0;

@@ -423,8 +423,6 @@ parse_c(const char* file, bool dump)
   earley::fast::Parser parser(built, symbols);
 
   size_t i;
-  size_t progress = symbols.size() / 100;
-  std::cout << "Progress dot indicates " << progress << " tokens" << std::endl;
   try {
     earley::Timer timer;
     for (i = 0; i != symbols.size(); ++i)

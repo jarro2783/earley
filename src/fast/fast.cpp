@@ -65,18 +65,22 @@ Parser::unique_insert_start_item(
   // Then if `membership[item][dot] == position` we know that we have
   // already added that item.
   // Otherwise `membership[item][dot]` will always be less than position.
-  auto result = m_item_membership.insert(item);
-  auto& membership = result.first;
-
-  if (!result.second)
+  if (m_item_membership.size() <= item->index())
   {
-    if (membership->get_entry(distance) == position)
-    {
-      return;
-    }
+    m_item_membership.resize(item->index()+1);
   }
 
-  membership->set_entry(distance, position);
+  auto& dots = m_item_membership[item->index()];
+  if (dots.size() <= distance)
+  {
+    dots.resize(distance+1);
+  }
+  else if (dots[distance] == position)
+  {
+    return;
+  }
+
+  dots[distance] = position;
   set->add_start_item(item, distance);
 }
 
@@ -108,8 +112,8 @@ Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
     m_grammar_new.first_sets(),
     m_grammar_new.follow_sets(),
     m_grammar_new.nullable_set())
-, m_item_membership(2000)
 {
+  m_item_membership.reserve(2000);
   m_setOwner.reserve(tokens.size());
   m_coreOwner.reserve(tokens.size());
 

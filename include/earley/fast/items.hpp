@@ -21,12 +21,14 @@ namespace earley::fast
       const grammar::Rule* rule,
       grammar::Rule::iterator position,
       HashSet<int> lookahead,
-      bool empty = false
+      bool empty = false,
+      size_t index = 0
     )
     : m_rule(rule)
     , m_position(position)
     , m_lookahead(std::move(lookahead))
     , m_empty_rhs(empty)
+    , m_index(index)
     {
     }
 
@@ -78,6 +80,12 @@ namespace earley::fast
       return m_empty_rhs;
     }
 
+    size_t
+    index() const
+    {
+      return m_index;
+    }
+
     std::ostream&
     print(std::ostream&, const std::unordered_map<size_t, std::string>&)
       const;
@@ -87,6 +95,7 @@ namespace earley::fast
     grammar::Rule::iterator m_position;
     HashSet<int> m_lookahead;
     bool m_empty_rhs;
+    size_t m_index;
   };
 
   typedef std::vector<Item> ItemStore;
@@ -142,6 +151,7 @@ namespace earley::fast
     const grammar::FirstSets& m_firsts;
     const grammar::FollowSets& m_follows;
     const std::vector<bool>& m_nullable;
+    size_t m_item_index = 0;
   };
 }
 
