@@ -89,7 +89,7 @@ void
 ItemSet::add_start_item(const PItem* item, size_t distance)
 {
   hash_combine(m_hash, std::hash<const PItem*>()(item));
-  hash_combine(m_hash, distance);
+  //hash_combine(m_hash, distance);
 
   m_core->add_start_item(item);
   m_distances.append(distance);
@@ -171,6 +171,18 @@ Parser::parse(size_t position)
 
   auto core_hash = m_set_core_hash.insert(set->core());
 
+  auto distance_hash = m_distance_hash.insert(set->distances());
+
+  if (!distance_hash.second)
+  {
+    set->distances().reset();
+    set->set_distance(*distance_hash.first);
+  }
+  else
+  {
+    set->distances().finalise();
+  }
+
   if (!core_hash.second)
   {
     set->set_core(*core_hash.first);
@@ -226,6 +238,7 @@ Parser::create_start_set()
   m_item_set_hash.insert(items);
 
   core.finalise();
+  items->distances().finalise();
   items->finalise();
 }
 
@@ -571,7 +584,8 @@ Parser::parse_error(size_t i)
 void
 Parser::reset_set()
 {
-  m_set_reset = true;
+  //m_set_reset = true;
+  m_setOwner.pop_back();
 }
 
 ItemSetCore&
@@ -610,6 +624,7 @@ Parser::print_stats() const
   std::cout << "Goto collisions: " << m_lookahead_collisions << std::endl;
   std::cout << "Goto successes: " << m_reuse << std::endl;
   std::cout << "Unique sets: " << m_setOwner.size() << std::endl;
+  std::cout << "Unique distances: " << m_distance_hash.size() << std::endl;
 }
 
 Stack<const Item*> ItemSetCore::item_stack;

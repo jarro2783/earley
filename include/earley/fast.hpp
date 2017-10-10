@@ -297,6 +297,7 @@ namespace earley
       reset()
       {
         m_stack->destroy_top();
+        m_stack->finalise();
         m_top = nullptr;
       }
 
@@ -343,6 +344,39 @@ namespace earley
       int* m_top = nullptr;
       int* m_end = nullptr;
       size_t m_hash = 0;
+    };
+
+    inline
+    bool
+    operator==(const StackDistances& lhs, const StackDistances& rhs)
+    {
+      return lhs.begin() == rhs.begin();
+    }
+
+    inline
+    bool
+    operator!=(const StackDistances& lhs, const StackDistances& rhs)
+    {
+      return !operator==(lhs, rhs);
+    }
+
+    struct StackDistanceHash
+    {
+      size_t
+      operator()(const StackDistances& s)
+      {
+        return s.hash();
+      }
+    };
+
+    struct StackDistanceEq
+    {
+      bool
+      operator()(const StackDistances& lhs, const StackDistances& rhs)
+      {
+        return lhs.size() == rhs.size() &&
+          std::equal(lhs.begin(), lhs.end(), rhs.begin());
+      }
     };
 
     class ItemSet
@@ -405,6 +439,12 @@ namespace earley
         return m_distances;
       }
 
+      auto&
+      distances()
+      {
+        return m_distances;
+      }
+
       size_t
       hash() const
       {
@@ -431,7 +471,8 @@ namespace earley
       void
       finalise()
       {
-        m_distances.finalise();
+        //m_distances.finalise();
+        hash_combine(m_hash, m_distances.begin());
       }
 
       void
@@ -443,6 +484,13 @@ namespace earley
         m_core = core;
         m_hash = 0;
         m_distances.reset();
+      }
+
+      void
+      set_distance(const StackDistances& d)
+      {
+        distance_stack.destroy_top();
+        m_distances = d;
       }
 
       private:
@@ -495,12 +543,17 @@ namespace earley
       }
 
       // we also have to compare the distances
-      auto& dl = pl->distances();
-      auto& dr = pr->distances();
+      //auto& dl = pl->distances();
+      //auto& dr = pr->distances();
 
       // they have the same number of start items here,
       // so their distances must have at least start_items elements
-      if (!std::equal(dl.begin(), dl.begin() + pl->core()->start_items(), dr.begin()))
+      //if (!std::equal(dl.begin(), dl.begin() + pl->core()->start_items(), dr.begin()))
+      //{
+      //  return false;
+      //}
+
+      if (pl->distances() != pr->distances())
       {
         return false;
       }
@@ -602,6 +655,8 @@ namespace earley
       typedef HashMap<SetSymbolRules, std::vector<uint16_t>> SetSymbolHash;
       typedef HashSet<SetTermLookahead> SetTermLookaheadHash;
       //typedef HashSet<ItemTreePointers> ItemTreeHash;
+      typedef HashSet<StackDistances, StackDistanceHash, StackDistanceEq>
+        DistanceHash;
 
       Parser(const grammar::Grammar&, const TerminalList&);
 
@@ -723,6 +778,7 @@ namespace earley
       SetSymbolHash m_set_symbols;
       SetTermLookaheadHash m_set_term_lookahead;
       //ItemTreeHash m_item_tree;
+      DistanceHash m_distance_hash;
 
       std::vector<bool> m_nullable;
 
