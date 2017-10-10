@@ -59,17 +59,19 @@ Parser::unique_insert_start_item(
   // We are only ever looking at the latest set, so a neat optimisation
   // here is to keep a single structure called `membership`, which is a map
   // of item -> array of position.
-  // When we insert an item with dot position `dot`, when parsing token
+  // When we insert an item with a distance `distance`, when parsing token
   // `position`, then we set
-  //   membership[item][dot] = position
-  // Then if `membership[item][dot] == position` we know that we have
+  //   membership[item][distance] = position
+  // Then if `membership[item][distance] == position` we know that we have
   // already added that item.
-  // Otherwise `membership[item][dot]` will always be less than position.
+  // Otherwise `membership[item][distance]` will always be less than position.
 
   auto& dots = m_item_membership[item->index()];
   if (dots.size() <= distance)
   {
-    dots.resize(distance+1);
+    // micro optimisation: we don't know how big this distance could ever be
+    // so double the distance to reduce allocations sometimes
+    dots.resize((distance+1)*2);
   }
   else if (dots[distance] == position)
   {
@@ -108,6 +110,7 @@ Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
     m_grammar_new.nullable_set())
 {
   m_item_membership.resize(m_all_items.items());
+
   m_setOwner.reserve(tokens.size());
   m_coreOwner.reserve(tokens.size());
 
