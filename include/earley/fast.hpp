@@ -264,16 +264,97 @@ namespace earley
       int m_number;
     };
 
+    class StackDistances
+    {
+      public:
+      StackDistances(Stack<int>& stack)
+      : m_stack(&stack)
+      {
+        stack.start();
+      }
+
+      size_t
+      size() const
+      {
+        if (m_end != nullptr)
+        {
+          return m_end - m_top;
+        }
+        else
+        {
+          return m_stack->top_size();
+        }
+      }
+
+      void
+      finalise()
+      {
+        m_end = m_top + m_stack->top_size();
+        m_stack->finalise();
+      }
+
+      void
+      reset()
+      {
+        m_stack->destroy_top();
+        m_top = nullptr;
+      }
+
+      void
+      append(int v)
+      {
+        m_top = m_stack->emplace_back(v);
+        hash_combine(m_hash, v);
+      }
+
+      size_t
+      hash() const
+      {
+        return m_hash;
+      }
+
+      int
+      operator[](int p) const
+      {
+        return m_top[p];
+      }
+
+      int*
+      begin() const
+      {
+        return m_top;
+      }
+
+      int*
+      end() const
+      {
+        if (m_end != nullptr)
+        {
+          return m_end;
+        }
+        else
+        {
+          return m_top + m_stack->top_size();
+        }
+      }
+
+      private:
+      Stack<int>* m_stack;
+      int* m_top = nullptr;
+      int* m_end = nullptr;
+      size_t m_hash = 0;
+    };
+
     class ItemSet
     {
       public:
 
       ItemSet(ItemSetCore* core)
       : m_core(core)
-      , m_distances_end(nullptr)
+      , m_distances(distance_stack)
       {
         //m_distances.reserve(10);
-        m_distances = distance_stack.start();
+        //m_distances = distance_stack.start();
       }
 
       ItemSet(const ItemSet&) = delete;
@@ -318,12 +399,10 @@ namespace earley
         return m_distances[i];
       }
 
-      const auto
+      const auto&
       distances() const
       {
-        return make_range(m_distances, 
-          m_distances_end == 0 ? m_distances + distance_stack.top_size() :
-          m_distances_end);
+        return m_distances;
       }
 
       size_t
@@ -352,8 +431,7 @@ namespace earley
       void
       finalise()
       {
-        m_distances_end = m_distances + distance_stack.top_size();
-        distance_stack.finalise();
+        m_distances.finalise();
       }
 
       void
@@ -363,19 +441,15 @@ namespace earley
       reset(ItemSetCore* core)
       {
         m_core = core;
-        //m_distances.resize(0);
         m_hash = 0;
-        distance_stack.destroy_top();
+        m_distances.reset();
       }
 
       private:
       ItemSetCore* m_core;
-      //std::vector<size_t> m_distances;
       size_t m_hash = 0;
 
-      int* m_distances;
-      int* m_distances_end;
-
+      StackDistances m_distances;
       static Stack<int> distance_stack;
     };
 

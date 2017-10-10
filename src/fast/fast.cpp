@@ -92,7 +92,7 @@ ItemSet::add_start_item(const PItem* item, size_t distance)
   hash_combine(m_hash, distance);
 
   m_core->add_start_item(item);
-  m_distances = distance_stack.emplace_back(distance);
+  m_distances.append(distance);
 }
 
 Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
