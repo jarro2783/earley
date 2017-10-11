@@ -1,11 +1,52 @@
 #ifndef EARLEY_STACK_IMP_HPP
 #define EARLEY_STACK_IMP_HPP
 
+#include <cstring>
+#include <type_traits>
+
 namespace earley::detail
 {
+  template <typename T, bool trivial_destroy>
+  struct stack_segment_destroy;
+
+  template <typename T>
+  struct stack_segment_destroy<T, true>
+  {
+    void
+    operator()(T*, T*)
+    {
+    }
+  };
+
+  template <typename T, bool trivial_copy>
+  struct stack_segment_copy;
+
+  template <typename T>
+  struct stack_segment_copy<T, true>
+  {
+    void
+    operator()(T* begin, T* end, T* dest, T*& finish)
+    {
+      size_t size = end - begin;
+      std::memmove(dest, begin, size * sizeof(T));
+      finish = dest + size;
+    }
+  };
+
   template <typename T>
   struct stack_segment
   {
+    private:
+    using item_destroy = stack_segment_destroy<T,
+      std::is_trivially_destructible<T>::value>;
+
+    using item_copy = stack_segment_copy<T,
+      std::is_trivially_copyable<T>::value>;
+
+    item_destroy m_destroy;
+    item_copy m_copy;
+
+    public:
     stack_segment()
     : stack_segment(nullptr)
     {
@@ -28,11 +69,7 @@ namespace earley::detail
     ~stack_segment() {
       delete m_previous;
 
-      for (auto i = m_memory; i != m_top; ++i)
-      {
-        i->~T();
-      }
-
+      m_destroy(m_memory, m_top);
       delete m_memory;
     }
 
@@ -68,14 +105,18 @@ namespace earley::detail
       ++m_current;
     }
 
+    // There must be enough space already
+    template <typename... Args>
+    void
+    append(T* begin, T* end)
+    {
+      m_copy(begin, end, m_top, m_current);
+    }
+
     void
     destroy_top()
     {
-      for (auto i = m_top; i != m_current; ++i)
-      {
-        i->~T();
-      }
-
+      m_destroy(m_current, m_top);
       m_current = m_top;
     }
 

@@ -80,11 +80,7 @@ namespace earley
     {
       // we need to reallocate and return the new pointer
       auto next = new detail::stack_segment<T>(m_top_segment, m_top_segment->size()*2);
-      for (auto iter = top.top(); iter != top.current(); ++iter)
-      {
-        next->emplace_back(std::move(*iter));
-      }
-
+      next->append(top.top(), top.current());
       next->emplace_back(std::forward<Args>(args)...);
 
       top.destroy_top();
