@@ -101,6 +101,7 @@ Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
 , m_item_set_hash(tokens.size() < 20000 ? 20000 : tokens.size() / 5)
 , m_set_symbols(tokens.size() < 20000 ? 20000 : tokens.size())
 , m_set_term_lookahead(tokens.size() < 30000 ? 30000 : tokens.size())
+, m_distance_hash(tokens.size() < 20000 ? 20000 : tokens.size() / 5)
 , m_all_items(m_grammar_new.all_rules(),
     m_grammar_new.first_sets(),
     m_grammar_new.follow_sets(),
@@ -243,6 +244,7 @@ Parser::create_start_set()
 }
 
 void
+__attribute__((noinline))
 Parser::expand_set(ItemSet* items)
 {
   add_empty_symbol_items(items);
