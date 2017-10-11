@@ -117,7 +117,7 @@ Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
   assert(m_setOwner.capacity() == tokens.size());
   assert(m_coreOwner.capacity() == tokens.size());
 
-  m_itemSets.reserve(tokens.size());
+  m_itemSets.reserve(tokens.size()+1);
   create_start_set();
 }
 
