@@ -519,30 +519,12 @@ namespace earley
       Container<const Item*> predecessor;
     };
 
-    struct ItemMembership
-    {
-      const Item* item;
-      std::vector<int> dot_is_member;
-
-      ItemMembership(const Item* _item)
-      : item(_item)
-      {
-      }
-
-      void
-      set_entry(size_t position, int value);
-
-      int
-      get_entry(size_t position);
-    };
-
     class Parser
     {
       public:
       typedef HashSet<SetSymbolRules> SetSymbolHash;
       typedef HashSet<SetTermLookahead> SetTermLookaheadHash;
       typedef HashSet<ItemTreePointers> ItemTreeHash;
-      typedef HashSet<ItemMembership> ItemMembershipHash;
 
       Parser(const grammar::Grammar&, const TerminalList&);
 
@@ -692,39 +674,6 @@ namespace earley
       return lhs.source == rhs.source;
     }
 
-    inline
-    bool
-    operator==(const ItemMembership& lhs, const ItemMembership& rhs)
-    {
-      return lhs.item == rhs.item;
-    }
-
-    inline
-    void
-    ItemMembership::set_entry(size_t position, int value)
-    {
-      if (dot_is_member.size() <= position)
-      {
-        dot_is_member.resize(position + 1);
-      }
-
-      dot_is_member[position] = value;
-    }
-
-    inline
-    int
-    ItemMembership::get_entry(size_t position)
-    {
-      if (dot_is_member.size() <= position)
-      {
-        return -1;
-      }
-      else
-      {
-        return dot_is_member[position];
-      }
-    }
-
     struct CoreHash
     {
       size_t
@@ -815,16 +764,6 @@ namespace std
     {
       std::hash<decltype(s.source)> h;
       return h(s.source);
-    }
-  };
-
-  template <>
-  struct hash<earley::fast::ItemMembership>
-  {
-    size_t
-    operator()(const earley::fast::ItemMembership& i) const
-    {
-      return std::hash<decltype(i.item)>()(i.item);
     }
   };
 }
