@@ -527,7 +527,7 @@ namespace earley
       public:
       typedef HashMap<SetSymbolRules, std::vector<uint16_t>> SetSymbolHash;
       typedef HashSet<SetTermLookahead> SetTermLookaheadHash;
-      typedef HashSet<ItemTreePointers> ItemTreeHash;
+      //typedef HashSet<ItemTreePointers> ItemTreeHash;
 
       Parser(const grammar::Grammar&, const TerminalList&);
 

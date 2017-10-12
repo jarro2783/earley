@@ -78,9 +78,9 @@ Items::Items(const std::vector<grammar::RuleList>& nonterminals,
   {
     for (auto& rule: rules)
     {
-      auto result = m_item_map.insert(&rule);
+      auto result = m_item_map.emplace(&rule);
 
-      fill_to(&rule, result.first->items, rule.end() - rule.begin());
+      fill_to(&rule, result.first->second, rule.end() - rule.begin());
     }
   }
 }
@@ -102,7 +102,7 @@ Items::get_item(const grammar::Rule* rule, int position)
     throw NoSuchItem();
   }
 
-  return &iter->items[position];
+  return &iter->second[position];
 }
 
 std::ostream&

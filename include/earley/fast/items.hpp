@@ -152,7 +152,7 @@ namespace earley::fast
     fill_to(const grammar::Rule* rule, ItemStore& items,
       size_t position);
 
-    HashSet<RuleItems, RuleItemHash, RuleItemEq> m_item_map;
+    HashMap<const grammar::Rule*, ItemStore, RuleItemHash, RuleItemEq> m_item_map;
 
     const grammar::FirstSets& m_firsts;
     const grammar::FollowSets& m_follows;
