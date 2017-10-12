@@ -108,3 +108,13 @@ TEST_CASE("Resize", "[resize]")
 
   CHECK(DestructCounter::destructs == inserts);
 }
+
+TEST_CASE("Hash Map", "[map]")
+{
+  earley::HashMap<int, int> h;
+  h.emplace(5);
+  auto iter = h.find(5);
+
+  REQUIRE(iter != h.end());
+  CHECK(iter->second == 0);
+}

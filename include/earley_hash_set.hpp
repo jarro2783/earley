@@ -7,10 +7,17 @@
 
 namespace earley
 {
-  template <typename T, typename Hash, typename Equal>
-  class HashSet;
+  template <typename Key, typename Value,
+    typename Hash = std::hash<Key>,
+    typename Equal = std::equal_to<Key>>
+  class HashTable;
 
-  template <typename T, typename H, typename E>
+  template <typename T,
+    typename Hash = std::hash<T>,
+    typename Equal = std::equal_to<T>>
+  using HashSet = HashTable<T, void, Hash, Equal>;
+
+  template <typename T, typename M, typename H, typename E>
   class HashSetIterator
   {
     public:
@@ -21,7 +28,7 @@ namespace earley
     typedef T* pointer;
     typedef std::forward_iterator_tag iterator_category;
 
-    HashSetIterator(const HashSet<T, H, E>* hs, size_t pos)
+    HashSetIterator(const HashTable<T, M, H, E>* hs, size_t pos)
     : m_set(hs)
     , m_pos(pos)
     {
@@ -40,7 +47,7 @@ namespace earley
       return *this;
     }
 
-    const T&
+    const auto&
     operator*() const
     {
       return *(m_set->m_memory + m_pos);
@@ -48,26 +55,28 @@ namespace earley
 
     // TODO: fix this so that it can be constant
     // whilst allowing non-key items to be changed
-    T*
+    auto
     operator->() const
     {
       return m_set->m_memory + m_pos;
     }
 
-    const HashSet<T, H, E>* m_set;
+    const HashTable<T, M, H, E>* m_set;
     size_t m_pos;
   };
 
-  template <typename T, typename H, typename E>
+  template <typename T, typename M, typename H, typename E>
   bool
-  operator==(const HashSetIterator<T, H, E>& lhs, const HashSetIterator<T, H, E>& rhs)
+  operator==(const HashSetIterator<T, M, H, E>& lhs,
+    const HashSetIterator<T, M, H, E>& rhs)
   {
     return lhs.m_set == rhs.m_set && lhs.m_pos == rhs.m_pos;
   }
 
-  template <typename T, typename H, typename E>
+  template <typename T, typename M, typename H, typename E>
   bool
-  operator!=(const HashSetIterator<T, H, E>& lhs, const HashSetIterator<T, H, E>& rhs)
+  operator!=(const HashSetIterator<T, M, H, E>& lhs,
+    const HashSetIterator<T, M, H, E>& rhs)
   {
     return !operator==(lhs, rhs);
   }
@@ -96,26 +105,97 @@ namespace earley
         }
       }
     }
+
+    template <typename T>
+    struct HashStorageConstruct
+    {
+      template <typename Value>
+      T
+      operator()(Value&& v)
+      {
+        return T(std::forward<Value>(v));
+      }
+    };
+
+    template <typename K, typename V>
+    struct HashStorageConstruct<std::pair<K, V>>
+    {
+      using Type = std::pair<K, V>;
+
+      template <typename Value>
+      Type
+      operator()(Value&& v)
+      {
+        return Type(std::forward<V>(v), V());
+      }
+
+      template <typename A, typename B>
+      Type
+      operator()(A&& a, B&& b)
+      {
+        return Type(std::move(a), std::move(b));
+      }
+    };
+
+    struct identity
+    {
+      template <typename T>
+      constexpr
+      decltype(auto)
+      operator()(T&& t) const
+      {
+        return std::forward<T>(t);
+      }
+    };
+
+    struct first
+    {
+      template <typename A, typename B>
+      constexpr
+      auto
+      operator()(const std::pair<A, B>& p) const
+      {
+        return p.first;
+      }
+    };
   }
 
   template <typename T,
-    typename Hash = std::hash<T>,
-    typename Equality = std::equal_to<T>>
-  class HashSet
+    typename Mapping = void,
+    typename Hash,
+    typename Equality
+  >
+  class HashTable
   {
+    private:
+    using IsSet = std::is_same<Mapping, void>;
+
+    using Storage = std::conditional_t<std::is_same_v<Mapping, void>,
+      T, std::pair<const T, Mapping>>;
+    using StorageSequence = std::conditional_t<std::is_same_v<Mapping, void>,
+      int, std::make_index_sequence<2>>;
+    using construct_storage_t = detail::HashStorageConstruct<Storage>;
+    construct_storage_t construct_storage;
+
+    using Key = std::conditional_t<IsSet::value,
+      detail::identity,
+      detail::first
+    >;
+    Key M_key;
+
     public:
 
-    typedef HashSetIterator<T, Hash, Equality> const_iterator;
+    typedef HashSetIterator<T, Mapping, Hash, Equality> const_iterator;
     typedef const_iterator iterator;
 
     mutable size_t collisions = 0;
 
-    HashSet()
-    : HashSet(0)
+    HashTable()
+    : HashTable(0)
     {
     }
 
-    HashSet(size_t size)
+    HashTable(size_t size)
     : m_elements(0)
     , m_size(size == 0 ? 0 : detail::next_prime(size))
     , m_first(m_size)
@@ -124,13 +204,13 @@ namespace earley
       if (m_size > 0)
       {
         m_occupied.insert(m_occupied.end(), m_size, false);
-        m_memory = static_cast<T*>(malloc(m_size * sizeof(T)));
+        m_memory = static_cast<Storage*>(malloc(m_size * sizeof(Storage)));
       }
     }
 
-    HashSet(const HashSet&) = delete;
+    HashTable(const HashTable&) = delete;
 
-    HashSet(HashSet&& rhs)
+    HashTable(HashTable&& rhs)
     : m_occupied(std::move(rhs.m_occupied))
     {
       m_memory = rhs.m_memory;
@@ -144,13 +224,13 @@ namespace earley
       rhs.m_first = 0;
     }
 
-    ~HashSet()
+    ~HashTable()
     {
       for (size_t i = 0; i != m_size; ++i)
       {
         if (m_occupied[i])
         {
-          m_memory[i].~T();
+          m_memory[i].~Storage();
         }
       }
 
@@ -181,15 +261,22 @@ namespace earley
     }
 
     std::pair<const_iterator, bool>
-    insert(const T& t)
+    insert(const Storage& t)
     {
       return insert_internal(t);
     }
 
     std::pair<const_iterator, bool>
-    insert(T&& t)
+    insert(Storage&& t)
     {
       return insert_internal(std::move(t));
+    }
+
+    template <typename... Args>
+    std::pair<const_iterator, bool>
+    emplace(Args&&... args)
+    {
+      return insert_internal(std::forward<Args>(args)...);
     }
 
     size_t
@@ -217,7 +304,7 @@ namespace earley
 
       while (true)
       {
-        if (!m_occupied[key] || Equality()(t, m_memory[key]))
+        if (!m_occupied[key] || Equality()(t, M_key(m_memory[key])))
         {
           return key;
         }
@@ -244,11 +331,11 @@ namespace earley
 
         if (m_occupied[pos])
         {
-          return HashSetIterator<T, Hash, Equality>(this, pos);
+          return HashSetIterator<T, Mapping, Hash, Equality>(this, pos);
         }
       }
 
-      return HashSetIterator<T, Hash, Equality>(this, m_size);
+      return HashSetIterator<T, Mapping, Hash, Equality>(this, m_size);
     }
 
     int
@@ -271,9 +358,42 @@ namespace earley
       return insert_unchecked(std::forward<Value>(t));
     }
 
-    template <typename Value>
+    template <typename S>
+    auto
+    insert_unpack(S&& storage, int)
+    {
+      return insert_impl(std::forward<S>(storage));
+    }
+
+    template <typename S, size_t... I>
+    auto
+    insert_unpack(S&& storage, std::index_sequence<I...>)
+    {
+      return insert_impl(std::get<I>(std::forward<S>(storage))...);
+    }
+
+    auto
+    insert_unchecked(Storage&& storage)
+    {
+      return insert_unpack(std::move(storage), StorageSequence());
+    }
+
+    auto
+    insert_unchecked(const Storage& storage)
+    {
+      return insert_unpack(storage, StorageSequence());
+    }
+
+    template <typename... Args>
+    auto
+    insert_unchecked(Args&&... args)
+    {
+      return insert_impl(std::forward<Args>(args)...);
+    }
+
+    template <typename Value, typename... Args>
     std::pair<const_iterator, bool>
-    insert_unchecked(Value&& t)
+    insert_impl(Value&& t, Args&&... args)
     {
       bool inserted = false;
 
@@ -281,7 +401,9 @@ namespace earley
 
       if (!m_occupied[pos])
       {
-        new(m_memory + pos) T (std::forward<Value>(t));
+        new(m_memory + pos) Storage (
+          construct_storage(std::forward<Value>(t), std::forward<Args>(args)...)
+        );
         m_occupied[pos] = true;
         inserted = true;
         ++m_elements;
@@ -292,19 +414,21 @@ namespace earley
         }
       }
 
-      return std::make_pair(HashSetIterator<T, Hash, Equality>(this, pos), inserted);
+      return std::make_pair(
+        HashSetIterator<T, Mapping, Hash, Equality>(this, pos), inserted);
     }
 
     void
     resize()
     {
-      HashSet<T, Hash, Equality> moved(m_size * 2 + 1);
+      HashTable<T, Mapping, Hash, Equality> moved(m_size * 2 + 1);
 
       for (size_t i = 0; i != m_size; ++i)
       {
         if (m_occupied[i])
         {
-          moved.insert_unchecked(std::move(m_memory[i]));
+          moved.insert_unchecked(std::move(m_memory[i])
+          );
         }
       }
 
@@ -312,7 +436,7 @@ namespace earley
     }
 
     void
-    swap(HashSet<T, Hash, Equality>& other)
+    swap(HashTable<T, Mapping, Hash, Equality>& other)
     {
       std::swap(other.m_memory, m_memory);
       std::swap(other.m_elements, m_elements);
@@ -321,14 +445,17 @@ namespace earley
       std::swap(other.m_size, m_size);
     }
 
-    friend class HashSetIterator<T, Hash, Equality>;
+    friend class HashSetIterator<T, Mapping, Hash, Equality>;
 
     size_t m_elements;
     size_t m_size;
     size_t m_first;
     std::vector<bool> m_occupied;
-    T* m_memory;
+    Storage* m_memory;
   };
+
+  template <typename Key, typename Value, typename... Args>
+  using HashMap = HashTable<Key, Value, Args...>;
 }
 
 #endif
