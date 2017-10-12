@@ -395,4 +395,20 @@ namespace earley::fast::grammar
   }
 }
 
+namespace std
+{
+  template <>
+  struct hash<earley::fast::grammar::Symbol>
+  {
+    size_t
+    operator()(const earley::fast::grammar::Symbol& s)
+    {
+      size_t result = s.index;
+      hash_combine(result, s.terminal);
+
+      return result;
+    }
+  };
+}
+
 #endif

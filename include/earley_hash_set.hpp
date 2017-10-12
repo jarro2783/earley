@@ -126,7 +126,7 @@ namespace earley
       Type
       operator()(Value&& v)
       {
-        return Type(std::forward<V>(v), V());
+        return Type(std::forward<Value>(v), V());
       }
 
       template <typename A, typename B>

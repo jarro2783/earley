@@ -315,7 +315,7 @@ Parser::insert_transitions(ItemSetCore* core,
 {
   SetSymbolRules tuple(core, symbol);
   auto result = insert_transition(tuple);
-  std::get<1>(result)->transitions.push_back(index);
+  std::get<1>(result)->second.push_back(index);
 }
 
 // If this item has a symbol after the dot, add an index for
@@ -347,7 +347,7 @@ Parser::item_transition(ItemSet* items, const PItem* item, size_t index)
           add_initial_item(core, get_item(&prediction, 0));
         }
       }
-      iter->transitions.push_back(index);
+      iter->second.push_back(index);
     }
 
     // if this symbol can derive empty then add the next item too
@@ -375,7 +375,7 @@ Parser::insert_transition(const SetSymbolRules& tuple)
 -> std::tuple<bool, decltype(m_set_symbols.find(tuple))>
 {
   //std::cout << "Inserting (" << tuple.set << ", (" << tuple.symbol.index << ", " << tuple.symbol.terminal << "))" << std::endl;
-  auto iter = m_set_symbols.insert(tuple);
+  auto iter = m_set_symbols.emplace(tuple);
   bool inserted = false;
 
   if (iter.second)
@@ -422,7 +422,7 @@ Parser::create_new_set(size_t position, const TerminalList& input)
   if (scans != m_set_symbols.end())
   {
     // do all the scans
-    for (auto transition: scans->transitions)
+    for (auto transition: scans->second)
     {
       auto item = previous_core.item(transition);
       auto next = get_item(&item->rule(), item->dot_index() + 1);
@@ -486,7 +486,7 @@ Parser::create_new_set(size_t position, const TerminalList& input)
           continue;
         }
 
-        for (auto transition: transitions->transitions)
+        for (auto transition: transitions->second)
         {
           auto* titem = from_core->item(transition);
           auto* next = get_item(&titem->rule(),

@@ -443,11 +443,14 @@ namespace earley
       : set(_set)
       , symbol(_symbol)
       {
+        hash = std::hash<decltype(set)>()(set);
+        size_t entry_hash = std::hash<decltype(symbol)>()(symbol);
+        hash_combine(hash, entry_hash);
       }
 
       ItemSetCore* set;
       grammar::Symbol symbol;
-      std::vector<uint16_t> transitions;
+      size_t hash;
     };
 
     struct SetTermLookahead
@@ -522,7 +525,7 @@ namespace earley
     class Parser
     {
       public:
-      typedef HashSet<SetSymbolRules> SetSymbolHash;
+      typedef HashMap<SetSymbolRules, std::vector<uint16_t>> SetSymbolHash;
       typedef HashSet<SetTermLookahead> SetTermLookaheadHash;
       typedef HashSet<ItemTreePointers> ItemTreeHash;
 
@@ -581,7 +584,7 @@ namespace earley
       SetSymbolHash::iterator
       new_symbol_index(const SetSymbolRules& item)
       {
-        return m_set_symbols.insert(item).first;
+        return m_set_symbols.emplace(item).first;
       }
 
       ItemSet*
@@ -645,7 +648,7 @@ namespace earley
 
       SetSymbolHash m_set_symbols;
       SetTermLookaheadHash m_set_term_lookahead;
-      ItemTreeHash m_item_tree;
+      //ItemTreeHash m_item_tree;
 
       std::vector<bool> m_nullable;
 
@@ -703,29 +706,12 @@ namespace earley
 namespace std
 {
   template <>
-  struct hash<earley::fast::grammar::Symbol>
-  {
-    size_t
-    operator()(const earley::fast::grammar::Symbol& s)
-    {
-      size_t result = s.index;
-      hash_combine(result, s.terminal);
-
-      return result;
-    }
-  };
-
-  template <>
   struct hash<earley::fast::SetSymbolRules>
   {
     size_t
     operator()(const earley::fast::SetSymbolRules& s)
     {
-      size_t result = std::hash<decltype(s.set)>()(s.set);
-      size_t entry_hash = std::hash<decltype(s.symbol)>()(s.symbol);
-      hash_combine(result, entry_hash);
-
-      return result;
+      return s.hash;
     }
   };
 
