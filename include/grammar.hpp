@@ -23,6 +23,32 @@ namespace earley
       virtual ~Grammar() = default;
     };
 
+    class GrammarDescription : public Grammar
+    {
+      public:
+      GrammarDescription(GrammarNode terminals, GrammarNode nonterminals)
+      : m_t(terminals)
+      , m_nt(nonterminals)
+      {
+      }
+
+      GrammarNode
+      terminals() const
+      {
+        return m_t;
+      }
+
+      GrammarNode
+      nonterminals() const
+      {
+        return m_nt;
+      }
+
+      private:
+      GrammarNode m_t;
+      GrammarNode m_nt;
+    };
+
     class GrammarList : public Grammar
     {
       public:
@@ -135,7 +161,13 @@ namespace earley
     class GrammarTerminals : public Grammar
     {
       public:
-      GrammarTerminals(const std::vector<std::string>& names);
+      GrammarTerminals(std::vector<std::pair<std::string, int>> names)
+      : m_names(std::move(names))
+      {
+      }
+
+      private:
+      std::vector<std::pair<std::string, int>> m_names;
     };
 
     class Rule : public Grammar
@@ -197,6 +229,18 @@ namespace earley
 
       std::vector<Production> m_productions;
     };
+
+    inline
+    GrammarNode
+    action_construct_grammar(std::vector<GrammarNode>& nodes)
+    {
+      if (nodes.size() != 2)
+      {
+        return values::Failed();
+      }
+
+      return std::make_shared<GrammarDescription>(nodes[0], nodes[1]);
+    }
 
     inline
     GrammarNode
@@ -398,6 +442,35 @@ namespace earley
       {
         return values::Failed();
       }
+
+      auto& node = nodes[0];
+      auto node_ptr = get<GrammarPtr>(node).get();
+      auto node_list = dynamic_cast<const GrammarList*>(node_ptr);
+
+      if (node_list == nullptr)
+      {
+        return values::Failed();
+      }
+
+      std::vector<std::pair<std::string, int>> names;
+
+      int id = 256;
+
+      for (auto& item: node_list->list())
+      {
+        auto ptr = get<GrammarPtr>(item);
+        auto string = dynamic_cast<const GrammarString*>(ptr.get());
+
+        if (string == nullptr)
+        {
+          return values::Failed();
+        }
+
+        names.push_back({string->string(), id});
+        ++id;
+      }
+
+      return std::make_shared<GrammarTerminals>(std::move(names));
     }
   }
 

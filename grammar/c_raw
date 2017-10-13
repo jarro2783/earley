@@ -1,3 +1,8 @@
+TERMS
+  AUTO
+  BREAK
+  CASE
+
 start : translation_unit
       ;
 

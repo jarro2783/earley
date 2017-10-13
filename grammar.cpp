@@ -160,7 +160,11 @@ compile_grammar(GrammarNode tree)
   check<GrammarPtr>(tree);
 
   auto ptr = get<GrammarPtr>(tree);
-  auto list = checked_cast<const GrammarList*>(ptr.get());
+  auto description = checked_cast<const GrammarDescription*>(ptr.get());
+
+  auto nonterminals = get<GrammarPtr>(description->nonterminals());
+
+  auto list = checked_cast<const GrammarList*>(nonterminals.get());
 
   std::string start;
 
@@ -223,7 +227,7 @@ parse_grammar(const std::string& text, bool debug)
 {
   Grammar ebnf = {
     {"Grammar", {
-      {{"TerminalList", "Nonterminals", "Space"}, {"pass", {1}}},
+      {{"TerminalList", "Nonterminals", "Space"}, {"construct_grammar", {0, 1}}},
     }},
     {"TerminalList", {
       {{}},
@@ -400,6 +404,7 @@ parse_grammar(const std::string& text, bool debug)
     add_action("create_range", actions, &ast::action_create_range);
     add_action("create_nonterminal", actions, &ast::action_create_nonterminal);
     add_action("construct_terminals", actions, &ast::action_construct_terminals);
+    add_action("construct_grammar", actions, &ast::action_construct_grammar);
 
     auto value = earley::run_actions(
         ebnf_pointers, ebnf_ids["Grammar"], text, actions, ebnf_items, ebnf_ids);
