@@ -7,6 +7,8 @@
 #include <lexertl/lookup.hpp>
 #include <lexertl/memory_file.hpp>
 
+#include "../c_grammar.hpp"
+
 namespace
 {
   class Terminate {};
@@ -19,6 +21,7 @@ namespace
 
   std::vector<Position> positions;
 
+  #if 0
   enum Token
   {
     // Words
@@ -92,73 +95,74 @@ namespace
 
     SPACE,
   };
+#endif
 
   earley::fast::grammar::TerminalIndices terminals
   {
-    {"_BOOL", Token::_BOOL},
-    {"_COMPLEX", Token::_COMPLEX},
-    {"_IMAGINARY", Token::_IMAGINARY},
-    {"ADD_ASSIGN", Token::ADD_ASSIGN},
-    {"AND_ASSIGN", Token::AND_ASSIGN},
-    {"AUTO", Token::AUTO},
-    {"BREAK", Token::BREAK},
-    {"CASE", Token::CASE},
-    {"CHAR", Token::CHAR},
-    {"CONST", Token::CONST},
-    {"CONSTANT", Token::CONSTANT},
-    {"CONTINUE", Token::CONTINUE},
-    {"DEFAULT", Token::DEFAULT},
-    {"DO", Token::DO},
-    {"DOUBLE", Token::DOUBLE},
-    {"ELIPSIS", Token::ELIPSIS},
-    {"ELSE", Token::ELSE},
-    {"ENUM", Token::ENUM},
-    {"EXTERN", Token::EXTERN},
-    {"FLOAT", Token::FLOAT},
-    {"FOR", Token::FOR},
-    {"GOTO", Token::GOTO},
-    {"IDENTIFIER", Token::IDENTIFIER},
-    {"IF", Token::IF},
-    {"INLINE", Token::INLINE},
-    {"INT", Token::INT},
-    {"LONG", Token::LONG},
-    {"REGISTER", Token::REGISTER},
-    {"RESTRICT", Token::RESTRICT},
-    {"RETURN", Token::RETURN},
-    {"SHORT", Token::SHORT},
-    {"SIGNED", Token::SIGNED},
-    {"SIZEOF", Token::SIZEOF},
-    {"STATIC", Token::STATIC},
-    {"STRUCT", Token::STRUCT},
-    {"SWITCH", Token::SWITCH},
-    {"TYPEDEF", Token::TYPEDEF},
-    {"UNION", Token::UNION},
-    {"UNSIGNED", Token::UNSIGNED},
-    {"VOID", Token::VOID},
-    {"VOLATILE", Token::VOLATILE},
-    {"WHILE", Token::WHILE},
+    {"_BOOL", c_Tokens::_BOOL},
+    {"_COMPLEX", c_Tokens::_COMPLEX},
+    {"_IMAGINARY", c_Tokens::_IMAGINARY},
+    {"ADD_ASSIGN", c_Tokens::ADD_ASSIGN},
+    {"AND_ASSIGN", c_Tokens::AND_ASSIGN},
+    {"AUTO", c_Tokens::AUTO},
+    {"BREAK", c_Tokens::BREAK},
+    {"CASE", c_Tokens::CASE},
+    {"CHAR", c_Tokens::CHAR},
+    {"CONST", c_Tokens::CONST},
+    {"CONSTANT", c_Tokens::CONSTANT},
+    {"CONTINUE", c_Tokens::CONTINUE},
+    {"DEFAULT", c_Tokens::DEFAULT},
+    {"DO", c_Tokens::DO},
+    {"DOUBLE", c_Tokens::DOUBLE},
+    {"ELIPSIS", c_Tokens::ELIPSIS},
+    {"ELSE", c_Tokens::ELSE},
+    {"ENUM", c_Tokens::ENUM},
+    {"EXTERN", c_Tokens::EXTERN},
+    {"FLOAT", c_Tokens::FLOAT},
+    {"FOR", c_Tokens::FOR},
+    {"GOTO", c_Tokens::GOTO},
+    {"IDENTIFIER", c_Tokens::IDENTIFIER},
+    {"IF", c_Tokens::IF},
+    {"INLINE", c_Tokens::INLINE},
+    {"INT", c_Tokens::INT},
+    {"LONG", c_Tokens::LONG},
+    {"REGISTER", c_Tokens::REGISTER},
+    {"RESTRICT", c_Tokens::RESTRICT},
+    {"RETURN", c_Tokens::RETURN},
+    {"SHORT", c_Tokens::SHORT},
+    {"SIGNED", c_Tokens::SIGNED},
+    {"SIZEOF", c_Tokens::SIZEOF},
+    {"STATIC", c_Tokens::STATIC},
+    {"STRUCT", c_Tokens::STRUCT},
+    {"SWITCH", c_Tokens::SWITCH},
+    {"TYPEDEF", c_Tokens::TYPEDEF},
+    {"UNION", c_Tokens::UNION},
+    {"UNSIGNED", c_Tokens::UNSIGNED},
+    {"VOID", c_Tokens::VOID},
+    {"VOLATILE", c_Tokens::VOLATILE},
+    {"WHILE", c_Tokens::WHILE},
 
-    {"AND_OP", Token::AND_OP},
-    {"DEC_OP", Token::DEC_OP},
-    {"DIV_ASSIGN", Token::DIV_ASSIGN},
-    {"EQ_OP", Token::EQ_OP},
-    {"GE_OP", Token::GE_OP},
-    {"INC_OP", Token::INC_OP},
-    {"LE_OP", Token::LE_OP},
-    {"LEFT_ASSIGN", Token::LEFT_ASSIGN},
-    {"LEFT_OP", Token::LEFT_OP},
-    {"NE_OP", Token::NE_OP},
-    {"OR_OP", Token::OR_OP},
-    {"PTR_OP", Token::PTR_OP},
-    {"MOD_ASSIGN", Token::MOD_ASSIGN},
-    {"MUL_ASSIGN", Token::MUL_ASSIGN},
-    {"OR_ASSIGN", Token::OR_ASSIGN},
-    {"RIGHT_ASSIGN", Token::RIGHT_ASSIGN},
-    {"RIGHT_OP", Token::RIGHT_OP},
-    {"SUB_ASSIGN", Token::SUB_ASSIGN},
-    {"XOR_ASSIGN", Token::XOR_ASSIGN},
+    {"AND_OP", c_Tokens::AND_OP},
+    {"DEC_OP", c_Tokens::DEC_OP},
+    {"DIV_ASSIGN", c_Tokens::DIV_ASSIGN},
+    {"EQ_OP", c_Tokens::EQ_OP},
+    {"GE_OP", c_Tokens::GE_OP},
+    {"INC_OP", c_Tokens::INC_OP},
+    {"LE_OP", c_Tokens::LE_OP},
+    {"LEFT_ASSIGN", c_Tokens::LEFT_ASSIGN},
+    {"LEFT_OP", c_Tokens::LEFT_OP},
+    {"NE_OP", c_Tokens::NE_OP},
+    {"OR_OP", c_Tokens::OR_OP},
+    {"PTR_OP", c_Tokens::PTR_OP},
+    {"MOD_ASSIGN", c_Tokens::MOD_ASSIGN},
+    {"MUL_ASSIGN", c_Tokens::MUL_ASSIGN},
+    {"OR_ASSIGN", c_Tokens::OR_ASSIGN},
+    {"RIGHT_ASSIGN", c_Tokens::RIGHT_ASSIGN},
+    {"RIGHT_OP", c_Tokens::RIGHT_OP},
+    {"SUB_ASSIGN", c_Tokens::SUB_ASSIGN},
+    {"XOR_ASSIGN", c_Tokens::XOR_ASSIGN},
 
-    {"STRING_LITERAL", Token::STRING_LITERAL},
+    {"STRING_LITERAL", c_Tokens::STRING_LITERAL},
   };
 }
 
@@ -168,67 +172,67 @@ get_tokens(const char* file)
   lexertl::rules rules;
   lexertl::state_machine sm;
 
-  std::initializer_list<std::pair<const char*, Token>> symbols = {
-    {"_Bool", Token::_BOOL},
-    {"_Complex", Token::_COMPLEX},
-    {"_Imaginary", Token::_IMAGINARY},
-    {"auto", Token::AUTO},
-    {"break", Token::BREAK},
-    {"case", Token::CASE},
-    {"char", Token::CHAR},
-    {"const", Token::CONST},
-    {"continue", Token::CONTINUE},
-    {"default", Token::DEFAULT},
-    {"do", Token::DO},
-    {"double", Token::DOUBLE},
-    {"else", Token::ELSE},
-    {"enum", Token::ENUM},
-    {"extern", Token::EXTERN},
-    {"float", Token::FLOAT},
-    {"for", Token::FOR},
-    {"if", Token::IF},
-    {"goto", Token::GOTO},
-    {"inline", Token::INLINE},
-    {"int", Token::INT},
-    {"long", Token::LONG},
-    {"register", Token::REGISTER},
-    {"restrict", Token::RESTRICT},
-    {"return", Token::RETURN},
-    {"signed", Token::SIGNED},
-    {"sizeof", Token::SIZEOF},
-    {"static", Token::STATIC},
-    {"struct", Token::STRUCT},
-    {"switch", Token::SWITCH},
-    {"union", Token::UNION},
-    {"unsigned", Token::UNSIGNED},
-    {"typedef", Token::TYPEDEF},
-    {"void", Token::VOID},
-    {"volatile", Token::VOLATILE},
-    {"while", Token::WHILE},
+  std::initializer_list<std::pair<const char*, c_Tokens>> symbols = {
+    {"_Bool", c_Tokens::_BOOL},
+    {"_Complex", c_Tokens::_COMPLEX},
+    {"_Imaginary", c_Tokens::_IMAGINARY},
+    {"auto", c_Tokens::AUTO},
+    {"break", c_Tokens::BREAK},
+    {"case", c_Tokens::CASE},
+    {"char", c_Tokens::CHAR},
+    {"const", c_Tokens::CONST},
+    {"continue", c_Tokens::CONTINUE},
+    {"default", c_Tokens::DEFAULT},
+    {"do", c_Tokens::DO},
+    {"double", c_Tokens::DOUBLE},
+    {"else", c_Tokens::ELSE},
+    {"enum", c_Tokens::ENUM},
+    {"extern", c_Tokens::EXTERN},
+    {"float", c_Tokens::FLOAT},
+    {"for", c_Tokens::FOR},
+    {"if", c_Tokens::IF},
+    {"goto", c_Tokens::GOTO},
+    {"inline", c_Tokens::INLINE},
+    {"int", c_Tokens::INT},
+    {"long", c_Tokens::LONG},
+    {"register", c_Tokens::REGISTER},
+    {"restrict", c_Tokens::RESTRICT},
+    {"return", c_Tokens::RETURN},
+    {"signed", c_Tokens::SIGNED},
+    {"sizeof", c_Tokens::SIZEOF},
+    {"static", c_Tokens::STATIC},
+    {"struct", c_Tokens::STRUCT},
+    {"switch", c_Tokens::SWITCH},
+    {"union", c_Tokens::UNION},
+    {"unsigned", c_Tokens::UNSIGNED},
+    {"typedef", c_Tokens::TYPEDEF},
+    {"void", c_Tokens::VOID},
+    {"volatile", c_Tokens::VOLATILE},
+    {"while", c_Tokens::WHILE},
 
     // symbols
-    {R"("+=")", Token::ADD_ASSIGN},
-    {"&=", Token::AND_ASSIGN},
-    {"&&", Token::AND_OP},
-    {"--", Token::DEC_OP},
-    {R"("/=")", Token::DIV_ASSIGN},
-    {R"("...")", Token::ELIPSIS},
-    {"==", Token::EQ_OP},
-    {">=", Token::GE_OP},
-    {R"("++")", Token::INC_OP},
-    {"<=", Token::LE_OP},
-    {"<<=", Token::LEFT_ASSIGN},
-    {"<<", Token::LEFT_OP},
-    {"%=", Token::MOD_ASSIGN},
-    {R"("*=")", Token::MUL_ASSIGN},
-    {"!=", Token::NE_OP},
-    {R"("|=")", Token::OR_ASSIGN},
-    {R"("||")", Token::OR_OP},
-    {"->", Token::PTR_OP},
-    {">>=", Token::RIGHT_ASSIGN},
-    {">>", Token::RIGHT_OP},
-    {"-=", Token::SUB_ASSIGN},
-    {R"("^=")", Token::XOR_ASSIGN},
+    {R"("+=")", c_Tokens::ADD_ASSIGN},
+    {"&=", c_Tokens::AND_ASSIGN},
+    {"&&", c_Tokens::AND_OP},
+    {"--", c_Tokens::DEC_OP},
+    {R"("/=")", c_Tokens::DIV_ASSIGN},
+    {R"("...")", c_Tokens::ELIPSIS},
+    {"==", c_Tokens::EQ_OP},
+    {">=", c_Tokens::GE_OP},
+    {R"("++")", c_Tokens::INC_OP},
+    {"<=", c_Tokens::LE_OP},
+    {"<<=", c_Tokens::LEFT_ASSIGN},
+    {"<<", c_Tokens::LEFT_OP},
+    {"%=", c_Tokens::MOD_ASSIGN},
+    {R"("*=")", c_Tokens::MUL_ASSIGN},
+    {"!=", c_Tokens::NE_OP},
+    {R"("|=")", c_Tokens::OR_ASSIGN},
+    {R"("||")", c_Tokens::OR_OP},
+    {"->", c_Tokens::PTR_OP},
+    {">>=", c_Tokens::RIGHT_ASSIGN},
+    {">>", c_Tokens::RIGHT_OP},
+    {"-=", c_Tokens::SUB_ASSIGN},
+    {R"("^=")", c_Tokens::XOR_ASSIGN},
   };
 
   std::vector<int> characters{
@@ -287,24 +291,24 @@ get_tokens(const char* file)
   rules.push("\\?", '?');
   rules.push("\\|", '|');
 
-  rules.push("{L}{A}*", Token::IDENTIFIER);
+  rules.push("{L}{A}*", c_Tokens::IDENTIFIER);
 
   // integers
-  rules.push("{NZ}{D}*{IS}?", Token::CONSTANT);
-  rules.push("{HP}{H}+{IS}?", Token::CONSTANT);
-  rules.push("0{O}*{IS}?", Token::CONSTANT);
+  rules.push("{NZ}{D}*{IS}?", c_Tokens::CONSTANT);
+  rules.push("{HP}{H}+{IS}?", c_Tokens::CONSTANT);
+  rules.push("0{O}*{IS}?", c_Tokens::CONSTANT);
 
   // character
-  rules.push(R"**({CP}?'([^'\\\n]|{ES})+')**", Token::CONSTANT);
+  rules.push(R"**({CP}?'([^'\\\n]|{ES})+')**", c_Tokens::CONSTANT);
 
   // floats
-  rules.push("{D}+{E}{FS}?", Token::CONSTANT);
-  rules.push("{D}*\\.{D}+{E}?{FS}?", Token::CONSTANT);
+  rules.push("{D}+{E}{FS}?", c_Tokens::CONSTANT);
+  rules.push("{D}*\\.{D}+{E}?{FS}?", c_Tokens::CONSTANT);
 
   // string
-  rules.push(R"**(({SP}?["]([^\\"\n\r]|{ES})*\"{WS}*)+)**", Token::STRING_LITERAL);
+  rules.push(R"**(({SP}?["]([^\\"\n\r]|{ES})*\"{WS}*)+)**", c_Tokens::STRING_LITERAL);
 
-  rules.push("{WS}", Token::SPACE);
+  rules.push("{WS}", c_Tokens::SPACE);
 
   lexertl::memory_file mf(file);
 
@@ -360,7 +364,7 @@ get_tokens(const char* file)
       std::cerr << std::endl;
 #endif
 
-      if (results.id != Token::SPACE)
+      if (results.id != c_Tokens::SPACE)
       {
         positions.push_back({line, column});
         tokens.push_back(results.id);
@@ -386,6 +390,7 @@ get_tokens(const char* file)
 void
 parse_c(const char* file, bool dump)
 {
+#if 0
   lexertl::memory_file c_bnf("grammar/c_raw");
 
   if (c_bnf.data() == 0)
@@ -397,10 +402,11 @@ parse_c(const char* file, bool dump)
 
   std::cout << "Building grammar" << std::endl;
   auto [grammar, g_terminals, start] = earley::parse_grammar(c_definition);
+#endif
 
   auto tokens = get_tokens(file);
   earley::fast::TerminalList symbols(tokens.begin(), tokens.end());
-  earley::fast::grammar::Grammar built(start, grammar, terminals);
+  earley::fast::grammar::Grammar built("start", ::c_grammar, ::c_terminals);
 
   auto valid = built.validate();
 

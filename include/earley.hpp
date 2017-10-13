@@ -739,7 +739,7 @@ namespace earley
   typedef std::unordered_map<std::string, std::vector<RuleWithAction>>
     Grammar;
 
-  typedef std::unordered_map<std::string, int> TerminalMap;
+  typedef std::unordered_map<std::string, size_t> TerminalMap;
 
   ItemSetList
   invert_items(const ItemSetList& item_sets);

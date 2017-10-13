@@ -6,9 +6,20 @@ rule cxx
 rule cxx_link
   command = g++ $in -o $out
 
+rule archive
+  command = ar rc $out $in && ranlib $out
+
+rule generate
+  command = ./generator $PREFIX $in $OUTPUT
+
 rule TEST_COMMAND
   command = $COMMAND
   pool    = console
+
+# archives
+build .build/fast.a: archive .build/fast/fast.o .build/fast/items.o $
+  .build/fast/grammar.o
+build .build/earley.a: archive .build/grammar_util.o earley.o grammar.o
 
 build .build/grammar_util.o: cxx src/grammar_util.cpp
 
@@ -23,12 +34,6 @@ build .build/fast/items.o: cxx src/fast/items.cpp
 
 build earley: cxx_link earley.o .build/fast/fast.o grammar.o main.o numbers.o $
   .build/grammar_util.o .build/fast/items.o .build/fast/grammar.o
-
-# generator
-# build .build/generate.o: cxx src/generate.cpp
-#   CFLAGS=-I../lexertl14
-#
-# build generator: cxx_link .build/generate.o
 
 # tests
 build test/.build/fast.o: cxx test/fast.cpp
@@ -82,6 +87,18 @@ build .build/examples/c.o: cxx examples/c.cpp
 
 build yc: cxx_link .build/examples/c.o $
   earley.o grammar.o .build/fast/fast.o .build/fast/grammar.o $
-  .build/fast/items.o .build/grammar_util.o
+  .build/fast/items.o .build/grammar_util.o $
+  .build/c_grammar.o
 
-default earley test/fast test/grammar test/hash test/stack lexer calculator yc
+# generator
+build .build/generate.o: cxx src/generate.cpp
+  CFLAGS=-I../lexertl14
+
+build generator: cxx_link .build/generate.o .build/earley.a .build/fast.a 
+build c_grammar.cpp c_grammar.hpp: generate grammar/c_raw | generator
+  PREFIX=c
+  OUTPUT=c_grammar
+build .build/c_grammar.o: cxx c_grammar.cpp
+
+default earley test/fast test/grammar test/hash test/stack lexer $
+  calculator yc generator

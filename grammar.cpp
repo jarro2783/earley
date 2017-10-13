@@ -232,11 +232,13 @@ parse_grammar(const std::string& text, bool debug)
 {
   Grammar ebnf = {
     {"Grammar", {
-      {{"TerminalList", "Nonterminals", "Space"}, {"construct_grammar", {0, 1}}},
+      {{"TerminalList", "HardSpace", "Nonterminals", "Space"},
+        {"construct_grammar", {0, 2}}},
     }},
     {"TerminalList", {
       {{}},
-      {{"Space", 'T', 'E', 'R', 'M', "NameList"}, {"construct_terminals", {5}}},
+      {{"Space", 'T', 'E', 'R', 'M', "HardSpace", "NameList"},
+        {"construct_terminals", {6}}},
     }},
     {"NameList", {
       {{"Name"}, {"create_list", {0}}},

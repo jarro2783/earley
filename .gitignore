@@ -7,3 +7,4 @@ lexer
 !include/earley/
 __pycache__/
 yc
+c_grammar.*
