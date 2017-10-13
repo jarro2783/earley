@@ -166,6 +166,12 @@ namespace earley
       {
       }
 
+      auto&
+      names() const
+      {
+        return m_names;
+      }
+
       private:
       std::vector<std::pair<std::string, int>> m_names;
     };
@@ -478,7 +484,7 @@ namespace earley
   parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
     const std::string& text = std::string());
 
-  std::tuple<earley::Grammar, std::string>
+  std::tuple<earley::Grammar, earley::TerminalMap, std::string>
   parse_grammar(const std::string& text, bool debug=false);
 
 }

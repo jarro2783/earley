@@ -152,7 +152,7 @@ add_nonterminal(earley::Grammar& grammar, GrammarNode tree)
   return nt->name();
 }
 
-std::tuple<earley::Grammar, std::string>
+std::tuple<earley::Grammar, earley::TerminalMap, std::string>
 compile_grammar(GrammarNode tree)
 {
   earley::Grammar grammar;
@@ -163,7 +163,6 @@ compile_grammar(GrammarNode tree)
   auto description = checked_cast<const GrammarDescription*>(ptr.get());
 
   auto nonterminals = get<GrammarPtr>(description->nonterminals());
-
   auto list = checked_cast<const GrammarList*>(nonterminals.get());
 
   std::string start;
@@ -177,7 +176,13 @@ compile_grammar(GrammarNode tree)
     }
   }
 
-  return {grammar, start};
+  auto terms_ptr = get<GrammarPtr>(description->terminals());
+  auto terms = checked_cast<const GrammarTerminals*>(terms_ptr.get());
+  auto& names = terms->names();
+
+  earley::TerminalMap terminals(names.begin(), names.end());
+
+  return {grammar, terminals, start};
 }
 
 }
@@ -222,7 +227,7 @@ parse(const earley::Grammar& grammar, const std::string& start,
 
 }
 
-std::tuple<earley::Grammar, std::string>
+std::tuple<earley::Grammar, earley::TerminalMap, std::string>
 parse_grammar(const std::string& text, bool debug)
 {
   Grammar ebnf = {
@@ -421,7 +426,7 @@ void
 parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
   const std::string& text)
 {
-  auto [built, start] = parse_grammar(input, debug);
+  auto [built, terminals, start] = parse_grammar(input, debug);
 
   if (text.size())
   {

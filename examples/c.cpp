@@ -396,7 +396,7 @@ parse_c(const char* file, bool dump)
   std::string c_definition(c_bnf.data(), c_bnf.data() + c_bnf.size());
 
   std::cout << "Building grammar" << std::endl;
-  auto [grammar, start] = earley::parse_grammar(c_definition);
+  auto [grammar, g_terminals, start] = earley::parse_grammar(c_definition);
 
   auto tokens = get_tokens(file);
   earley::fast::TerminalList symbols(tokens.begin(), tokens.end());
