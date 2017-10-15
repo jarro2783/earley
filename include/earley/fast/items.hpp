@@ -138,7 +138,24 @@ namespace earley::fast
       const std::vector<bool>&);
 
     const Item*
-    get_item(const grammar::Rule*, int position);
+    get_item(const grammar::Rule* rule, int position)
+    {
+      auto iter = m_item_map.find(rule);
+
+      if (iter == m_item_map.end())
+      {
+        throw NoSuchItem();
+      }
+
+      auto length = rule->end() - rule->begin();
+
+      if (position > length)
+      {
+        throw NoSuchItem();
+      }
+
+      return &iter->second[position];
+    }
 
     size_t
     items() const

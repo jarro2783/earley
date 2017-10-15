@@ -85,26 +85,6 @@ Items::Items(const std::vector<grammar::RuleList>& nonterminals,
   }
 }
 
-const Item*
-Items::get_item(const grammar::Rule* rule, int position)
-{
-  auto iter = m_item_map.find(rule);
-
-  if (iter == m_item_map.end())
-  {
-    throw NoSuchItem();
-  }
-
-  auto length = rule->end() - rule->begin();
-
-  if (position > length)
-  {
-    throw NoSuchItem();
-  }
-
-  return &iter->second[position];
-}
-
 std::ostream&
 Item::print(
   std::ostream& os,
