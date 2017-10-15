@@ -20,16 +20,28 @@ namespace earley::fast
     (
       const grammar::Rule* rule,
       grammar::Rule::iterator position,
-      HashSet<int> lookahead,
+      const HashSet<int>& lookahead,
       bool empty = false,
       size_t index = 0
     )
     : m_rule(rule)
     , m_position(position)
-    , m_lookahead(std::move(lookahead))
     , m_empty_rhs(empty)
     , m_index(index)
     {
+      for (auto symbol : lookahead)
+      {
+        // TODO: fix EOF handling further up
+        // an END_OF_INPUT will never be in the lookahead set of an item
+        if (symbol != END_OF_INPUT)
+        {
+          if (m_lookahead.size() <= static_cast<size_t>(symbol))
+          {
+            m_lookahead.resize(symbol+1);
+          }
+          m_lookahead[symbol] = true;
+        }
+      }
     }
 
     auto
@@ -71,7 +83,9 @@ namespace earley::fast
     bool
     in_lookahead(int symbol) const
     {
-      return m_lookahead.count(symbol) > 0;
+      return 
+        (m_lookahead.size() > static_cast<size_t>(symbol) &&
+        m_lookahead[symbol]);
     }
 
     bool
@@ -93,7 +107,8 @@ namespace earley::fast
     private:
     const grammar::Rule* m_rule;
     grammar::Rule::iterator m_position;
-    HashSet<int> m_lookahead;
+    std::vector<bool> m_lookahead;
+    bool m_eof_lookahead = false;
     bool m_empty_rhs;
     size_t m_index;
   };
