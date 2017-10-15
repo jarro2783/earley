@@ -569,8 +569,8 @@ translation_unit : external_declaration
                  ;
 
 
-external_declaration : function_definition
-                     | declaration
+external_declaration : declaration
+                     | function_definition
                      ;
 
 

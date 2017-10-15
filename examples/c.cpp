@@ -200,6 +200,7 @@ get_tokens(const char* file)
     {"return", c_Tokens::RETURN},
     {"signed", c_Tokens::SIGNED},
     {"sizeof", c_Tokens::SIZEOF},
+    {"short", c_Tokens::SHORT},
     {"static", c_Tokens::STATIC},
     {"struct", c_Tokens::STRUCT},
     {"switch", c_Tokens::SWITCH},
@@ -291,8 +292,6 @@ get_tokens(const char* file)
   rules.push("\\?", '?');
   rules.push("\\|", '|');
 
-  rules.push("{L}{A}*", c_Tokens::IDENTIFIER);
-
   // integers
   rules.push("{NZ}{D}*{IS}?", c_Tokens::CONSTANT);
   rules.push("{HP}{H}+{IS}?", c_Tokens::CONSTANT);
@@ -309,6 +308,8 @@ get_tokens(const char* file)
   rules.push(R"**(({SP}?["]([^\\"\n\r]|{ES})*\"{WS}*)+)**", c_Tokens::STRING_LITERAL);
 
   rules.push("{WS}", c_Tokens::SPACE);
+
+  rules.push("{L}{A}*", c_Tokens::IDENTIFIER);
 
   lexertl::memory_file mf(file);
 
@@ -452,7 +453,10 @@ parse_c(const char* file, bool dump)
       for (size_t j = 0; j <= i; ++j)
       {
         std::cout << "-- Set " << j << " --" << std::endl;
-        std::cout << "Symbol: " << tokens[j] << std::endl;
+        if (j > 0)
+        {
+          std::cout << "Symbol: " << tokens[j-1] << std::endl;
+        }
         parser.print_set(j);
       }
     }

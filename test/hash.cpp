@@ -118,3 +118,32 @@ TEST_CASE("Hash Map", "[map]")
   REQUIRE(iter != h.end());
   CHECK(iter->second == 0);
 }
+
+TEST_CASE("Counts", "[count]")
+{
+  earley::HashSet<int> h(50);
+  for (size_t i = 0; i != 1000; ++i)
+  {
+    if (i % 2 == 0)
+    {
+      h.insert(i);
+    }
+  }
+
+  for (size_t i = 0; i != 1000; ++i)
+  {
+    if (i % 2 == 0)
+    {
+      CHECK(h.count(i) == 1);
+    }
+    else
+    {
+      CHECK(h.count(i) == 0);
+    }
+  }
+
+  for (size_t i = 1000; i != 2000; ++i)
+  {
+    CHECK(h.count(i) == 0);
+  }
+}

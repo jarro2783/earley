@@ -667,7 +667,7 @@ namespace earley
 
       auto
       insert_transition(const SetSymbolRules& tuple)
-      -> std::tuple<bool, decltype(m_set_symbols.find(tuple))>;
+      -> decltype(m_set_symbols.emplace(tuple));
     };
 
     inline

@@ -315,7 +315,7 @@ Parser::insert_transitions(ItemSetCore* core,
 {
   SetSymbolRules tuple(core, symbol);
   auto result = insert_transition(tuple);
-  std::get<1>(result)->second.push_back(index);
+  result.first->second.push_back(index);
 }
 
 // If this item has a symbol after the dot, add an index for
@@ -337,7 +337,7 @@ Parser::item_transition(ItemSet* items, const PItem* item, size_t index)
     else
     {
       SetSymbolRules tuple(core, get_symbol(symbol));
-      auto [inserted, iter] = insert_transition(tuple);
+      auto [iter, inserted] = insert_transition(tuple);
       if (inserted)
       {
         // prediction
@@ -372,19 +372,10 @@ Parser::item_completion(ItemSet*, const PItem*, size_t)
 
 auto
 Parser::insert_transition(const SetSymbolRules& tuple)
--> std::tuple<bool, decltype(m_set_symbols.find(tuple))>
+-> decltype(m_set_symbols.emplace(tuple))
 {
   //std::cout << "Inserting (" << tuple.set << ", (" << tuple.symbol.index << ", " << tuple.symbol.terminal << "))" << std::endl;
-  auto iter = m_set_symbols.emplace(tuple);
-  bool inserted = false;
-
-  if (iter.second)
-  {
-    //insert a new set
-    inserted = true;
-  }
-
-  return std::make_tuple(inserted, iter.first);
+  return m_set_symbols.emplace(tuple);
 }
 
 void
