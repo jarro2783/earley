@@ -155,9 +155,8 @@ namespace earley::fast
     const Item*
     get_item(const grammar::Rule* rule, int position)
     {
-      auto iter = m_item_map.find(rule);
-
-      if (iter == m_item_map.end())
+      auto store = find_rule(rule);
+      if (store == nullptr)
       {
         throw NoSuchItem();
       }
@@ -169,7 +168,7 @@ namespace earley::fast
         throw NoSuchItem();
       }
 
-      return &iter->second[position];
+      return &(*store)[position];
     }
 
     size_t
@@ -184,7 +183,13 @@ namespace earley::fast
     fill_to(const grammar::Rule* rule, ItemStore& items,
       size_t position);
 
-    HashMap<const grammar::Rule*, ItemStore, RuleItemHash, RuleItemEq> m_item_map;
+    ItemStore&
+    insert_rule(const grammar::Rule*);
+
+    const ItemStore*
+    find_rule(const grammar::Rule* rule);
+
+    std::vector<std::pair<const grammar::Rule*, ItemStore>> m_rule_map;
 
     const grammar::FirstSets& m_firsts;
     const grammar::FollowSets& m_follows;

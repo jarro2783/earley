@@ -30,6 +30,27 @@ empty_sequence(const std::vector<bool>& nullable,
   return true;
 }
 
+struct RuleItemComparator
+{
+  bool
+  operator()(
+    const grammar::Rule* r,
+    const std::pair<const grammar::Rule*, ItemStore>& p
+  )
+  {
+    return r < p.first;
+  }
+
+  bool
+  operator()(
+    const std::pair<const grammar::Rule*, ItemStore>& p,
+    const grammar::Rule* r
+  )
+  {
+    return p.first < r;
+  }
+};
+
 }
 
 // TODO: move this to utils and test it
@@ -78,11 +99,41 @@ Items::Items(const std::vector<grammar::RuleList>& nonterminals,
   {
     for (auto& rule: rules)
     {
-      auto result = m_item_map.emplace(&rule);
-
-      fill_to(&rule, result.first->second, rule.end() - rule.begin());
+      auto& position = insert_rule(&rule);
+      fill_to(&rule, position, rule.end() - rule.begin());
     }
   }
+}
+
+// There better be no duplicates
+ItemStore&
+Items::insert_rule(const grammar::Rule* rule)
+{
+  auto pos = std::upper_bound(m_rule_map.begin(), m_rule_map.end(), rule,
+    RuleItemComparator());
+
+  auto result = m_rule_map.insert(pos, {rule, ItemStore()});
+
+  return result->second;
+}
+
+const ItemStore*
+Items::find_rule(const grammar::Rule* rule)
+{
+  auto pos = std::lower_bound(m_rule_map.begin(), m_rule_map.end(), rule,
+    RuleItemComparator());
+
+  if (pos == m_rule_map.end())
+  {
+    return nullptr;
+  }
+
+  if (pos->first != rule)
+  {
+    return nullptr;
+  }
+
+  return &pos->second;
 }
 
 std::ostream&
