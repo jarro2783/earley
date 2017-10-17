@@ -105,35 +105,25 @@ Items::Items(const std::vector<grammar::RuleList>& nonterminals,
   }
 }
 
-// There better be no duplicates
 ItemStore&
 Items::insert_rule(const grammar::Rule* rule)
 {
-  auto pos = std::upper_bound(m_rule_map.begin(), m_rule_map.end(), rule,
-    RuleItemComparator());
-
-  auto result = m_rule_map.insert(pos, {rule, ItemStore()});
-
-  return result->second;
+  if (m_rule_array.size() <= rule->index())
+  {
+    m_rule_array.resize(rule->index()+1);
+  }
+  return m_rule_array[rule->index()];
 }
 
 const ItemStore*
 Items::find_rule(const grammar::Rule* rule)
 {
-  auto pos = std::lower_bound(m_rule_map.begin(), m_rule_map.end(), rule,
-    RuleItemComparator());
-
-  if (pos == m_rule_map.end())
+  if (m_rule_array.size() <= rule->index())
   {
     return nullptr;
   }
 
-  if (pos->first != rule)
-  {
-    return nullptr;
-  }
-
-  return &pos->second;
+  return &m_rule_array[rule->index()];
 }
 
 std::ostream&

@@ -70,6 +70,7 @@ namespace earley::fast::grammar
     : m_nonterminal(nonterminal)
     , m_entries(std::move(symbols))
     {
+      m_index = global_rule_counter++;
     }
 
     int
@@ -90,11 +91,20 @@ namespace earley::fast::grammar
       return m_entries.end();
     }
 
+    size_t
+    index() const
+    {
+      return m_index;
+    }
+
     private:
 
     int m_nonterminal;
     std::vector<Symbol> m_entries;
     ActionArgs m_actions;
+    size_t m_index;
+
+    static size_t global_rule_counter;
 
     public:
     typedef decltype(m_entries)::const_iterator iterator;

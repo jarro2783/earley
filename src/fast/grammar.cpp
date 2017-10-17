@@ -4,6 +4,8 @@
 namespace earley::fast::grammar
 {
 
+size_t Rule::global_rule_counter = 0;
+
 Grammar::Grammar(
   const std::string& start,
   const ::earley::Grammar& grammar,

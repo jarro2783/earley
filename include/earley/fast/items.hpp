@@ -189,7 +189,7 @@ namespace earley::fast
     const ItemStore*
     find_rule(const grammar::Rule* rule);
 
-    std::vector<std::pair<const grammar::Rule*, ItemStore>> m_rule_map;
+    std::vector<ItemStore> m_rule_array;
 
     const grammar::FirstSets& m_firsts;
     const grammar::FollowSets& m_follows;
