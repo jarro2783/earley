@@ -404,8 +404,19 @@ parse_c(const char* file, bool dump)
   std::cout << "Building grammar" << std::endl;
   auto [grammar, g_terminals, start] = earley::parse_grammar(c_definition);
 #endif
+  auto memstart = static_cast<char*>(sbrk(0));
 
+  std::cout << "Reading tokens" << std::endl;
+
+  earley::Timer scan_timer;
   auto tokens = get_tokens(file);
+  std::cout << "Scanner took " << scan_timer.count<std::chrono::microseconds>()
+            << " microseconds" << std::endl
+            << "Used " << (static_cast<char*>(sbrk(0)) - memstart)/1024
+            << "kb of memory" << std::endl;
+
+
+  std::cout << "Building grammar" << std::endl;
   earley::fast::TerminalList symbols(tokens.begin(), tokens.end());
   earley::fast::grammar::Grammar built("start", ::c_grammar, ::c_terminals);
 
@@ -425,7 +436,6 @@ parse_c(const char* file, bool dump)
     throw Terminate();
   }
 
-  auto memstart = sbrk(0);
   std::cout << "Parsing " << symbols.size() << " tokens" << std::endl;
   earley::fast::Parser parser(built, symbols);
 
@@ -442,7 +452,7 @@ parse_c(const char* file, bool dump)
     auto memend = sbrk(0);
 
     std::cout << "Used " 
-      << (static_cast<char*>(memend) - static_cast<char*>(memstart)) / 1000
+      << (static_cast<char*>(memend) - static_cast<char*>(memstart)) / 1024
       << "kb of memory" << std::endl;
 
     parser.print_stats();
