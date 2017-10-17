@@ -3,9 +3,6 @@
 #include "earley/fast.hpp"
 #include "earley/grammar_util.hpp"
 
-#define HASH_REUSE
-#define ITEM_SET_HASH
-
 namespace earley::fast
 {
 
@@ -157,16 +154,12 @@ Parser::parse(size_t position)
       while (which < lookahead_hash.first->goto_count)
       {
         auto place = lookahead_hash.first->place[which];
-        //std::cout << "Checking reuse at " << position << " from " << place << std::endl;
         if (compare_lookahead_sets(m_itemSets, lookahead_hash.first->goto_sets[which],
           place, position))
         {
-          //std::cout << "Would reuse at " << position << " from " << place << std::endl;
           ++m_reuse;
-#ifdef HASH_REUSE
           m_itemSets.push_back(m_itemSets[place]);
           return;
-#endif
         }
         ++which;
       }
@@ -200,17 +193,6 @@ Parser::parse(size_t position)
   if (core_hash.second)
   {
     expand_set(&result.first->get());
-  }
-  else
-  {
-#if 0
-    std::cout << "Reused a set at position " << position << std::endl;
-    auto& names = m_grammar_new.names();
-    result.first->get()->print({names.begin(), names.end()});
-    std::cout << "=== Copy ===" << std::endl;
-    copy.print({names.begin(), names.end()});
-#endif
-    // we reused a set so we can throw away the one we just started
   }
 
   // keeping the most recent set here seems to increase reuse a bit
