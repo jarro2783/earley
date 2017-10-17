@@ -281,14 +281,14 @@ Parser::add_non_start_items(ItemSet* items)
     item_transition(items, core->item(i), i);
   }
 
-  for (size_t i = 0; i < core->all_items(); ++i)
-  {
-    auto item = core->item(i);
-    if (item->dot() == item->end())
-    {
-      item_completion(items, item, i);
-    }
-  }
+  //for (size_t i = 0; i < core->all_items(); ++i)
+  //{
+  //  auto item = core->item(i);
+  //  if (item->dot() == item->end())
+  //  {
+  //    item_completion(items, item, i);
+  //  }
+  //}
 }
 
 void
