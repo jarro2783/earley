@@ -64,13 +64,13 @@ Parser::unique_insert_start_item(
   // Otherwise `membership[item][distance]` will always be less than position.
 
   auto& dots = m_item_membership[item->index()];
-  if (dots.size() <= distance)
+  if (dots.size() <= static_cast<size_t>(distance))
   {
     // micro optimisation: we don't know how big this distance could ever be
     // so double the distance to reduce allocations sometimes
     dots.resize((distance+1)*2);
   }
-  else if (dots[distance] == position)
+  else if (dots[distance] == static_cast<size_t>(position))
   {
     return;
   }

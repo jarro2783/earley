@@ -429,6 +429,7 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
   const std::string& text)
 {
   auto [built, terminals, start] = parse_grammar(input, debug);
+  (void)terminals;
 
   if (text.size())
   {

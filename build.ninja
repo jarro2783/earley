@@ -42,11 +42,11 @@ build test/.build/hash.o: cxx test/hash.cpp
 build test/.build/main.o: cxx test/main.cpp
 build test/.build/stack.o: cxx test/stack.cpp
 
-build test/hash: cxx_link test/.build/main.o test/.build/hash.o
+build test/hash: cxx_link test/.build/main.o test/.build/hash.o earley.o
 build test/grammar: cxx_link test/.build/main.o test/.build/grammar_util.o $
   .build/grammar_util.o
 build test/fast: cxx_link test/.build/main.o test/.build/fast.o $
-  .build/fast/grammar.o .build/fast/items.o .build/fast/fast.o
+  .build/fast/grammar.o .build/fast/items.o .build/fast/fast.o earley.o
 build test/stack: cxx_link test/.build/stack.o test/.build/main.o
 
 build test_fast: TEST_COMMAND test/fast

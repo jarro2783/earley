@@ -15,6 +15,8 @@ using namespace earley;
 namespace earley
 {
 
+size_t hashtable_collisions = 0;
+
 ItemSetList
 invert_items(const ItemSetList& item_sets)
 {

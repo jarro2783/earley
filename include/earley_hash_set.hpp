@@ -17,6 +17,8 @@ namespace earley
     typename Equal = std::equal_to<T>>
   using HashSet = HashTable<T, void, Hash, Equal>;
 
+  extern size_t hashtable_collisions;
+
   template <typename T, typename M, typename H, typename E>
   class HashSetIterator
   {
@@ -188,8 +190,6 @@ namespace earley
     typedef HashSetIterator<T, Mapping, Hash, Equality> const_iterator;
     typedef const_iterator iterator;
 
-    mutable size_t collisions = 0;
-
     HashTable()
     : HashTable(0)
     {
@@ -316,7 +316,7 @@ namespace earley
             key -= m_size;
           }
         }
-        ++collisions;
+        ++hashtable_collisions;
       }
     }
 

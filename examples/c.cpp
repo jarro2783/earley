@@ -456,6 +456,8 @@ parse_c(const char* file, bool dump)
       << "kb of memory" << std::endl;
 
     parser.print_stats();
+    std::cout << "HashTable collisions "
+              << earley::hashtable_collisions << std::endl;
   } catch(...)
   {
     if (dump)
