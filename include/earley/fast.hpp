@@ -299,13 +299,15 @@ namespace earley
         m_stack->destroy_top();
         m_stack->finalise();
         m_top = nullptr;
+        m_hash = 2053222611;
       }
 
       void
       append(int v)
       {
         m_top = m_stack->emplace_back(v);
-        hash_combine(m_hash, v);
+        //hash_combine(m_hash, v);
+        m_hash = m_hash * 611 + v;
       }
 
       size_t
@@ -343,7 +345,7 @@ namespace earley
       Stack<int>* m_stack;
       int* m_top = nullptr;
       int* m_end = nullptr;
-      size_t m_hash = 0;
+      size_t m_hash = 2053222611;
     };
 
     inline
