@@ -190,6 +190,8 @@ Parser::parse(size_t position)
     m_core_reset = true;
   }
 
+  set->finalise();
+
   // if this is a new set, then expand it
   //auto copy = *set;
   auto result = m_item_set_hash.insert(set);
@@ -197,10 +199,6 @@ Parser::parse(size_t position)
   if (!result.second)
   {
     reset_set();
-  }
-  else
-  {
-    set->finalise();
   }
 
   if (core_hash.second)
