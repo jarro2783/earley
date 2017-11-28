@@ -656,7 +656,7 @@ namespace earley
       public:
       typedef HashMap<SetSymbolRules, std::vector<uint16_t>> SetSymbolHash;
       typedef HashSet<SetTermLookahead> SetTermLookaheadHash;
-      //typedef HashSet<ItemTreePointers> ItemTreeHash;
+      typedef HashSet<ItemTreePointers> ItemTreeHash;
       typedef HashSet<StackDistances, StackDistanceHash, StackDistanceEq>
         DistanceHash;
 
@@ -779,7 +779,7 @@ namespace earley
 
       SetSymbolHash m_set_symbols;
       SetTermLookaheadHash m_set_term_lookahead;
-      //ItemTreeHash m_item_tree;
+      ItemTreeHash m_item_tree;
       DistanceHash m_distance_hash;
 
       std::vector<bool> m_nullable;

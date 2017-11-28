@@ -488,10 +488,10 @@ Parser::create_new_set(size_t position, const TerminalList& input)
           unique_insert_start_item(current_set, next,
             transition_distance, position);
 
-          //auto pointers = m_item_tree.insert({next, current_set,
-          //  from_set->actual_distance(transition) + distance});
-          //insert_unique(pointers.first->reduction, item);
-          //insert_unique(pointers.first->predecessor, item);
+          auto pointers = m_item_tree.insert({next, current_set,
+            from_set->actual_distance(transition) + distance});
+          insert_unique(pointers.first->reduction, item);
+          insert_unique(pointers.first->predecessor, titem);
         }
       }
     }
