@@ -31,16 +31,16 @@ namespace earley::fast
     {
       for (auto symbol : lookahead)
       {
-        // TODO: fix EOF handling further up
-        // an END_OF_INPUT will never be in the lookahead set of an item
-        if (symbol != END_OF_INPUT)
+        if (symbol == END_OF_INPUT)
         {
-          if (m_lookahead.size() <= static_cast<size_t>(symbol))
-          {
-            m_lookahead.resize(symbol+1);
-          }
-          m_lookahead[symbol] = true;
+          //continue;
         }
+
+        if (m_lookahead.size() <= static_cast<size_t>(symbol))
+        {
+          m_lookahead.resize(symbol+1);
+        }
+        m_lookahead[symbol] = true;
       }
     }
 

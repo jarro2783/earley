@@ -283,6 +283,11 @@ sequence_lookahead(
   {
     for (auto symbol: follows.find(rule.nonterminal())->second)
     {
+      // Perhaps instead of this, END_OF_INPUT could be symbol zero, and
+      // the token stream could actually end in a zero.
+      // This would also remove a couple of checks for end of input in the
+      // parser.
+      if (symbol == END_OF_INPUT) { continue; }
       result.insert(symbol);
     }
   }
