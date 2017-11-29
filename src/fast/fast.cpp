@@ -488,10 +488,21 @@ Parser::create_new_set(size_t position, const TerminalList& input)
           unique_insert_start_item(current_set, next,
             transition_distance, position);
 
-          auto pointers = m_item_tree.insert({next, current_set,
-            from_set->actual_distance(transition) + distance});
-          insert_unique(pointers.first->reduction, item);
-          insert_unique(pointers.first->predecessor, titem);
+          // If we are actually at the end, then add a reduction
+          // We can do this later, once for each unique set
+          // If we go through each unique set when we are finished, then we
+          // can take every completed item t, find the item that predicted it q,
+          // create the next item p, then make a reduction pointer p to t, and 
+          // a predecessor pointer p to q.
+#if 0
+          if (item->position() == item->end())
+          {
+            auto pointers = m_item_tree.insert({next, current_set,
+              from_set->actual_distance(transition) + distance});
+            insert_unique(pointers.first->reduction, item);
+            insert_unique(pointers.first->predecessor, titem);
+          }
+#endif
         }
       }
     }
