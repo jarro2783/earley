@@ -44,6 +44,8 @@ namespace earley
 
   class StackOwned {};
 
+  class StackNotOwned {};
+
   template <typename T>
   Stack<T>::Stack()
   {
@@ -100,6 +102,11 @@ namespace earley
   void
   Stack<T>::finalise()
   {
+    if (!m_owned)
+    {
+      throw StackNotOwned();
+    }
+
     m_owned = false;
     m_top_segment->finalise();
   }

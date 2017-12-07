@@ -455,11 +455,19 @@ parse_c(const char* file, bool dump)
       << (static_cast<char*>(memend) - static_cast<char*>(memstart)) / 1024
       << "kb of memory" << std::endl;
 
+    std::cout << "creating reductions" << std::endl;
+    parser.create_reductions();
+    std::cout << "done" << std::endl;
+
     parser.print_stats();
     std::cout << "HashTable collisions "
               << earley::hashtable_collisions << std::endl;
+
+    //throw "foo";
   } catch(...)
   {
+    auto& position = positions[i];
+    std::cout << "Error at: " << position.line << ":" << position.column << std::endl;
     if (dump)
     {
       for (size_t j = 0; j <= i; ++j)
@@ -472,8 +480,6 @@ parse_c(const char* file, bool dump)
         parser.print_set(j);
       }
     }
-    auto& position = positions[i];
-    std::cout << "Error at: " << position.line << ":" << position.column << std::endl;
     throw;
   }
 }

@@ -192,6 +192,12 @@ namespace earley
         return make_range(m_item_list, m_item_list_end);
       }
 
+      auto
+      start_item_list() const
+      {
+        return make_range(m_item_list, m_item_list + m_start_items);
+      }
+
       const Item**
       first_item() const
       {
@@ -231,6 +237,8 @@ namespace earley
 
         parent_stack.destroy_top();
         m_parent_list_end = m_parent_list;
+
+        ++m_resets;
       }
 
       // There will be no more changes to this set.
@@ -262,6 +270,7 @@ namespace earley
       static Stack<const Item*> item_stack;
 
       int m_number;
+      int m_resets = 0;
     };
 
     class StackDistances
@@ -299,6 +308,7 @@ namespace earley
         m_stack->destroy_top();
         m_stack->finalise();
         m_top = nullptr;
+        m_end = nullptr;
         m_hash = 2053222611;
       }
 
@@ -674,6 +684,9 @@ namespace earley
       void
       print_stats() const;
 
+      void
+      create_reductions();
+
       private:
 
       void
@@ -681,9 +694,6 @@ namespace earley
 
       void
       create_start_set();
-
-      const earley::Item*
-      get_item(const earley::Rule* rule, size_t dot) const;
 
       const Item*
       get_item(const grammar::Rule* rule, int dot);
@@ -772,19 +782,12 @@ namespace earley
       bool m_core_reset = false;
       bool m_set_reset = false;
 
-      // The addresses of these might change after adding another one, so only
-      // keep a pointer to them after adding all the items
-      // TODO: this is going away
-      std::unordered_map<const earley::Rule*, std::vector<earley::Item>> m_items;
-
       SetSymbolHash m_set_symbols;
       SetTermLookaheadHash m_set_term_lookahead;
       ItemTreeHash m_item_tree;
       DistanceHash m_distance_hash;
 
       std::vector<bool> m_nullable;
-
-      std::unordered_map<size_t, std::string> m_names;
 
       // follow and first sets
       FirstSet m_first_sets;

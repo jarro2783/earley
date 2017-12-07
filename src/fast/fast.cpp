@@ -43,6 +43,14 @@ namespace
 
     return true;
   }
+
+  bool
+  in_start_items(const Item* item, const ItemSet* set)
+  {
+    auto core = set->core();
+    auto items = core->start_item_list();
+    return std::find(items.begin(), items.end(), item) != items.end();
+  }
 }
 
 void
@@ -253,14 +261,6 @@ const Item*
 Parser::get_item(const grammar::Rule* rule, int dot)
 {
   return m_all_items.get_item(rule, dot);
-}
-
-const earley::Item*
-Parser::get_item(const earley::Rule* rule, size_t dot) const
-{
-  auto iter = m_items.find(rule);
-  assert(iter != m_items.end());
-  return &iter->second.at(dot);
 }
 
 void
@@ -532,6 +532,8 @@ ItemSet::print(const std::unordered_map<size_t, std::string>& names) const
 
   std::cout << "  core: " << m_core << std::endl;
   std::cout << "  Set core = " << m_core->number() << std::endl;
+  std::cout << "  Start items: " << m_core->start_items() << std::endl;
+
 
   for (; i != m_core->start_items(); ++i)
   {
@@ -636,6 +638,128 @@ Parser::print_stats() const
   std::cout << "Goto successes: " << m_reuse << std::endl;
   std::cout << "Unique sets: " << m_setOwner.size() << std::endl;
   std::cout << "Unique distances: " << m_distance_hash.size() << std::endl;
+}
+
+void
+Parser::create_reductions()
+{
+  HashSet<ItemSet*> items_seen;
+  size_t reductions = 0;
+  size_t skipped_sets = 0;
+  size_t skipped_items = 0;
+
+  // This is almost the same algorithm as doing the completions of the initial
+  // items.
+  // We need to go from 1 to the end, because the first set won't have
+  // completed anything.
+
+  // The main difference is that we are counting the index in the item sets
+  // not the token position, so there is a +1 that doesn't appear here.
+
+  for (size_t position = 1; position < m_itemSets.size(); ++position)
+  {
+    auto item_set = m_itemSets[position];
+    if (!items_seen.insert(item_set).second)
+    {
+      ++skipped_sets;
+      continue;
+    }
+
+    auto core = item_set->core();
+    auto start_items = core->start_items();
+
+#ifdef DEBUG_REDUCTION
+    std::cout << core->number() << ": " << start_items << " ";
+#endif
+    for (size_t i = 0; i != start_items; ++i)
+    {
+      auto item = core->item(i);
+#ifdef DEBUG_REDUCTION
+      std::cout << item << " ";
+#endif
+
+      if (item == nullptr)
+      {
+        std::cout << "Fail at " << position << ":" << i << std::endl;
+        throw "fail";
+      }
+
+      if (item->empty_rhs())
+      {
+        auto distance = item_set->distance(i);
+        auto from = position - distance; // no +1 because we're counting sets
+        auto from_set = m_itemSets.at(from);
+        auto from_core = from_set->core();
+
+        // find the symbol for the lhs of this rule in set that predicted this
+        // i.e., this is a completion: find the items it completes
+        auto transitions = m_set_symbols.find(SetSymbolRules(
+          from_core,
+          {item->rule().nonterminal(), false}
+        ));
+
+        if (transitions == m_set_symbols.end())
+        {
+          // This should never happen, because we will only ever get here
+          // if there is a successful parse.
+          if (item->rule().nonterminal() != m_grammar_new.start())
+          {
+            auto names = m_grammar_new.names();
+            std::unordered_map<size_t, std::string> item_names(names.begin(), names.end());
+
+            for (auto& name: names)
+            {
+              std::cout << name.first << ", " << name.second << std::endl;
+            }
+
+            std::cerr << "Unexpected error finding transition " <<
+              print_nt(item_names, item->rule().nonterminal())
+              << " in set " << from
+                      << " at position "
+                      << position
+                      << std::endl;
+            throw "Error";
+          }
+          continue;
+        }
+
+        for (auto transition: transitions->second)
+        {
+          auto* titem = from_core->item(transition);
+          auto* next = get_item(&titem->rule(),
+            titem->dot() - titem->rule().begin() + 1);
+
+          // In the other algorithm we check lookahead. Here we check whether
+          // we already have this item in our set, because otherwise we don't
+          // care about it.
+          // TODO: do that
+          if (in_start_items(next, item_set))
+          {
+            ++skipped_items;
+            continue;
+          }
+
+          auto transition_distance = from_set->actual_distance(transition) + distance;
+
+          // We only do the reduction if it is actually at the end
+          if (item->position() == item->end())
+          {
+            auto pointers = m_item_tree.insert({next, item_set,
+              transition_distance});
+            insert_unique(pointers.first->reduction, item);
+            insert_unique(pointers.first->predecessor, titem);
+            ++reductions;
+          }
+        }
+      }
+#ifdef DEBUG_REDUCTION
+      std::cout << std::endl;
+#endif
+    }
+  }
+  std::cout << "Added " << reductions << " reductions" << std::endl;
+  std::cout << "Skipped " << skipped_sets << " sets" << std::endl;
+  std::cout << "Skipped " << skipped_items << " items" << std::endl;
 }
 
 Stack<const Item*> ItemSetCore::item_stack;
