@@ -164,9 +164,14 @@ Item::print(
   }
 
   os << ": ( ";
+  size_t i = 0;
   for (auto symbol: m_lookahead)
   {
-    os << symbol << " ";
+    if (symbol)
+    {
+      os << i << " ";
+    }
+    ++i;
   }
   os << ")";
 
