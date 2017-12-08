@@ -705,7 +705,8 @@ Parser::create_reductions()
           if (item->rule().nonterminal() != m_grammar_new.start())
           {
             auto names = m_grammar_new.names();
-            std::unordered_map<size_t, std::string> item_names(names.begin(), names.end());
+            std::unordered_map<size_t, std::string> item_names(
+              names.begin(), names.end());
 
             for (auto& name: names)
             {
@@ -732,8 +733,7 @@ Parser::create_reductions()
           // In the other algorithm we check lookahead. Here we check whether
           // we already have this item in our set, because otherwise we don't
           // care about it.
-          // TODO: do that
-          if (in_start_items(next, item_set))
+          if (!in_start_items(next, item_set))
           {
             ++skipped_items;
             continue;
