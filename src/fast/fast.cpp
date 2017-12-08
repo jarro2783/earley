@@ -684,7 +684,8 @@ Parser::create_reductions()
         throw "fail";
       }
 
-      if (item->empty_rhs())
+      // Don't care if it's not an actual end item
+      if (item->position() == item->end())
       {
         auto distance = item_set->distance(i);
         auto from = position - distance; // no +1 because we're counting sets
@@ -741,15 +742,11 @@ Parser::create_reductions()
 
           auto transition_distance = from_set->actual_distance(transition) + distance;
 
-          // We only do the reduction if it is actually at the end
-          if (item->position() == item->end())
-          {
-            auto pointers = m_item_tree.insert({next, item_set,
-              transition_distance});
-            insert_unique(pointers.first->reduction, item);
-            insert_unique(pointers.first->predecessor, titem);
-            ++reductions;
-          }
+          auto pointers = m_item_tree.insert({next, item_set,
+            transition_distance});
+          insert_unique(pointers.first->reduction, item);
+          insert_unique(pointers.first->predecessor, titem);
+          ++reductions;
         }
       }
 #ifdef DEBUG_REDUCTION
