@@ -45,10 +45,10 @@ namespace
   }
 
   bool
-  in_start_items(const Item* item, const ItemSet* set)
+  in_item_set(const Item* item, const ItemSet* set)
   {
     auto core = set->core();
-    auto items = core->start_item_list();
+    auto items = core->items();
     return std::find(items.begin(), items.end(), item) != items.end();
   }
 }
@@ -666,12 +666,12 @@ Parser::create_reductions()
     }
 
     auto core = item_set->core();
-    auto start_items = core->start_items();
+    auto all_items = core->all_items();
 
 #ifdef DEBUG_REDUCTION
-    std::cout << core->number() << ": " << start_items << " ";
+    std::cout << core->number() << ": " << all_items << " ";
 #endif
-    for (size_t i = 0; i != start_items; ++i)
+    for (size_t i = 0; i != all_items; ++i)
     {
       auto item = core->item(i);
 #ifdef DEBUG_REDUCTION
@@ -684,10 +684,10 @@ Parser::create_reductions()
         throw "fail";
       }
 
-      // Don't care if it's not an actual end item
+      // We only want actual end items.
       if (item->position() == item->end())
       {
-        auto distance = item_set->distance(i);
+        auto distance = item_set->actual_distance(i);
         auto from = position - distance; // no +1 because we're counting sets
         auto from_set = m_itemSets.at(from);
         auto from_core = from_set->core();
@@ -734,7 +734,7 @@ Parser::create_reductions()
           // In the other algorithm we check lookahead. Here we check whether
           // we already have this item in our set, because otherwise we don't
           // care about it.
-          if (!in_start_items(next, item_set))
+          if (!in_item_set(next, item_set))
           {
             ++skipped_items;
             continue;
@@ -744,8 +744,15 @@ Parser::create_reductions()
 
           auto pointers = m_item_tree.insert({next, item_set,
             transition_distance});
-          insert_unique(pointers.first->reduction, item);
-          insert_unique(pointers.first->predecessor, titem);
+          insert_unique(pointers.first->reduction, {item, distance});
+
+          // Only add a predecessor if the transition item isn't at the
+          // start. When building the tree we would have processed the last
+          // reduction, so we don't actually care what the predecessor is.
+          if (titem->dot() != titem->rule().begin())
+          {
+            insert_unique(pointers.first->predecessor, {titem, distance});
+          }
           ++reductions;
         }
       }

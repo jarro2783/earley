@@ -655,10 +655,12 @@ namespace earley
       size_t label;
 
       template <typename T>
-      using Container = std::vector<T>;
+      using Container = HashSet<T>;
 
-      Container<const Item*> reduction;
-      Container<const Item*> predecessor;
+      using LabelledItem = std::tuple<const Item*, size_t>;
+
+      Container<LabelledItem> reduction;
+      Container<LabelledItem> predecessor;
     };
 
     class Parser
@@ -863,6 +865,18 @@ namespace std
       hash_combine(result, entry_hash);
       hash_combine(result, lookahead_hash);
 
+      return result;
+    }
+  };
+
+  template <>
+  struct hash<tuple<const earley::fast::Item*, size_t>>
+  {
+    size_t
+    operator()(const tuple<const earley::fast::Item*, size_t>& p)
+    {
+      size_t result = std::hash<const earley::fast::Item*>()(std::get<0>(p));
+      hash_combine(result, std::get<1>(p));
       return result;
     }
   };
