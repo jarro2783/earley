@@ -16,21 +16,21 @@ int main(int argc, char** argv)
     ("slow", "Run the slow parser")
   ;
 
-  options.parse(argc, argv);
+  auto result = options.parse(argc, argv);
 
-  if (options.count("help"))
+  if (result.count("help"))
   {
     std::cout << options.help();
     exit(1);
   }
 
-  bool debug = options.count("debug");
-  bool timing = options.count("timing");
-  bool slow = options.count("slow");
+  bool debug = result.count("debug");
+  bool timing = result.count("timing");
+  bool slow = result.count("slow");
 
-  if (options.count("expression"))
+  if (result.count("expression"))
   {
-    parse_expression(options["expression"].as<std::string>(), debug, timing);
+    parse_expression(result["expression"].as<std::string>(), debug, timing);
   }
 
   if (argc < 2)
@@ -38,6 +38,8 @@ int main(int argc, char** argv)
     std::cerr << "Give me an ebnf to parse" << std::endl;
     exit(0);
   }
+
+  auto extras = options.positional();
 
   std::string to_parse;
   if (argc >= 3)

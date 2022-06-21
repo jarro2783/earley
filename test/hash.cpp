@@ -1,6 +1,8 @@
 #include "catch.hpp"
 #include "earley_hash_set.hpp"
 
+#include <memory>
+
 template <typename Op>
 struct CountedOp
 {
