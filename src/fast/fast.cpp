@@ -117,11 +117,10 @@ Parser::Parser(const grammar::Grammar& grammar_new, const TerminalList& tokens)
 {
   m_item_membership.resize(m_all_items.items());
 
-  m_setOwner.reserve(tokens.size());
-  m_coreOwner.reserve(tokens.size());
-
-  assert(m_setOwner.capacity() == tokens.size());
-  assert(m_coreOwner.capacity() == tokens.size());
+  // this needs to be large enough to not reallocate, since we store pointers
+  // to these. I think we only end up with tokens + 1 sets.
+  m_setOwner.reserve(tokens.size() + 1);
+  m_coreOwner.reserve(tokens.size() + 1);
 
   m_itemSets.reserve(tokens.size()+1);
   create_start_set();

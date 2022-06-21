@@ -21,7 +21,7 @@ int main(int argc, char** argv)
   if (result.count("help"))
   {
     std::cout << options.help();
-    exit(1);
+    exit(0);
   }
 
   bool debug = result.count("debug");
@@ -44,10 +44,10 @@ int main(int argc, char** argv)
   std::string to_parse;
   if (extras.size() > 1)
   {
-    to_parse = extras[0];
+    to_parse = extras[1];
   }
 
-  earley::parse_ebnf(argv[1], debug, timing, slow, to_parse);
+  earley::parse_ebnf(extras[0], debug, timing, slow, to_parse);
 
   return 0;
 }
