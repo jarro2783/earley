@@ -39,12 +39,12 @@ int main(int argc, char** argv)
     exit(0);
   }
 
-  auto extras = options.positional();
+  auto extras = result.unmatched();
 
   std::string to_parse;
-  if (argc >= 3)
+  if (extras.size() > 1)
   {
-    to_parse = argv[2];
+    to_parse = extras[0];
   }
 
   earley::parse_ebnf(argv[1], debug, timing, slow, to_parse);
