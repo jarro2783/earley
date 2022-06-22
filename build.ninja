@@ -69,13 +69,11 @@ build test: phony test_fast test_grammar test_hash test_stack
 
 # lexer
 build .build/lexer.o: cxx lexer.cpp
-  CFLAGS=-I../lexertl14/include
 
 build lexer: cxx_link .build/lexer.o
 
 # calculator
 build .build/examples/calculator.o: cxx examples/calculator.cpp
-  CFLAGS=-I../lexertl14/include
 
 build calculator: cxx_link .build/examples/calculator.o $
   earley.o grammar.o .build/fast/fast.o .build/fast/grammar.o $
@@ -83,7 +81,6 @@ build calculator: cxx_link .build/examples/calculator.o $
 
 # c grammar
 build .build/examples/c.o: cxx examples/c.cpp | c_grammar.hpp
-  CFLAGS=-I../lexertl14/include
 
 build yc: cxx_link .build/examples/c.o $
   earley.o grammar.o .build/fast/fast.o .build/fast/grammar.o $
@@ -92,7 +89,6 @@ build yc: cxx_link .build/examples/c.o $
 
 # generator
 build .build/generate.o: cxx src/generate.cpp
-  CFLAGS=-I../lexertl14/include
 
 build generator: cxx_link .build/generate.o .build/earley.a .build/fast.a 
 build c_grammar.cpp c_grammar.hpp: generate grammar/c_raw | generator
