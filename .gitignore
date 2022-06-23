@@ -8,3 +8,5 @@ lexer
 __pycache__/
 yc
 c_grammar.*
+generator
+calculator

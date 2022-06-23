@@ -152,7 +152,7 @@ int main(int argc, char** argv)
     try
     {
       run_calculator(argv[1]);
-    } catch (const std::string& e)
+    } catch (const char* e)
     {
       std::cerr << "Error parsing: " << e << std::endl;
       return 1;

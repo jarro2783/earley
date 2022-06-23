@@ -31,6 +31,7 @@ int main(int argc, char** argv)
   if (result.count("expression"))
   {
     parse_expression(result["expression"].as<std::string>(), debug, timing);
+    return 0;
   }
 
   if (argc < 2)
