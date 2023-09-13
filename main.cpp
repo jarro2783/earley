@@ -3,6 +3,18 @@
 #include "grammar.hpp"
 #include "numbers.hpp"
 
+auto parse_options(cxxopts::Options& options, int argc, char** argv)
+{
+  try {
+    return options.parse(argc, argv);
+  } catch (const std::exception& e)
+  {
+    std::cerr << "Error: " << e.what() << std::endl;
+    exit(1);
+  }
+
+}
+
 int main(int argc, char** argv)
 {
   using namespace earley;
@@ -16,12 +28,12 @@ int main(int argc, char** argv)
     ("slow", "Run the slow parser")
   ;
 
-  auto result = options.parse(argc, argv);
+  auto result = parse_options(options, argc, argv);
 
   if (result.count("help"))
   {
     std::cout << options.help();
-    exit(0);
+    return 0;
   }
 
   bool debug = result.count("debug");
@@ -37,7 +49,7 @@ int main(int argc, char** argv)
   if (argc < 2)
   {
     std::cerr << "Give me an ebnf to parse" << std::endl;
-    exit(0);
+    exit(1);
   }
 
   auto extras = result.unmatched();

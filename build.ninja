@@ -19,7 +19,7 @@ rule TEST_COMMAND
 # archives
 build .build/fast.a: archive .build/fast/fast.o .build/fast/items.o $
   .build/fast/grammar.o
-build .build/earley.a: archive .build/grammar_util.o earley.o grammar.o
+build .build/earley.a: archive .build/grammar_util.o earley.o grammar.o .build/util.o
 
 build .build/grammar_util.o: cxx src/grammar_util.cpp
 
@@ -28,12 +28,13 @@ build .build/fast/fast.o: cxx src/fast/fast.cpp
 build grammar.o: cxx grammar.cpp
 build main.o: cxx main.cpp
 build numbers.o: cxx numbers.cpp
+build .build/util.o: cxx src/util.cpp
 
 build .build/fast/grammar.o: cxx src/fast/grammar.cpp
 build .build/fast/items.o: cxx src/fast/items.cpp
 
 build earley: cxx_link earley.o .build/fast/fast.o grammar.o main.o numbers.o $
-  .build/grammar_util.o .build/fast/items.o .build/fast/grammar.o
+  .build/grammar_util.o .build/fast/items.o .build/fast/grammar.o .build/earley.a
 
 # tests
 build test/.build/fast.o: cxx test/fast.cpp
@@ -46,7 +47,7 @@ build test/hash: cxx_link test/.build/main.o test/.build/hash.o earley.o
 build test/grammar: cxx_link test/.build/main.o test/.build/grammar_util.o $
   .build/grammar_util.o
 build test/fast: cxx_link test/.build/main.o test/.build/fast.o $
-  .build/fast/grammar.o .build/fast/items.o .build/fast/fast.o earley.o
+  .build/fast/grammar.o .build/fast/items.o .build/fast/fast.o .build/earley.a
 build test/stack: cxx_link test/.build/stack.o test/.build/main.o
 
 build test_fast: TEST_COMMAND test/fast
@@ -77,7 +78,7 @@ build .build/examples/calculator.o: cxx examples/calculator.cpp
 
 build calculator: cxx_link .build/examples/calculator.o $
   earley.o grammar.o .build/fast/fast.o .build/fast/grammar.o $
-  .build/fast/items.o .build/grammar_util.o
+  .build/fast/items.o .build/grammar_util.o .build/util.o
 
 # c grammar
 build .build/examples/c.o: cxx examples/c.cpp | c_grammar.hpp
@@ -85,12 +86,12 @@ build .build/examples/c.o: cxx examples/c.cpp | c_grammar.hpp
 build yc: cxx_link .build/examples/c.o $
   earley.o grammar.o .build/fast/fast.o .build/fast/grammar.o $
   .build/fast/items.o .build/grammar_util.o $
-  .build/c_grammar.o
+  .build/c_grammar.o .build/earley.a
 
 # generator
 build .build/generate.o: cxx src/generate.cpp
 
-build generator: cxx_link .build/generate.o .build/earley.a .build/fast.a 
+build generator: cxx_link .build/generate.o .build/fast.a .build/earley.a .build/fast.a .build/earley.a 
 build c_grammar.cpp c_grammar.hpp: generate grammar/c_raw | generator
   PREFIX=c
   OUTPUT=c_grammar

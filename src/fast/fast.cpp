@@ -1,13 +1,15 @@
-#include <cassert>
-
 #include "earley/fast.hpp"
 #include "earley/grammar_util.hpp"
+#include "earley/util.hpp"
+
+#include <cassert>
 
 namespace earley::fast
 {
 
 namespace
 {
+
   template <typename T>
   void
   insert_unique(std::vector<T>& c, const T& v)
@@ -577,7 +579,7 @@ Parser::parse_error(size_t i)
 
       if (token <= 127 && token >= ' ')
       {
-        std::cout << "'" << static_cast<char>(token) << "'";
+        std::cout << "'" << escape_character(static_cast<char>(token)) << "'";
       }
       else
       {
