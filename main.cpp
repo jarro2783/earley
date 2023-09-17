@@ -60,7 +60,14 @@ int main(int argc, char** argv)
     to_parse = extras[1];
   }
 
-  earley::parse_ebnf(extras[0], debug, timing, slow, to_parse);
+  try {
+    earley::parse_ebnf(extras[0], debug, timing, slow, to_parse);
+  }
+  catch (const earley::ast::InvalidGrammar& e)
+  {
+    std::cerr << "Invalid grammar, exiting" << std::endl;
+    return 1;
+  }
 
   return 0;
 }

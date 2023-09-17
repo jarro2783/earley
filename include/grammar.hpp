@@ -11,17 +11,21 @@ namespace earley
 {
   namespace ast
   {
-    class Grammar;
 
-    typedef std::shared_ptr<Grammar> GrammarPtr;
-    typedef ActionResult<GrammarPtr> GrammarNode;
-    typedef std::vector<GrammarNode> GrammarNodeList;
+    class InvalidGrammar
+    {
+    };
 
     class Grammar
     {
       public:
       virtual ~Grammar() = default;
     };
+
+    using GrammarPtr = std::shared_ptr<Grammar>;
+    using GrammarNode = ActionResult<GrammarPtr>;
+    using GrammarNodeList = std::vector<GrammarNode>;
+
 
     class GrammarDescription : public Grammar
     {

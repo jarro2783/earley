@@ -1,6 +1,6 @@
 rule cxx
   command = g++ -I include -c -std=c++17 -fdiagnostics-color=always $
-    $CFLAGS -O3 -Wall -Wextra -g -MMD -MF $out.d -o $out $in
+    $CFLAGS -O0 -Wall -Wextra -g -MMD -MF $out.d -o $out $in
   depfile = $out.d
 
 rule cxx_link

@@ -12,10 +12,6 @@ namespace earley
 namespace ast
 {
 
-class InvalidGrammar
-{
-};
-
 namespace
 {
 
@@ -117,7 +113,10 @@ print_grammar(GrammarNode grammar)
   check<GrammarPtr>(grammar);
 
   auto ptr = get<GrammarPtr>(grammar);
-  auto list = checked_cast<const GrammarList*>(ptr.get());
+  auto desc = checked_cast<const GrammarDescription*>(ptr.get());
+
+  auto list_ptr = get<GrammarPtr>(desc->nonterminals());
+  auto list = checked_cast<const GrammarList*>(list_ptr.get());
 
   for (auto& nt : list->list())
   {
@@ -175,6 +174,8 @@ compile_grammar(GrammarNode tree)
       start = name;
     }
   }
+
+  check<GrammarPtr>(description->terminals());
 
   auto terms_ptr = get<GrammarPtr>(description->terminals());
   auto terms = checked_cast<const GrammarTerminals*>(terms_ptr.get());

@@ -1,3 +1,5 @@
+TERM FOO
+
 S -> F B 'x'
    | G B 'y'
 
