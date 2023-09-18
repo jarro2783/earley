@@ -70,7 +70,7 @@ namespace earley::detail
       delete m_previous;
 
       m_destroy(m_memory, m_top);
-      delete m_memory;
+      operator delete(m_memory);
     }
 
     T*

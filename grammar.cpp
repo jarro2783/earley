@@ -175,13 +175,20 @@ compile_grammar(GrammarNode tree)
     }
   }
 
-  check<GrammarPtr>(description->terminals());
+  earley::TerminalMap terminals;
 
-  auto terms_ptr = get<GrammarPtr>(description->terminals());
-  auto terms = checked_cast<const GrammarTerminals*>(terms_ptr.get());
-  auto& names = terms->names();
+  auto grammar_terminals = description->terminals();
 
-  earley::TerminalMap terminals(names.begin(), names.end());
+  if (holds<GrammarPtr>(grammar_terminals))
+  {
+    check<GrammarPtr>(description->terminals());
+
+    auto terms_ptr = get<GrammarPtr>(description->terminals());
+    auto terms = checked_cast<const GrammarTerminals*>(terms_ptr.get());
+    auto& names = terms->names();
+
+    terminals = earley::TerminalMap{names.begin(), names.end()};
+  }
 
   return {grammar, terminals, start};
 }
@@ -229,16 +236,16 @@ parse(const earley::Grammar& grammar, const std::string& start,
 }
 
 std::tuple<earley::Grammar, earley::TerminalMap, std::string>
-parse_grammar(const std::string& text, bool debug)
+parse_grammar(const std::string& text, bool timing, bool debug)
 {
   Grammar ebnf = {
     {"Grammar", {
-      {{"TerminalList", "HardSpace", "Nonterminals", "Space"},
-        {"construct_grammar", {0, 2}}},
+      {{"TerminalList", "Nonterminals", "Space"},
+        {"construct_grammar", {0, 1}}},
     }},
     {"TerminalList", {
       {{}},
-      {{"Space", 'T', 'E', 'R', 'M', "HardSpace", "NameList"},
+      {{"Space", 'T', 'E', 'R', 'M', "HardSpace", "NameList", "HardSpace"},
         {"construct_terminals", {6}}},
     }},
     {"NameList", {
@@ -388,7 +395,10 @@ parse_grammar(const std::string& text, bool debug)
     process_input(debug, ebnf_ids["Grammar"], text, ebnf_rules, ebnf_ids);
   (void)ebnf_items;
   (void)ebnf_pointers;
-  (void)ebnf_time;
+
+  if (timing) {
+    std::cout << "Parsing grammar took " << ebnf_time << " microseconds" << std::endl;
+  }
 
   if (!ebnf_parsed)
   {
@@ -429,7 +439,7 @@ void
 parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
   const std::string& text)
 {
-  auto [built, terminals, start] = parse_grammar(input, debug);
+  auto [built, terminals, start] = parse_grammar(input, timing, debug);
   (void)terminals;
 
   if (text.size())
@@ -447,7 +457,6 @@ parse_ebnf(const std::string& input, bool debug, bool timing, bool slow,
 
     //test the fast parser
     auto [rules, ids] = generate_rules(built);
-    ParseGrammar parse_grammar(ids[start], rules);
     earley::fast::grammar::Grammar grammar_new(start, built);
 
     std::chrono::time_point<std::chrono::system_clock> start_time, end;

@@ -16,19 +16,14 @@
 
 #define MAX_LOOKAHEAD_SETS 4
 
-namespace earley::fast
-{
-  struct ItemSetOwner;
-}
-
 namespace earley
 {
   namespace fast
   {
     typedef Item PItem;
     typedef grammar::Rule PRule;
-    class CoreEqual;
-    class CoreHash;
+    struct CoreEqual;
+    struct CoreHash;
 
     typedef std::vector<size_t> TerminalList;
 

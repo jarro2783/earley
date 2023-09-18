@@ -724,7 +724,9 @@ process_input(
           }
           else
           {
-            std::cout << "Item not found" << std::endl;
+            std::cout << "Item not found: ";
+            item.print(std::cout, rule_names);
+            std::cout << std::endl;
           }
         }
         else
@@ -746,12 +748,10 @@ process_input(
 
 struct InvertVisitor
 {
-  InvertVisitor(const std::vector<earley::RuleList>& rules,
-    std::vector<std::vector<const Rule*>>& inverted,
+  InvertVisitor(std::vector<std::vector<const Rule*>>& inverted,
     const Rule* current
   )
-  : m_rules(rules)
-  , m_inverted(inverted)
+  : m_inverted(inverted)
   , m_current(current)
   {
   }
@@ -774,7 +774,6 @@ struct InvertVisitor
   }
 
   private:
-  const std::vector<earley::RuleList>& m_rules;
   std::vector<std::vector<const Rule*>>& m_inverted;
   const Rule* m_current;
 };
@@ -798,7 +797,7 @@ find_nullable(const std::vector<earley::RuleList>& rules)
         work.push_back(i);
       }
 
-      InvertVisitor invert_rule(rules, inverted, &rule);
+      InvertVisitor invert_rule(inverted, &rule);
       //inverted index
       for (auto& entry: rule)
       {

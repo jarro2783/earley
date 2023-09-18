@@ -54,9 +54,9 @@ namespace std
 
 namespace earley
 {
-  template <template <typename, typename> typename Map, typename K, typename V>
+  template <template <typename, typename, typename...> typename Map, typename K, typename V, typename... Args>
   Map<V, K>
-  invert_map(const Map<K, V>& map)
+  invert_map(const Map<K, V, Args...>& map)
   {
     Map<V, K> inverted;
 
@@ -269,6 +269,11 @@ namespace earley
     {
     }
 
+    bool empty() const
+    {
+      return m_entries.empty();
+    }
+
     std::vector<Entry>::const_iterator
     begin() const
     {
@@ -395,6 +400,11 @@ namespace earley
     in_lookahead(int symbol) const
     {
       return m_lookahead.count(symbol);
+    }
+
+    bool empty() const
+    {
+      return m_current == m_rule->end();
     }
 
     std::ostream&
@@ -795,7 +805,15 @@ namespace std
   hash<earley::Item>::operator()(const earley::Item& item) const
   {
     size_t result = item.m_start;
-    hash_combine(result, &*item.m_current);
+
+    if (item.empty())
+    {
+      hash_combine(result, 0);
+    }
+    else
+    {
+      hash_combine(result, &*item.m_current);
+    }
     hash_combine(result, item.m_rule);
 
     return result;
@@ -1026,11 +1044,11 @@ namespace earley
       ForestActions(
         const TreePointers& pointers,
         const std::string& input,
-        const std::unordered_map<size_t, std::string>& names
+        [[maybe_unused]] const std::unordered_map<size_t, std::string>& names
       )
       : m_pointers(pointers)
       , m_input(input)
-      , m_names(names)
+      //, m_names(names)
       {
       }
 
@@ -1167,7 +1185,7 @@ namespace earley
 
       const TreePointers& m_pointers;
       const std::string& m_input;
-      const std::unordered_map<size_t, std::string>& m_names;
+      //const std::unordered_map<size_t, std::string>& m_names;
     };
   }
 

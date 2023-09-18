@@ -561,7 +561,7 @@ void
 Parser::parse_error(size_t i)
 {
   //failed here
-  std::cout << "Parse error at " << i << ", expecting: ";
+  std::cout << "Parse error at " << i << ", expecting: START";
 
   auto& names = m_grammar_new.names();
   std::unordered_map<size_t, std::string> item_names(names.begin(), names.end());
@@ -592,7 +592,7 @@ Parser::parse_error(size_t i)
     std::cout << std::endl;
   }
 
-  std::cout << std::endl;
+  std::cout << "END" << std::endl;
 }
 
 void

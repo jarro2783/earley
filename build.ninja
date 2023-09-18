@@ -1,10 +1,10 @@
 rule cxx
-  command = g++ -I include -c -std=c++17 -fdiagnostics-color=always $
-    $CFLAGS -O0 -Wall -Wextra -g -MMD -MF $out.d -o $out $in
+  command = clang++ -I include -c -std=c++17 -fdiagnostics-color=always $
+    $CFLAGS -Wall -Wextra -g -MMD -MF $out.d -o $out $in -ferror-limit=1
   depfile = $out.d
 
 rule cxx_link
-  command = g++ $in -o $out
+  command = clang++ $in -o $out
 
 rule archive
   command = ar rc $out $in && ranlib $out

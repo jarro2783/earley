@@ -68,7 +68,7 @@ generate_grammar(const char* prefix, const char* input, const char* output)
 
   std::string text(raw.data(), raw.data() + raw.size());
 
-  auto [grammar, terminals, start] = earley::parse_grammar(text);
+  auto [grammar, terminals, start] = earley::parse_grammar(text, false);
 
   earley::fast::grammar::Grammar built(start, grammar, terminals);
 
