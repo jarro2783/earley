@@ -468,7 +468,6 @@ complete(
 
   HashSet<Item> to_add(20);
 
-  //std::cout << "Completed: " << item << std::endl;
   for (auto& consider : item_sets[item.where()])
   {
     //std::cout << "Consider " << consider << std::endl;

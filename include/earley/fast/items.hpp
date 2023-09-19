@@ -108,7 +108,6 @@ namespace earley::fast
     const grammar::Rule* m_rule;
     grammar::Rule::iterator m_position;
     std::vector<bool> m_lookahead;
-    bool m_eof_lookahead = false;
     bool m_empty_rhs;
     size_t m_index;
   };
