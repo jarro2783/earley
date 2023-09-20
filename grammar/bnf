@@ -21,7 +21,7 @@ Nonterminal -> Name Space RuleSeparator Rules OptSemi
 RuleSeparator : '-' '>' | ':'
 
 OptSemi :
-        | ';'
+        | Space ';'
 
 Rules : Rule
       | Rules Space '|' Rule
@@ -34,6 +34,10 @@ Rule
 Productions
   : Production
   | Productions HardSpace Production
+
+Production
+  : Name
+  | Space Literal
 
 Action -> Space '#' Name HardSpace Numbers
 

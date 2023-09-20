@@ -68,6 +68,11 @@ int main(int argc, char** argv)
     std::cerr << "Invalid grammar, exiting" << std::endl;
     return 1;
   }
+  catch (const char* c)
+  {
+    std::cerr << "Error parsing input expression: " << c << std::endl;
+    return 1;
+  }
 
   return 0;
 }

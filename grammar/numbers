@@ -13,12 +13,12 @@ Space ->
 
 Sum ->
     Product
-  | Sum Space '+' Product
-  | Sum Space '-' Product
+  | Sum Space '+' Product # add 1 4
+  | Sum Space '-' Product # subtract 1 4
 
 Product ->
     Facter
-  | Product Space '*' Facter
+  | Product Space '*' Facter # multiply 1 4
   | Product Space '/' Facter
 
 Facter ->
