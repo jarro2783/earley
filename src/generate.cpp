@@ -128,7 +128,20 @@ write_grammar(
         print_node(os, node);
         os << ", ";
       }
-      os << "}},\n";
+      os << "},";
+
+      auto& action = rule.arguments();
+      auto& action_name = std::get<0>(action);
+      if (!action_name.empty())
+      {
+        os << "{\"" << action_name << "\", {";
+        for (auto& action_index: std::get<1>(action))
+        {
+          os << action_index << ", ";
+        }
+        os << "}";
+      }
+      os << "},\n";
     }
     os << "  }},\n";
   }

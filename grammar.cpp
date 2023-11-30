@@ -302,7 +302,7 @@ parse_grammar(const std::string& text, bool timing, bool debug)
       {{"Space", "Literal"}, {"pass", {1}}},
     }},
     {"Action", {
-      {{"Space", '#', "Name", "HardSpace", "Numbers"}},
+      {{"Space", '#', "Name", "HardSpace", "Numbers"}, {"create_action", {0, 2}}},
     }},
     {"Literal", {
       {{'\'', "Char", '\''}, {"pass", {1}}},
@@ -377,15 +377,15 @@ parse_grammar(const std::string& text, bool timing, bool debug)
       {{'"'}, {"pass", {0}}},
     }},
     {"Numbers", {
-      {{"Space", "Number"}},
-      {{"Numbers", "HardSpace", "Number"}},
+      {{"Space", "Number"}, {"create_list", {1}}},
+      {{"Numbers", "HardSpace", "Number"}, {"append_list", {0, 2}}},
     }},
     {"Number", {
-      {{"Digit"}},
-      {{"Number", "Digit"}},
+      {{"Digit"}, {"create_number", {0}}},
+      {{"Number", "Digit"}, {"append_number", {0, 1}}},
     }},
     {"Digit", {
-      {{scan_range('0', '9')}},
+      {{scan_range('0', '9')}, {"pass", {0}}},
     }},
   };
 
@@ -423,6 +423,8 @@ parse_grammar(const std::string& text, bool timing, bool debug)
     add_action("create_nonterminal", actions, &ast::action_create_nonterminal);
     add_action("construct_terminals", actions, &ast::action_construct_terminals);
     add_action("construct_grammar", actions, &ast::action_construct_grammar);
+    add_action("create_number", actions, &ast::action_create_number);
+    add_action("append_number", actions, &ast::action_append_number);
 
     auto value = earley::run_actions(
         ebnf_pointers, ebnf_ids["Grammar"], text, actions, ebnf_items, ebnf_ids);

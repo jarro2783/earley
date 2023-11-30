@@ -26,6 +26,14 @@ namespace earley
     using GrammarNode = ActionResult<GrammarPtr>;
     using GrammarNodeList = std::vector<GrammarNode>;
 
+    template <typename T>
+    T& grammar_get(GrammarNode& node)
+    {
+      auto ptr = get<GrammarPtr>(node);
+      auto& t = dynamic_cast<T&>(*ptr);
+
+      return t;
+    }
 
     class GrammarDescription : public Grammar
     {
@@ -238,6 +246,28 @@ namespace earley
       }
 
       std::vector<Production> m_productions;
+    };
+
+    class GrammarAction : public Grammar
+    {
+      private:
+      std::string m_action_name;
+      std::vector<int> m_positions;
+    };
+
+    class GrammarNumber : public Grammar
+    {
+      public:
+      GrammarNumber(int value) : m_value(value) {}
+      int value() const { return m_value; }
+
+      void append_value(int v)
+      {
+        m_value *= 10 + v;
+      }
+
+      private:
+      int m_value = 0;
     };
 
     inline
@@ -482,6 +512,43 @@ namespace earley
 
       return std::make_shared<GrammarTerminals>(std::move(names));
     }
+
+    inline
+    GrammarNode
+    action_create_number(std::vector<GrammarNode>& nodes) {
+      if (nodes.size() != 1)
+      {
+        return values::Failed();
+      }
+
+      auto& node = nodes[0];
+      auto value = get<char>(node);
+
+      std::cout << int(value - '0') << std::endl;
+      return std::make_shared<GrammarNumber>(value - '0');
+    }
+
+    inline
+    GrammarNode
+    action_append_number(std::vector<GrammarNode>& nodes) {
+      if (nodes.size() != 2)
+      {
+        return values::Failed();
+      }
+
+      auto& lhs = nodes[0];
+      auto& rhs = nodes[1];
+
+      auto& num = grammar_get<GrammarNumber>(lhs);
+      auto value = get<char>(rhs);
+
+      num.append_value(value);
+
+      std::cout << num.value();
+
+      return lhs;
+    }
+
   }
 
   void
